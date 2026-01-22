@@ -79,6 +79,87 @@ export type Database = {
         }
         Relationships: []
       }
+      stripe_events: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          processed: boolean | null
+          raw_event: Json | null
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id: string
+          processed?: boolean | null
+          raw_event?: Json | null
+          type: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          processed?: boolean | null
+          raw_event?: Json | null
+          type?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          canceled_at: string | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan_name: string | null
+          status: string
+          stripe_customer_id: string
+          stripe_price_id: string | null
+          stripe_subscription_id: string | null
+          trial_end: string | null
+          trial_start: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_name?: string | null
+          status: string
+          stripe_customer_id: string
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_end?: string | null
+          trial_start?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_name?: string | null
+          status?: string
+          stripe_customer_id?: string
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_end?: string | null
+          trial_start?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           assigned_at: string
@@ -116,21 +197,27 @@ export type Database = {
           created_at: string
           email: string
           id: string
-          name: string | null
+          name: string
+          photo_url: string | null
+          stripe_customer_id: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           email: string
           id: string
-          name?: string | null
+          name?: string
+          photo_url?: string | null
+          stripe_customer_id?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
-          name?: string | null
+          name?: string
+          photo_url?: string | null
+          stripe_customer_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -141,6 +228,7 @@ export type Database = {
     }
     Functions: {
       get_user_roles: { Args: never; Returns: string[] }
+      has_active_subscription: { Args: never; Returns: boolean }
       has_role: { Args: { role_name: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
     }

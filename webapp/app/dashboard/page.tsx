@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation'
 import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
-import { LogoutButton } from '@/components/auth/LogoutButton'
 import { getUserRoles } from '@/lib/auth/permissions'
+import { getUserSubscription } from '@/lib/auth/subscriptions'
 import Link from 'next/link'
 
 // Cache the user profile query for performance
@@ -31,32 +31,28 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  // Fetch user profile and roles
+  // Fetch user profile, roles, and subscription
   const profile = await getUserProfile(user.id)
   const userRoles = await getUserRoles(supabase)
   const isAdmin = userRoles.includes('Admin')
+  const subscription = await getUserSubscription(supabase)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <div className="flex justify-between items-start mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-              <p className="text-gray-600 mt-1">Welcome back!</p>
-            </div>
-            <div className="flex gap-3 items-center">
-              {isAdmin && (
-                <Link
-                  href="/admin"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
-                >
-                  Admin Dashboard
-                </Link>
-              )}
-              <LogoutButton />
-            </div>
-          </div>
+    <div className="w-full">
+      <div className="flex justify-between items-start mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600 mt-1">Welcome back!</p>
+        </div>
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+          >
+            Admin Dashboard
+          </Link>
+        )}
+      </div>
 
           <div className="border-t pt-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Your Profile</h2>
@@ -111,12 +107,46 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <p className="text-sm text-blue-800">
-              <span className="font-semibold">Authentication Status:</span> Active Session
-            </p>
-          </div>
-        </div>
+          {subscription && (
+            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="font-medium text-green-900">
+                    {subscription.status === 'trialing' ? '14-Day Free Trial Active' : 'Active Subscription'}
+                  </p>
+                  <p className="text-sm text-green-700 mt-1">
+                    {subscription.plan_name} - Renews {subscription.current_period_end ? new Date(subscription.current_period_end).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
+                    }) : 'N/A'}
+                  </p>
+                  {subscription.status === 'trialing' && subscription.trial_end && (
+                    <p className="text-sm text-green-600 mt-1">
+                      Trial ends {new Date(subscription.trial_end).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      })}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {isAdmin && !subscription && (
+            <div className="mt-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+              <p className="text-sm text-purple-800">
+                <span className="font-semibold">Admin Access:</span> You have access to all features as an administrator.
+              </p>
+            </div>
+          )}
+
+      <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <p className="text-sm text-blue-800">
+          <span className="font-semibold">Authentication Status:</span> Active Session
+        </p>
       </div>
     </div>
   )

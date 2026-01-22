@@ -1,14 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useActionState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useFormState, useFormStatus } from 'react-dom'
+import { useFormStatus } from 'react-dom'
 import Link from 'next/link'
 import { loginSchema } from '@/lib/validation/auth'
 import { loginAction } from '@/app/actions/auth'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
+import { parseFieldErrors } from '@/lib/utils/errorParsing'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -21,8 +22,13 @@ function SubmitButton() {
 
 export function LoginForm() {
   const router = useRouter()
-  const [state, formAction] = useFormState(loginAction, { success: false })
+  const [state, formAction] = useActionState(loginAction, { success: false })
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({})
+
+  // Diagnostic logging in development
+  if (process.env.NODE_ENV === 'development' && state.fieldErrors) {
+    console.log('[LoginForm] Received fieldErrors:', state.fieldErrors)
+  }
 
   // Client-side validation on blur
   const validateField = (name: string, value: string) => {
@@ -34,7 +40,8 @@ export function LoginForm() {
       }
       setClientErrors(prev => ({ ...prev, [name]: '' }))
     } catch (error: any) {
-      setClientErrors(prev => ({ ...prev, [name]: error.errors[0].message }))
+      const message = error.errors?.[0]?.message || 'Invalid input'
+      setClientErrors(prev => ({ ...prev, [name]: message }))
     }
   }
 
@@ -48,8 +55,8 @@ export function LoginForm() {
 
   // Merge server and client errors, preferring server errors
   const errors = {
-    email: state.fieldErrors?.email?.[0] || clientErrors.email,
-    password: state.fieldErrors?.password?.[0] || clientErrors.password,
+    email: parseFieldErrors(state.fieldErrors, 'email', clientErrors.email),
+    password: parseFieldErrors(state.fieldErrors, 'password', clientErrors.password),
   }
 
   return (

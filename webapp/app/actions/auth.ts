@@ -22,9 +22,33 @@ export async function loginAction(prevState: any, formData: FormData): Promise<A
   const validation = loginSchema.safeParse(rawData)
 
   if (!validation.success) {
+    // Best practice: Extract only message strings from Zod errors
+    const fieldErrors: Record<string, string[]> = {}
+
+    // Iterate through issues to build clean error messages
+    validation.error.issues.forEach((issue) => {
+      const fieldName = issue.path[0]?.toString()
+      if (fieldName) {
+        if (!fieldErrors[fieldName]) {
+          fieldErrors[fieldName] = []
+        }
+        // Only push the message string, nothing else
+        fieldErrors[fieldName].push(issue.message)
+      }
+    })
+
+    // Diagnostic logging in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Login Action] Validation failed:', {
+        action: 'login',
+        fieldErrors,
+        serializedCheck: JSON.stringify(fieldErrors)
+      })
+    }
+
     return {
       success: false,
-      fieldErrors: validation.error.flatten().fieldErrors,
+      fieldErrors,
     }
   }
 
@@ -67,6 +91,15 @@ export async function loginAction(prevState: any, formData: FormData): Promise<A
 
 // Register action
 export async function registerAction(prevState: any, formData: FormData): Promise<ActionResponse> {
+  // Validate invitation code first
+  const invitationCode = formData.get('invitationCode')
+  if (invitationCode !== 'LetMeIn') {
+    return {
+      success: false,
+      error: 'Invalid invitation code',
+    }
+  }
+
   // Parse and validate form data
   const rawData = {
     name: formData.get('name'),
@@ -78,9 +111,33 @@ export async function registerAction(prevState: any, formData: FormData): Promis
   const validation = registerSchema.safeParse(rawData)
 
   if (!validation.success) {
+    // Best practice: Extract only message strings from Zod errors
+    const fieldErrors: Record<string, string[]> = {}
+
+    // Iterate through issues to build clean error messages
+    validation.error.issues.forEach((issue) => {
+      const fieldName = issue.path[0]?.toString()
+      if (fieldName) {
+        if (!fieldErrors[fieldName]) {
+          fieldErrors[fieldName] = []
+        }
+        // Only push the message string, nothing else
+        fieldErrors[fieldName].push(issue.message)
+      }
+    })
+
+    // Diagnostic logging in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Register Action] Validation failed:', {
+        action: 'register',
+        fieldErrors,
+        serializedCheck: JSON.stringify(fieldErrors)
+      })
+    }
+
     return {
       success: false,
-      fieldErrors: validation.error.flatten().fieldErrors,
+      fieldErrors,
     }
   }
 

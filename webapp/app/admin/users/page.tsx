@@ -6,10 +6,20 @@ import { RoleManagement } from '@/components/admin/RoleManagement'
 const getAllUsersWithRoles = cache(async () => {
   const supabase = await createClient()
 
-  // Get all users
+  // Get all users with subscriptions
   const { data: users, error: usersError } = await supabase
     .from('users')
-    .select('id, email, name, created_at')
+    .select(`
+      id,
+      email,
+      name,
+      created_at,
+      subscriptions (
+        status,
+        plan_name,
+        current_period_end
+      )
+    `)
     .order('created_at', { ascending: false })
 
   if (usersError) {
@@ -89,6 +99,9 @@ export default async function AdminUsersPage() {
                   Roles
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Subscription
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Joined
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -122,6 +135,21 @@ export default async function AdminUsersPage() {
                         </span>
                       ))}
                     </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {(user as any).subscriptions?.[0] ? (
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        (user as any).subscriptions[0].status === 'active' || (user as any).subscriptions[0].status === 'trialing'
+                          ? 'bg-green-100 text-green-800'
+                          : (user as any).subscriptions[0].status === 'past_due'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {(user as any).subscriptions[0].status}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 text-sm">None</span>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(user.created_at).toLocaleDateString('en-GB', {
