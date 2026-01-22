@@ -1,87 +1,82 @@
 'use client'
 
-import { useState } from 'react'
-import Link from 'next/link'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { useFormState, useFormStatus } from 'react-dom'
+import Link from 'next/link'
+import { loginSchema } from '@/lib/validation/auth'
+import { loginAction } from '@/app/actions/auth'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
 
+function SubmitButton() {
+  const { pending } = useFormStatus()
+  return (
+    <Button type="submit" variant="primary" loading={pending} className="w-full">
+      Sign In
+    </Button>
+  )
+}
+
 export function LoginForm() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const [state, formAction] = useFormState(loginAction, { success: false })
+  const [clientErrors, setClientErrors] = useState<Record<string, string>>({})
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-
-    if (!email || !password) {
-      setError('Please fill in all fields')
-      return
-    }
-
-    setLoading(true)
-
+  // Client-side validation on blur
+  const validateField = (name: string, value: string) => {
     try {
-      const supabase = createClient()
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (signInError) {
-        if (signInError.message.includes('Email not confirmed')) {
-          setError('Please confirm your email address before logging in')
-        } else if (signInError.message.includes('Invalid')) {
-          setError('Invalid email or password')
-        } else {
-          setError(signInError.message)
-        }
-      } else {
-        router.push('/dashboard')
-        router.refresh()
+      if (name === 'email') {
+        loginSchema.shape.email.parse(value)
+      } else if (name === 'password') {
+        loginSchema.shape.password.parse(value)
       }
-    } catch (err) {
-      setError('An unexpected error occurred')
-    } finally {
-      setLoading(false)
+      setClientErrors(prev => ({ ...prev, [name]: '' }))
+    } catch (error: any) {
+      setClientErrors(prev => ({ ...prev, [name]: error.errors[0].message }))
     }
   }
 
+  // Redirect on success
+  useEffect(() => {
+    if (state.success) {
+      router.push('/dashboard')
+      router.refresh()
+    }
+  }, [state.success, router])
+
+  // Merge server and client errors, preferring server errors
+  const errors = {
+    email: state.fieldErrors?.email?.[0] || clientErrors.email,
+    password: state.fieldErrors?.password?.[0] || clientErrors.password,
+  }
+
   return (
-    <form onSubmit={handleSubmit}>
-      {error && <Alert type="error" message={error} onDismiss={() => setError(null)} />}
+    <form action={formAction}>
+      {state.error && <Alert type="error" message={state.error} />}
 
       <Input
         label="Email"
         type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        name="email"
         placeholder="john@example.com"
         required
+        error={errors.email}
+        onBlur={(e) => validateField('email', e.target.value)}
       />
 
       <Input
         label="Password"
         type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
+        name="password"
         placeholder="Enter your password"
         required
+        error={errors.password}
+        onBlur={(e) => validateField('password', e.target.value)}
       />
 
-      <Button
-        type="submit"
-        variant="primary"
-        loading={loading}
-        className="w-full"
-      >
-        Sign In
-      </Button>
+      <SubmitButton />
 
       <p className="text-center text-sm text-gray-600 mt-4">
         Don&apos;t have an account?{' '}

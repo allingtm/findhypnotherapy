@@ -1,69 +1,57 @@
 'use client'
 
 import { useState } from 'react'
+import { useFormState, useFormStatus } from 'react-dom'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { registerSchema } from '@/lib/validation/auth'
+import { registerAction } from '@/app/actions/auth'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
 
+function SubmitButton() {
+  const { pending } = useFormStatus()
+  return (
+    <Button type="submit" variant="primary" loading={pending} className="w-full">
+      Create Account
+    </Button>
+  )
+}
+
 export function RegisterForm() {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const [state, formAction] = useFormState(registerAction, { success: false })
+  const [clientErrors, setClientErrors] = useState<Record<string, string>>({})
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-
-    // Validation
-    if (!name || !email || !password || !confirmPassword) {
-      setError('Please fill in all fields')
-      return
-    }
-
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters')
-      return
-    }
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match')
-      return
-    }
-
-    setLoading(true)
-
+  // Client-side validation on blur
+  const validateField = (name: string, value: string, formData?: FormData) => {
     try {
-      const supabase = createClient()
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name,
-          },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
-
-      if (signUpError) {
-        setError(signUpError.message)
-      } else {
-        setSuccess(true)
+      if (name === 'name') {
+        registerSchema.shape.name.parse(value)
+      } else if (name === 'email') {
+        registerSchema.shape.email.parse(value)
+      } else if (name === 'password') {
+        registerSchema.shape.password.parse(value)
+      } else if (name === 'confirmPassword' && formData) {
+        const password = formData.get('password')
+        if (value !== password) {
+          throw new Error("Passwords don't match")
+        }
       }
-    } catch (err) {
-      setError('An unexpected error occurred')
-    } finally {
-      setLoading(false)
+      setClientErrors(prev => ({ ...prev, [name]: '' }))
+    } catch (error: any) {
+      setClientErrors(prev => ({ ...prev, [name]: error.errors?.[0]?.message || error.message }))
     }
   }
 
-  if (success) {
+  // Merge server and client errors, preferring server errors
+  const errors = {
+    name: state.fieldErrors?.name?.[0] || clientErrors.name,
+    email: state.fieldErrors?.email?.[0] || clientErrors.email,
+    password: state.fieldErrors?.password?.[0] || clientErrors.password,
+    confirmPassword: state.fieldErrors?.confirmPassword?.[0] || clientErrors.confirmPassword,
+  }
+
+  if (state.success) {
     return (
       <div>
         <Alert
@@ -81,53 +69,55 @@ export function RegisterForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      {error && <Alert type="error" message={error} onDismiss={() => setError(null)} />}
+    <form action={formAction}>
+      {state.error && <Alert type="error" message={state.error} />}
 
       <Input
         label="Full Name"
         type="text"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
+        name="name"
         placeholder="John Doe"
         required
+        error={errors.name}
+        onBlur={(e) => validateField('name', e.target.value)}
       />
 
       <Input
         label="Email"
         type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        name="email"
         placeholder="john@example.com"
         required
+        error={errors.email}
+        onBlur={(e) => validateField('email', e.target.value)}
       />
 
       <Input
         label="Password"
         type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
+        name="password"
         placeholder="At least 8 characters"
         required
+        error={errors.password}
+        onBlur={(e) => validateField('password', e.target.value)}
       />
 
       <Input
         label="Confirm Password"
         type="password"
-        value={confirmPassword}
-        onChange={(e) => setConfirmPassword(e.target.value)}
+        name="confirmPassword"
         placeholder="Confirm your password"
         required
+        error={errors.confirmPassword}
+        onBlur={(e) => {
+          const form = e.target.form
+          if (form) {
+            validateField('confirmPassword', e.target.value, new FormData(form))
+          }
+        }}
       />
 
-      <Button
-        type="submit"
-        variant="primary"
-        loading={loading}
-        className="w-full"
-      >
-        Create Account
-      </Button>
+      <SubmitButton />
 
       <p className="text-center text-sm text-gray-600 mt-4">
         Already have an account?{' '}

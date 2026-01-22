@@ -16,6 +16,11 @@ Next.js 15 application with Supabase authentication and TypeScript.
 ```
 webapp/
 ├── app/                    # Next.js App Router
+│   ├── admin/             # Admin dashboard (role-protected)
+│   │   ├── layout.tsx     # Admin layout with role check
+│   │   ├── page.tsx       # Admin dashboard home
+│   │   └── users/         # User management
+│   │       └── page.tsx   # User list & role assignment
 │   ├── auth/              # Authentication routes
 │   │   └── callback/      # OAuth callback handler
 │   ├── dashboard/         # Protected dashboard page
@@ -24,19 +29,23 @@ webapp/
 │   ├── layout.tsx         # Root layout
 │   └── page.tsx           # Home page
 ├── components/            # React components
-│   ├── auth/             # Auth-related components
+│   ├── admin/             # Admin components
+│   │   └── RoleManagement.tsx  # Role assignment UI
+│   ├── auth/              # Auth-related components
 │   │   └── LogoutButton.tsx
-│   └── ui/               # UI components (Button, Input, Alert)
-├── lib/                  # Utilities & configurations
-│   ├── supabase/        # Supabase client & middleware
-│   │   ├── client.ts    # Browser client
-│   │   ├── server.ts    # Server-side client
-│   │   └── middleware.ts # Middleware client
-│   └── types/           # TypeScript type definitions
-│       └── database.ts  # Database types
-├── middleware.ts         # Route protection middleware
-├── next.config.ts       # Next.js configuration
-└── tailwind.config.ts   # Tailwind CSS configuration
+│   └── ui/                # UI components (Button, Input, Alert)
+├── lib/                   # Utilities & configurations
+│   ├── auth/              # Authorization utilities
+│   │   └── permissions.ts # Role checking functions
+│   ├── supabase/          # Supabase client & middleware
+│   │   ├── client.ts      # Browser client
+│   │   ├── server.ts      # Server-side client
+│   │   └── middleware.ts  # Middleware client
+│   └── types/             # TypeScript type definitions
+│       └── database.ts    # Database types (includes RBAC tables)
+├── middleware.ts          # Route protection middleware
+├── next.config.ts         # Next.js configuration
+└── tailwind.config.ts     # Tailwind CSS configuration
 ```
 
 ## Key Files
@@ -65,14 +74,26 @@ npm run start  # Run production server
 npm run lint   # Run ESLint
 ```
 
-## Authentication Flow
+## Authentication & Authorization Flow
 
+**Authentication:**
 1. User visits login/register pages
 2. Form submission sends credentials to Supabase
 3. Supabase returns session tokens
 4. Middleware checks auth on protected routes
 5. Protected routes (e.g., `/dashboard`) require valid session
 6. Callback route at `/auth/callback` handles OAuth redirects
+
+**Authorization (RBAC):**
+1. New users automatically get "Member" role (database trigger)
+2. Admin routes check role via [lib/auth/permissions.ts](lib/auth/permissions.ts)
+3. Database RLS policies enforce access control
+4. Three-layer security: Middleware → Server Components → RLS
+5. All role changes logged to audit table
+
+**Roles:**
+- **Member**: Default for all users (hypnotherapists)
+- **Admin**: Full system access, can manage users/roles
 
 ## Component Patterns
 
