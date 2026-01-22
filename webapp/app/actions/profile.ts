@@ -56,7 +56,7 @@ export async function updateProfileAction(prevState: any, formData: FormData): P
     if (!validation.success) {
       return {
         success: false,
-        error: validation.error.errors[0]?.message || 'Validation failed',
+        error: validation.error.issues[0]?.message || 'Validation failed',
       }
     }
 
@@ -133,7 +133,7 @@ export async function updatePasswordAction(prevState: any, formData: FormData): 
     if (!validation.success) {
       return {
         success: false,
-        error: validation.error.errors[0]?.message || 'Validation failed',
+        error: validation.error.issues[0]?.message || 'Validation failed',
       }
     }
 
