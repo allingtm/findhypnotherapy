@@ -12,7 +12,18 @@
       "Bash(npm install:*)",
       "Bash(netstat:*)",
       "Bash(findstr:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(git -C \"d:\\\\repos\\\\findhypnotherapy\" log --oneline -10)",
+      "Bash(git -C \"d:\\\\repos\\\\findhypnotherapy\" diff HEAD~1 HEAD --stat)",
+      "Bash(git -C \"d:\\\\repos\\\\findhypnotherapy\" show HEAD --stat)",
+      "mcp__supabase__list_migrations",
+      "mcp__supabase__search_docs",
+      "mcp__supabase__get_advisors",
+      "mcp__supabase__get_publishable_keys",
+      "Bash(npm cache clean:*)",
+      "mcp__supabase__apply_migration",
+      "mcp__supabase__execute_sql",
+      "mcp__supabase__generate_typescript_types"
     ]
   }
 }
