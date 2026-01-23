@@ -89,9 +89,9 @@ export function RegisterForm() {
           type="success"
           message="Registration successful! Please check your email to confirm your account."
         />
-        <p className="text-center text-sm text-gray-600 mt-4">
+        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
           Already confirmed?{' '}
-          <Link href="/login" className="text-blue-600 hover:underline">
+          <Link href="/login" className="text-blue-600 dark:text-blue-400 hover:underline">
             Sign in here
           </Link>
         </p>
