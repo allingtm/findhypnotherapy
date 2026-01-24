@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 import {
   IconMenu2 as Menu,
   IconX as X,
@@ -15,7 +16,7 @@ const items = [
   { label: "Directory", href: "/directory" },
   { label: "Videos", href: "/videos" },
   { label: "About Us", href: "/about" },
-  { label: "For Practitioners", href: "/register" },
+  { label: "For Practitioners", href: "/for-practitioners" },
 ]
 
 const tapProps = {
@@ -30,7 +31,26 @@ const tapProps = {
 
 export function Navbar() {
   const [open, setOpen] = useState(false)
+  const [user, setUser] = useState<any>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [authLoading, setAuthLoading] = useState(true)
   const pathname = usePathname()
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+
+      if (user) {
+        const { data: isAdminResult } = await supabase.rpc('is_admin')
+        setIsAdmin(isAdminResult === true)
+      }
+      setAuthLoading(false)
+    }
+
+    checkAuth()
+  }, [])
 
   return (
     <header className="bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md w-full border-b border-gray-200 dark:border-neutral-800 sticky top-0 z-50">
@@ -72,22 +92,35 @@ export function Navbar() {
           </nav>
 
           <div className="hidden items-center gap-2 md:flex">
-            <motion.div {...tapProps}>
-              <Link
-                href="/login"
-                className="rounded-full px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-              >
-                Login
-              </Link>
-            </motion.div>
-            <motion.div {...tapProps}>
-              <Link
-                href="/register"
-                className="rounded-full bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-2 text-sm font-semibold text-white shadow-lg hover:from-purple-500 hover:to-blue-500 transition-all"
-              >
-                Sign Up
-              </Link>
-            </motion.div>
+            {!authLoading && user ? (
+              <motion.div {...tapProps}>
+                <Link
+                  href={isAdmin ? "/admin" : "/dashboard"}
+                  className="rounded-full bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-2 text-sm font-semibold text-white shadow-lg hover:from-purple-500 hover:to-blue-500 transition-all"
+                >
+                  Dashboard
+                </Link>
+              </motion.div>
+            ) : !authLoading ? (
+              <>
+                <motion.div {...tapProps}>
+                  <Link
+                    href="/login"
+                    className="rounded-full px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  >
+                    Login
+                  </Link>
+                </motion.div>
+                <motion.div {...tapProps}>
+                  <Link
+                    href="/register"
+                    className="rounded-full bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-2 text-sm font-semibold text-white shadow-lg hover:from-purple-500 hover:to-blue-500 transition-all"
+                  >
+                    Sign Up
+                  </Link>
+                </motion.div>
+              </>
+            ) : null}
           </div>
         </div>
 
@@ -117,24 +150,38 @@ export function Navbar() {
                   </motion.div>
                 ))}
                 <div className="flex items-center gap-2 px-3 pt-2">
-                  <motion.div {...tapProps} className="flex-1">
-                    <Link
-                      href="/login"
-                      onClick={() => setOpen(false)}
-                      className="block w-full text-center rounded-full border border-gray-300 dark:border-neutral-600 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300"
-                    >
-                      Login
-                    </Link>
-                  </motion.div>
-                  <motion.div {...tapProps} className="flex-1">
-                    <Link
-                      href="/register"
-                      onClick={() => setOpen(false)}
-                      className="block w-full text-center rounded-full bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-2 text-sm font-semibold text-white"
-                    >
-                      Sign Up
-                    </Link>
-                  </motion.div>
+                  {!authLoading && user ? (
+                    <motion.div {...tapProps} className="flex-1">
+                      <Link
+                        href={isAdmin ? "/admin" : "/dashboard"}
+                        onClick={() => setOpen(false)}
+                        className="block w-full text-center rounded-full bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-2 text-sm font-semibold text-white"
+                      >
+                        Dashboard
+                      </Link>
+                    </motion.div>
+                  ) : !authLoading ? (
+                    <>
+                      <motion.div {...tapProps} className="flex-1">
+                        <Link
+                          href="/login"
+                          onClick={() => setOpen(false)}
+                          className="block w-full text-center rounded-full border border-gray-300 dark:border-neutral-600 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >
+                          Login
+                        </Link>
+                      </motion.div>
+                      <motion.div {...tapProps} className="flex-1">
+                        <Link
+                          href="/register"
+                          onClick={() => setOpen(false)}
+                          className="block w-full text-center rounded-full bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-2 text-sm font-semibold text-white"
+                        >
+                          Sign Up
+                        </Link>
+                      </motion.div>
+                    </>
+                  ) : null}
                 </div>
               </nav>
             </motion.div>

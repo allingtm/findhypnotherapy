@@ -45,7 +45,7 @@ export default async function VideosPage({ searchParams }: VideosPageProps) {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <div className="flex-1">
+      <div className="flex-1 bg-gray-50 dark:bg-neutral-950">
         <VideoFeedClient initialVideos={videoList} hasMore={hasMore} />
       </div>
       <Footer />

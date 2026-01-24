@@ -1,0 +1,8 @@
+export { PractitionerHero } from './PractitionerHero'
+export { PractitionerPainPoints } from './PractitionerPainPoints'
+export { PractitionerFeatures } from './PractitionerFeatures'
+export { PractitionerTestimonials } from './PractitionerTestimonials'
+export { PractitionerHowItWorks } from './PractitionerHowItWorks'
+export { PractitionerPricing } from './PractitionerPricing'
+export { PractitionerFAQ } from './PractitionerFAQ'
+export { PractitionerCTA } from './PractitionerCTA'

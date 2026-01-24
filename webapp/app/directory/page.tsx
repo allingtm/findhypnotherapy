@@ -56,7 +56,7 @@ export default async function DirectoryPage({ searchParams }: DirectoryPageProps
       <div className="flex-1 bg-gray-50 dark:bg-neutral-950">
         {/* Header */}
         <div className="bg-white dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-800">
-          <div className="container mx-auto px-4 py-8">
+          <div className="max-w-6xl mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Find a Hypnotherapist</h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
               Browse our directory of qualified hypnotherapists
@@ -65,7 +65,7 @@ export default async function DirectoryPage({ searchParams }: DirectoryPageProps
         </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 py-8">
         <SearchFilters specializations={specializations || []} />
 
         {/* Results count */}

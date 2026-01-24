@@ -13,7 +13,7 @@ import {
   validateVideoDuration,
   formatDuration,
 } from '@/lib/utils/videoValidation'
-import { SESSION_FORMAT_LABELS, type SessionFormat, type TherapistVideo } from '@/lib/types/videos'
+import type { TherapistVideo } from '@/lib/types/videos'
 
 interface VideoUploadFormProps {
   editVideo?: TherapistVideo
@@ -42,9 +42,6 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
 
   const [title, setTitle] = useState(editVideo?.title || '')
   const [description, setDescription] = useState(editVideo?.description || '')
-  const [sessionFormats, setSessionFormats] = useState<SessionFormat[]>(
-    (editVideo?.session_format as SessionFormat[]) || []
-  )
 
   const videoInputRef = useRef<HTMLInputElement>(null)
   const videoPreviewRef = useRef<HTMLVideoElement>(null)
@@ -133,12 +130,6 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
     setShowThumbnailSelector(false)
   }, [])
 
-  const toggleSessionFormat = useCallback((format: SessionFormat) => {
-    setSessionFormats((prev) =>
-      prev.includes(format) ? prev.filter((f) => f !== format) : [...prev, format]
-    )
-  }, [])
-
   const handleSubmit = useCallback(
     (formData: FormData) => {
       if (!isEditing && !videoFile) {
@@ -156,9 +147,6 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
         formData.set('thumbnail', thumbnailFile)
       }
 
-      // Add session formats as JSON
-      formData.set('session_format', JSON.stringify(sessionFormats))
-
       // Add duration if available
       if (videoDuration) {
         formData.set('duration_seconds', Math.floor(videoDuration).toString())
@@ -169,7 +157,7 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
         formData.set('videoId', editVideo.id)
       }
     },
-    [videoFile, thumbnailFile, sessionFormats, videoDuration, isEditing, editVideo]
+    [videoFile, thumbnailFile, videoDuration, isEditing, editVideo]
   )
 
   // Handle success
@@ -353,31 +341,6 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-500">
             {description.length}/500 characters
           </p>
-        </div>
-
-        {/* Session Format */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Session Format (select all that apply)
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {(Object.entries(SESSION_FORMAT_LABELS) as [SessionFormat, string][]).map(
-              ([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => toggleSessionFormat(value)}
-                  className={`px-4 py-2 rounded-lg border transition-colors ${
-                    sessionFormats.includes(value)
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white dark:bg-neutral-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-neutral-600 hover:border-blue-400'
-                  }`}
-                >
-                  {label}
-                </button>
-              )
-            )}
-          </div>
         </div>
 
         {/* Actions */}
