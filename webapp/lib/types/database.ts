@@ -79,6 +79,36 @@ export type Database = {
         }
         Relationships: []
       }
+      specializations: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          slug: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       stripe_events: {
         Row: {
           created_at: string
@@ -160,6 +190,258 @@ export type Database = {
         }
         Relationships: []
       }
+      therapist_profiles: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          availability_notes: string | null
+          bio: string | null
+          booking_url: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          credentials: string[] | null
+          currency: string | null
+          fts: unknown
+          id: string
+          initial_consultation_fee: number | null
+          is_published: boolean | null
+          is_verified: boolean | null
+          latitude: number | null
+          longitude: number | null
+          meta_description: string | null
+          offers_free_consultation: boolean | null
+          phone: string | null
+          postal_code: string | null
+          professional_title: string | null
+          published_at: string | null
+          session_duration_minutes: number | null
+          session_fee: number | null
+          session_format: string[] | null
+          slug: string | null
+          state_province: string | null
+          updated_at: string | null
+          user_id: string
+          verified_at: string | null
+          verified_by: string | null
+          website_url: string | null
+          years_experience: number | null
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          availability_notes?: string | null
+          bio?: string | null
+          booking_url?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          credentials?: string[] | null
+          currency?: string | null
+          fts?: unknown
+          id?: string
+          initial_consultation_fee?: number | null
+          is_published?: boolean | null
+          is_verified?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
+          meta_description?: string | null
+          offers_free_consultation?: boolean | null
+          phone?: string | null
+          postal_code?: string | null
+          professional_title?: string | null
+          published_at?: string | null
+          session_duration_minutes?: number | null
+          session_fee?: number | null
+          session_format?: string[] | null
+          slug?: string | null
+          state_province?: string | null
+          updated_at?: string | null
+          user_id: string
+          verified_at?: string | null
+          verified_by?: string | null
+          website_url?: string | null
+          years_experience?: number | null
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          availability_notes?: string | null
+          bio?: string | null
+          booking_url?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          credentials?: string[] | null
+          currency?: string | null
+          fts?: unknown
+          id?: string
+          initial_consultation_fee?: number | null
+          is_published?: boolean | null
+          is_verified?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
+          meta_description?: string | null
+          offers_free_consultation?: boolean | null
+          phone?: string | null
+          postal_code?: string | null
+          professional_title?: string | null
+          published_at?: string | null
+          session_duration_minutes?: number | null
+          session_fee?: number | null
+          session_format?: string[] | null
+          slug?: string | null
+          state_province?: string | null
+          updated_at?: string | null
+          user_id?: string
+          verified_at?: string | null
+          verified_by?: string | null
+          website_url?: string | null
+          years_experience?: number | null
+        }
+        Relationships: []
+      }
+      therapist_services: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          directory_price: number | null
+          display_order: number | null
+          duration_minutes: number
+          id: string
+          includes: string[] | null
+          is_active: boolean | null
+          is_featured: boolean | null
+          name: string
+          outcome_focus: string | null
+          price: number | null
+          price_display_mode: Database['public']['Enums']['price_display_mode']
+          price_max: number | null
+          price_min: number | null
+          service_type: Database['public']['Enums']['service_type']
+          session_count: number
+          session_count_max: number | null
+          session_count_min: number | null
+          short_description: string | null
+          show_per_session_price: boolean | null
+          show_price: boolean | null
+          show_session_details: boolean | null
+          show_includes: boolean | null
+          show_outcome_focus: boolean | null
+          sort_priority: number | null
+          therapist_profile_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          display_order?: number | null
+          duration_minutes?: number
+          id?: string
+          includes?: string[] | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          name: string
+          outcome_focus?: string | null
+          price?: number | null
+          price_display_mode?: Database['public']['Enums']['price_display_mode']
+          price_max?: number | null
+          price_min?: number | null
+          service_type?: Database['public']['Enums']['service_type']
+          session_count?: number
+          session_count_max?: number | null
+          session_count_min?: number | null
+          short_description?: string | null
+          show_per_session_price?: boolean | null
+          show_price?: boolean | null
+          show_session_details?: boolean | null
+          show_includes?: boolean | null
+          show_outcome_focus?: boolean | null
+          sort_priority?: number | null
+          therapist_profile_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          display_order?: number | null
+          duration_minutes?: number
+          id?: string
+          includes?: string[] | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          name?: string
+          outcome_focus?: string | null
+          price?: number | null
+          price_display_mode?: Database['public']['Enums']['price_display_mode']
+          price_max?: number | null
+          price_min?: number | null
+          service_type?: Database['public']['Enums']['service_type']
+          session_count?: number
+          session_count_max?: number | null
+          session_count_min?: number | null
+          short_description?: string | null
+          show_per_session_price?: boolean | null
+          show_price?: boolean | null
+          show_session_details?: boolean | null
+          show_includes?: boolean | null
+          show_outcome_focus?: boolean | null
+          sort_priority?: number | null
+          therapist_profile_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "therapist_services_therapist_profile_id_fkey"
+            columns: ["therapist_profile_id"]
+            isOneToOne: false
+            referencedRelation: "therapist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      therapist_specializations: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_primary: boolean | null
+          specialization_id: string
+          therapist_profile_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          specialization_id: string
+          therapist_profile_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          specialization_id?: string
+          therapist_profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "therapist_specializations_specialization_id_fkey"
+            columns: ["specialization_id"]
+            isOneToOne: false
+            referencedRelation: "specializations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "therapist_specializations_therapist_profile_id_fkey"
+            columns: ["therapist_profile_id"]
+            isOneToOne: false
+            referencedRelation: "therapist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           assigned_at: string
@@ -227,13 +509,48 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_profile_slug: {
+        Args: { profile_user_id: string; user_name: string }
+        Returns: string
+      }
       get_user_roles: { Args: never; Returns: string[] }
       has_active_subscription: { Args: never; Returns: boolean }
       has_role: { Args: { role_name: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      search_therapists: {
+        Args: {
+          search_query?: string
+          location_filter?: string
+          specialization_slugs?: string[]
+          session_format_filter?: string
+          page_number?: number
+          page_size?: number
+        }
+        Returns: {
+          id: string
+          user_id: string
+          professional_title: string
+          bio: string
+          city: string
+          state_province: string
+          postal_code: string
+          country: string
+          session_format: string[]
+          session_fee: number
+          currency: string
+          offers_free_consultation: boolean
+          slug: string
+          is_verified: boolean
+          photo_url: string
+          name: string
+          specializations: Json
+          total_count: number
+        }[]
+      }
     }
     Enums: {
-      [_ in never]: never
+      price_display_mode: 'exact' | 'from' | 'range' | 'contact' | 'free'
+      service_type: 'single_session' | 'package' | 'programme' | 'consultation' | 'subscription'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -360,6 +677,13 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      price_display_mode: ['exact', 'from', 'range', 'contact', 'free'] as const,
+      service_type: ['single_session', 'package', 'programme', 'consultation', 'subscription'] as const,
+    },
   },
 } as const
+
+// Convenience type exports
+export type ServiceType = Database['public']['Enums']['service_type']
+export type PriceDisplayMode = Database['public']['Enums']['price_display_mode']

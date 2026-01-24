@@ -12,6 +12,8 @@ import { AnimatePresence, motion } from "framer-motion"
 
 const items = [
   { label: "Home", href: "/" },
+  { label: "Directory", href: "/directory" },
+  { label: "Videos", href: "/videos" },
   { label: "About Us", href: "/about" },
   { label: "For Practitioners", href: "/register" },
 ]

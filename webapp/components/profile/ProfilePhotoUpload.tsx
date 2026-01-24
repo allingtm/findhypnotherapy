@@ -81,10 +81,10 @@ export function ProfilePhotoUpload({
             <img
               src={displayPhotoUrl}
               alt={userName}
-              className="w-32 h-32 rounded-full object-cover border-4 border-gray-200"
+              className="w-32 h-32 rounded-full object-cover border-4 border-gray-200 dark:border-neutral-700"
             />
           ) : (
-            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center border-4 border-gray-200">
+            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center border-4 border-gray-200 dark:border-neutral-700">
               <span className="text-4xl font-bold text-white">
                 {userName.charAt(0).toUpperCase()}
               </span>
@@ -93,7 +93,7 @@ export function ProfilePhotoUpload({
         </div>
 
         <div className="space-y-3">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             Upload a professional photo. JPG, PNG or WebP. Max 5MB.
           </p>
 

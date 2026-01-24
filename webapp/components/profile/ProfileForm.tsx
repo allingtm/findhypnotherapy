@@ -34,8 +34,8 @@ export function ProfileForm({ user }: ProfileFormProps) {
   return (
     <div className="space-y-8">
       {/* Profile Photo Section */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">Profile Photo</h2>
+      <div className="bg-white dark:bg-neutral-900 rounded-lg shadow p-6">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Profile Photo</h2>
         <ProfilePhotoUpload
           currentPhotoUrl={user.photo_url}
           userName={user.name}
@@ -43,8 +43,8 @@ export function ProfileForm({ user }: ProfileFormProps) {
       </div>
 
       {/* Profile Information Form */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">Profile Information</h2>
+      <div className="bg-white dark:bg-neutral-900 rounded-lg shadow p-6">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Profile Information</h2>
         <form action={profileAction} className="space-y-4">
           {profileState.error && <Alert type="error" message={profileState.error} />}
           {profileState.success && <Alert type="success" message="Profile updated successfully!" />}
@@ -74,8 +74,8 @@ export function ProfileForm({ user }: ProfileFormProps) {
       </div>
 
       {/* Change Password Section */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">Change Password</h2>
+      <div className="bg-white dark:bg-neutral-900 rounded-lg shadow p-6">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Change Password</h2>
 
         {!showPasswordForm ? (
           <Button

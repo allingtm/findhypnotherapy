@@ -60,16 +60,16 @@ export function PhotoUploadModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+      <div className="bg-white dark:bg-neutral-900 rounded-lg shadow-xl max-w-2xl w-full">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-neutral-700">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
             Crop Profile Photo
           </h2>
         </div>
 
         {/* Cropper Area */}
-        <div className="relative h-96 bg-gray-100">
+        <div className="relative h-96 bg-gray-100 dark:bg-neutral-800">
           <Cropper
             image={initialImage}
             crop={crop}
@@ -84,8 +84,8 @@ export function PhotoUploadModal({
         </div>
 
         {/* Zoom Control */}
-        <div className="px-6 py-4 border-b border-gray-200">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-neutral-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Zoom
           </label>
           <input

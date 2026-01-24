@@ -1,17 +1,24 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
 import {
   IconBrandTabler,
   IconUserBolt,
   IconArrowLeft,
+  IconBriefcase,
+  IconCurrencyPound,
+  IconVideo,
+  IconSun,
+  IconMoon,
+  IconDeviceDesktop,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useTheme } from "next-themes";
 
 interface DashboardSidebarProps {
   children: React.ReactNode;
@@ -23,8 +30,15 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({ children, user }: DashboardSidebarProps) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const { theme, setTheme } = useTheme();
+
+  // Avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleLogout = async () => {
     setOpen(false);
@@ -51,7 +65,28 @@ export function DashboardSidebar({ children, user }: DashboardSidebarProps) {
       ),
     },
     {
-      label: "Profile",
+      label: "Therapist Profile",
+      href: "/dashboard/profile/therapist",
+      icon: (
+        <IconBriefcase className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: "Services",
+      href: "/dashboard/services",
+      icon: (
+        <IconCurrencyPound className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: "Videos",
+      href: "/dashboard/videos",
+      icon: (
+        <IconVideo className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: "Account",
       href: "/dashboard/profile",
       icon: (
         <IconUserBolt className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
@@ -81,21 +116,59 @@ export function DashboardSidebar({ children, user }: DashboardSidebarProps) {
                   onClick={handleLinkClick}
                 />
               ))}
-              <button
-                onClick={handleLogout}
-                className="flex items-center justify-start gap-2 group/sidebar py-2 text-left"
-              >
-                <IconArrowLeft className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-                <motion.span
-                  animate={{
-                    display: open ? "inline-block" : "none",
-                    opacity: open ? 1 : 0,
-                  }}
-                  className="text-neutral-700 dark:text-neutral-200 text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0"
-                >
-                  Logout
-                </motion.span>
-              </button>
+
+              {/* Theme Selector */}
+              <div className="py-2">
+                {mounted && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setTheme("light")}
+                      className={cn(
+                        "p-1.5 rounded-md transition-colors",
+                        theme === "light"
+                          ? "bg-neutral-200 dark:bg-neutral-700 text-yellow-600"
+                          : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
+                      )}
+                      title="Light mode"
+                    >
+                      <IconSun className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => setTheme("dark")}
+                      className={cn(
+                        "p-1.5 rounded-md transition-colors",
+                        theme === "dark"
+                          ? "bg-neutral-200 dark:bg-neutral-700 text-blue-400"
+                          : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
+                      )}
+                      title="Dark mode"
+                    >
+                      <IconMoon className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => setTheme("system")}
+                      className={cn(
+                        "p-1.5 rounded-md transition-colors",
+                        theme === "system"
+                          ? "bg-neutral-200 dark:bg-neutral-700 text-green-500"
+                          : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
+                      )}
+                      title="System theme"
+                    >
+                      <IconDeviceDesktop className="h-5 w-5" />
+                    </button>
+                    <motion.span
+                      animate={{
+                        display: open ? "inline-block" : "none",
+                        opacity: open ? 1 : 0,
+                      }}
+                      className="text-neutral-500 dark:text-neutral-400 text-xs ml-1 whitespace-pre inline-block !p-0 !m-0"
+                    >
+                      Theme
+                    </motion.span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <div>
@@ -113,6 +186,21 @@ export function DashboardSidebar({ children, user }: DashboardSidebarProps) {
               }}
               onClick={handleLinkClick}
             />
+            <button
+              onClick={handleLogout}
+              className="flex items-center justify-start gap-2 group/sidebar py-2 text-left w-full"
+            >
+              <IconArrowLeft className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+              <motion.span
+                animate={{
+                  display: open ? "inline-block" : "none",
+                  opacity: open ? 1 : 0,
+                }}
+                className="text-neutral-700 dark:text-neutral-200 text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0"
+              >
+                Logout
+              </motion.span>
+            </button>
           </div>
         </SidebarBody>
       </Sidebar>
