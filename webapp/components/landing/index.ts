@@ -1,0 +1,8 @@
+export { HeroSearch } from './HeroSearch'
+export { EmpathyHook } from './EmpathyHook'
+export { EvidenceSection } from './EvidenceSection'
+export { ApplicationsSection } from './ApplicationsSection'
+export { HowItWorksSection } from './HowItWorksSection'
+export { WhatIsHypnotherapy } from './WhatIsHypnotherapy'
+export { CTASection } from './CTASection'
+export { FAQSection } from './FAQSection'
