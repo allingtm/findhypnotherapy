@@ -2,14 +2,17 @@
 
 ## Project Overview
 
-This is a Next.js web application for finding hypnotherapy services, built with Supabase authentication.
+A Next.js web application for finding and booking hypnotherapy services. Therapists can create profiles, manage availability, and accept bookings. Visitors can search the directory, contact therapists, and book appointments.
 
 **Tech Stack:**
 - Next.js 15 with App Router
 - React 19
 - TypeScript
 - Tailwind CSS
-- Supabase (Authentication & Database)
+- Supabase (Authentication, Database, Storage)
+- Stripe (Subscriptions)
+- SendGrid (Email)
+- Google/Microsoft Calendar Integration
 
 **Monorepo Structure:**
 - Root package.json manages workspace commands
@@ -19,75 +22,151 @@ This is a Next.js web application for finding hypnotherapy services, built with 
 
 ```
 findhypnotherapy/
-├── webapp/              # Main Next.js application
-│   ├── app/            # Next.js App Router pages
-│   ├── components/     # React components
-│   ├── lib/            # Utility functions and configs
-│   └── middleware.ts   # Route protection middleware
-├── .env                # Environment variables (Supabase config)
-├── .mcp.json           # MCP configuration
-└── package.json        # Monorepo workspace config
+├── webapp/
+│   ├── app/
+│   │   ├── actions/        # Server actions (auth, bookings, messages, stripe, etc.)
+│   │   ├── api/            # API routes (webhooks, OAuth callbacks)
+│   │   ├── admin/          # Admin dashboard pages
+│   │   ├── dashboard/      # Member dashboard pages
+│   │   ├── directory/      # Public therapist directory
+│   │   ├── book/           # Public booking flow
+│   │   └── conversation/   # Visitor message thread
+│   ├── components/
+│   │   ├── availability/   # Booking settings, calendar sync
+│   │   ├── booking/        # Booking form, calendar, time slots
+│   │   ├── bookings/       # Booking management cards
+│   │   ├── dashboard/      # Dashboard sidebar, billing
+│   │   ├── directory/      # Search filters, therapist cards
+│   │   ├── messages/       # Contact form, conversation thread
+│   │   └── ...
+│   ├── lib/
+│   │   ├── calendar/       # Google/Microsoft calendar integration
+│   │   ├── email/          # SendGrid + email templates
+│   │   ├── supabase/       # Supabase clients (browser, server, admin)
+│   │   ├── validation/     # Zod schemas
+│   │   └── types/          # TypeScript types including database.ts
+│   └── middleware.ts       # Route protection
+├── docs/                   # Additional documentation
+└── .env                    # Environment variables
 ```
 
 ## Getting Started
 
-**Installation:**
 ```bash
 npm install
-```
-
-**Development:**
-```bash
-npm run dev    # Starts webapp on http://localhost:3000
-```
-
-**Build:**
-```bash
-npm run build  # Builds production bundle
-npm run start  # Starts production server
+npm run dev    # http://localhost:3000
+npm run build  # Production build
 ```
 
 ## Environment Variables
 
-Required variables in `.env`:
-- `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anonymous key
-- `SUPABASE_URL` - Server-side Supabase URL
-- `SUPABASE_PUBLISHABLE_KEY` - Server-side publishable key
+Required in `.env` / `.env.local`:
+
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# Stripe
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+NEXT_PUBLIC_STRIPE_PRICE_ID=
+
+# SendGrid
+SENDGRID_API_KEY=
+
+# Google Calendar (optional)
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+
+# Microsoft Calendar (optional)
+MICROSOFT_CLIENT_ID=
+MICROSOFT_CLIENT_SECRET=
+
+# Calendar token encryption
+CALENDAR_TOKEN_ENCRYPTION_KEY=
+
+# App URL
+NEXT_PUBLIC_SITE_URL=
+NEXT_PUBLIC_APP_URL=
+```
 
 ## Key Features
 
-- User authentication (login/register)
-- **Role-Based Access Control (RBAC)** - Admin and Member roles
-- **Admin Dashboard** - User management and role assignment
-- Protected dashboard routes
-- Supabase integration for auth and database
-- Middleware-based route protection
-- Responsive UI with Tailwind CSS
-- Audit logging for role changes
+### For Therapists (Members)
+- Professional profile with bio, credentials, specializations
+- Service management (sessions, packages, programmes)
+- Availability scheduling (weekly + date overrides)
+- Google/Microsoft calendar sync
+- Booking management (confirm/cancel)
+- Messaging with potential clients
+- Video content uploads
+- Subscription billing via Stripe (14-day free trial)
+
+### For Visitors
+- Search directory by name, location, specialty, session format
+- View therapist profiles and services
+- Book appointments (with email verification)
+- Contact therapists via messaging
+- Receive email notifications
+
+### Admin
+- User management
+- Role assignment (Member/Admin)
+- Audit logging
+
+## Key Server Actions
+
+Located in `webapp/app/actions/`:
+
+| File | Purpose |
+|------|---------|
+| `auth.ts` | Login, register, password reset |
+| `profile.ts` | User profile, photo upload |
+| `therapist-profile.ts` | Professional profile, specializations |
+| `therapist-services.ts` | Service CRUD, reordering |
+| `availability.ts` | Weekly schedule, overrides, calendar sync |
+| `bookings.ts` | Booking flow, confirmation, cancellation |
+| `messages.ts` | Contact form, conversations, replies |
+| `stripe.ts` | Checkout session, billing portal |
 
 ## Roles & Permissions
 
-**Member Role:**
-- Default role for all new users (hypnotherapists)
-- Access to user dashboard
-- Can view and edit own profile
-- Cannot access admin features
+**Member:** Default role for therapists
+- Dashboard access
+- Profile and service management
+- Booking and messaging
 
-**Admin Role:**
-- Full system access
-- Access to admin dashboard at `/admin`
-- Can view and manage all users
-- Can assign/remove roles
-- View audit logs
+**Admin:** System administrators
+- All member permissions
+- User management at `/admin`
+- Role assignment
 
-**Initial Admin:** marc@solvewithsoftware.com
+## Database
+
+Types defined in `webapp/lib/types/database.ts`. Key tables:
+- `users` - User accounts
+- `therapist_profiles` - Professional profiles
+- `therapist_services` - Service offerings
+- `therapist_availability` - Weekly schedule
+- `therapist_booking_settings` - Booking configuration
+- `bookings` - Appointment bookings
+- `conversations` / `messages` - Messaging
+- `subscriptions` - Stripe subscriptions
+
+## Email Templates
+
+Located in `webapp/lib/email/templates.ts`:
+- Email verification (contact form, booking)
+- New message/booking notifications
+- Booking confirmed/cancelled
+- Reply notifications
 
 ## Development Notes
 
-- Using Next.js 15 App Router architecture
-- Supabase SSR package for server-side auth
-- Protected routes configured in [middleware.ts](webapp/middleware.ts)
-- Auth callback handler at [webapp/app/auth/callback/route.ts](webapp/app/auth/callback/route.ts)
-- **RBAC implementation details:** See [docs/rbac.md](docs/rbac.md)
-- Admin routes protected at [webapp/app/admin/layout.tsx](webapp/app/admin/layout.tsx)
+- Server actions use `'use server'` directive
+- Supabase RLS policies enforce data access
+- Calendar tokens encrypted at rest
+- Email verification required for new visitors
+- Rate limiting on messages (5 per email per hour)

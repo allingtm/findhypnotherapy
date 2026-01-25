@@ -91,12 +91,15 @@ export async function loginAction(prevState: any, formData: FormData): Promise<A
 
 // Register action
 export async function registerAction(prevState: any, formData: FormData): Promise<ActionResponse> {
-  // Validate invitation code first
-  const invitationCode = formData.get('invitationCode')
-  if (invitationCode !== 'LetMeIn') {
-    return {
-      success: false,
-      error: 'Invalid invitation code',
+  // Validate invitation code first (if required)
+  const requiredCode = process.env.INVITATION_CODE
+  if (requiredCode) {
+    const invitationCode = formData.get('invitationCode')
+    if (invitationCode !== requiredCode) {
+      return {
+        success: false,
+        error: 'Invalid invitation code',
+      }
     }
   }
 

@@ -74,3 +74,35 @@ export async function createCheckoutSession(couponCode?: string) {
 
   redirect(session.url!)
 }
+
+/**
+ * Create a Stripe billing portal session for managing subscriptions
+ * Returns the portal URL for the user to manage their subscription
+ */
+export async function createBillingPortalSession() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    throw new Error('Not authenticated')
+  }
+
+  // Get user's Stripe customer ID
+  const { data: profile } = await supabase
+    .from('users')
+    .select('stripe_customer_id')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile?.stripe_customer_id) {
+    throw new Error('No subscription found. Please subscribe first.')
+  }
+
+  // Create billing portal session
+  const session = await stripe.billingPortal.sessions.create({
+    customer: profile.stripe_customer_id,
+    return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard`,
+  })
+
+  redirect(session.url)
+}

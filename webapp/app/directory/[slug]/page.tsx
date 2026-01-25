@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { Navbar } from '@/components/ui/Navbar'
 import { Footer } from '@/components/ui/Footer'
+import { ContactForm } from '@/components/messages/ContactForm'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import type { ServiceType, PriceDisplayMode } from '@/lib/types/database'
@@ -49,7 +50,7 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
   const { slug } = await params
   const supabase = await createClient()
 
-  // Fetch profile with user info, specializations, and services
+  // Fetch profile with user info, specializations, services, and booking settings
   const { data: profile, error } = await supabase
     .from('therapist_profiles')
     .select(`
@@ -58,7 +59,8 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
       therapist_specializations(
         specializations(name, slug)
       ),
-      therapist_services(*)
+      therapist_services(*),
+      therapist_booking_settings(accepts_online_booking, slot_duration_minutes)
     `)
     .eq('slug', slug)
     .eq('is_published', true)
@@ -109,6 +111,14 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
       // Then by display order
       return (a.display_order || 0) - (b.display_order || 0)
     })
+
+  // Check if online booking is available
+  const bookingSettings = profile.therapist_booking_settings as unknown as {
+    accepts_online_booking: boolean | null;
+    slot_duration_minutes: number | null;
+  } | null;
+  const acceptsOnlineBooking = bookingSettings?.accepts_online_booking === true;
+  const consultationDuration = bookingSettings?.slot_duration_minutes || 30;
 
   // Calculate min price for header display (using directory_price, excludes contact-for-pricing)
   const pricedServices = services.filter(s => s.directory_price !== null)
@@ -306,14 +316,29 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
                   )}
                 </div>
 
+                {/* Book Free Consultation - only shown if online booking is enabled */}
+                {acceptsOnlineBooking && (
+                  <Link
+                    href={`/book/${profile.slug}`}
+                    className="block w-full px-4 py-3 bg-green-600 text-white text-center rounded-lg hover:bg-green-700 transition-colors font-medium"
+                  >
+                    Book Free Consultation
+                  </Link>
+                )}
+
+                {/* External booking link - shown if they have one and either no online booking or as secondary option */}
                 {profile.booking_url && (
                   <a
                     href={profile.booking_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block w-full px-4 py-3 bg-blue-600 text-white text-center rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                    className={`block w-full px-4 py-3 text-center rounded-lg transition-colors font-medium ${
+                      acceptsOnlineBooking
+                        ? 'bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-neutral-700'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
                   >
-                    Book an Appointment
+                    {acceptsOnlineBooking ? 'View External Calendar' : 'Book an Appointment'}
                   </a>
                 )}
 
@@ -342,6 +367,14 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
                     Visit Website
                   </a>
                 )}
+
+                {/* Send Message Form */}
+                <div className="pt-4 border-t border-gray-200 dark:border-neutral-700">
+                  <ContactForm
+                    memberProfileId={profile.id}
+                    therapistName={userData.name}
+                  />
+                </div>
               </div>
             </div>
 

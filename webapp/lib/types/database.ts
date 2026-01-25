@@ -14,6 +14,309 @@ export type Database = {
   }
   public: {
     Tables: {
+      blocked_visitors: {
+        Row: {
+          created_at: string | null
+          id: string
+          member_id: string
+          visitor_email: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          member_id: string
+          visitor_email: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          member_id?: string
+          visitor_email?: string
+        }
+        Relationships: []
+      }
+      bookings: {
+        Row: {
+          booking_date: string
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          confirmed_at: string | null
+          created_at: string | null
+          duration_minutes: number
+          end_time: string
+          id: string
+          is_verified: boolean | null
+          service_id: string | null
+          session_format: string | null
+          start_time: string
+          status: string
+          therapist_profile_id: string
+          updated_at: string | null
+          verification_expires_at: string | null
+          verification_token: string | null
+          visitor_email: string
+          visitor_name: string
+          visitor_notes: string | null
+          visitor_phone: string | null
+          visitor_token: string
+        }
+        Insert: {
+          booking_date: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          duration_minutes: number
+          end_time: string
+          id?: string
+          is_verified?: boolean | null
+          service_id?: string | null
+          session_format?: string | null
+          start_time: string
+          status?: string
+          therapist_profile_id: string
+          updated_at?: string | null
+          verification_expires_at?: string | null
+          verification_token?: string | null
+          visitor_email: string
+          visitor_name: string
+          visitor_notes?: string | null
+          visitor_phone?: string | null
+          visitor_token: string
+        }
+        Update: {
+          booking_date?: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          duration_minutes?: number
+          end_time?: string
+          id?: string
+          is_verified?: boolean | null
+          service_id?: string | null
+          session_format?: string | null
+          start_time?: string
+          status?: string
+          therapist_profile_id?: string
+          updated_at?: string | null
+          verification_expires_at?: string | null
+          verification_token?: string | null
+          visitor_email?: string
+          visitor_name?: string
+          visitor_notes?: string | null
+          visitor_phone?: string | null
+          visitor_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "therapist_services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_therapist_profile_id_fkey"
+            columns: ["therapist_profile_id"]
+            isOneToOne: false
+            referencedRelation: "therapist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_busy_times: {
+        Row: {
+          end_time: string
+          fetched_at: string | null
+          id: string
+          provider: string
+          start_time: string
+          user_id: string
+        }
+        Insert: {
+          end_time: string
+          fetched_at?: string | null
+          id?: string
+          provider: string
+          start_time: string
+          user_id: string
+        }
+        Update: {
+          end_time?: string
+          fetched_at?: string | null
+          id?: string
+          provider?: string
+          start_time?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      calendar_oauth_tokens: {
+        Row: {
+          access_token_encrypted: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          last_sync_at: string | null
+          provider: string
+          refresh_token_encrypted: string
+          scope: string | null
+          sync_error: string | null
+          token_expires_at: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token_encrypted: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          provider: string
+          refresh_token_encrypted: string
+          scope?: string | null
+          sync_error?: string | null
+          token_expires_at: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token_encrypted?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          provider?: string
+          refresh_token_encrypted?: string
+          scope?: string | null
+          sync_error?: string | null
+          token_expires_at?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      conversations: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_blocked: boolean | null
+          is_reported: boolean | null
+          is_verified: boolean | null
+          member_id: string
+          updated_at: string | null
+          visitor_email: string
+          visitor_name: string
+          visitor_token: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_blocked?: boolean | null
+          is_reported?: boolean | null
+          is_verified?: boolean | null
+          member_id: string
+          updated_at?: string | null
+          visitor_email: string
+          visitor_name: string
+          visitor_token: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_blocked?: boolean | null
+          is_reported?: boolean | null
+          is_verified?: boolean | null
+          member_id?: string
+          updated_at?: string | null
+          visitor_email?: string
+          visitor_name?: string
+          visitor_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_public_users_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_verifications: {
+        Row: {
+          conversation_id: string
+          created_at: string | null
+          expires_at: string
+          id: string
+          token: string
+          verified_at: string | null
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          token: string
+          verified_at?: string | null
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          token?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_verifications_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          sender_type: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          sender_type: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          sender_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_audit_log: {
         Row: {
           action: string
@@ -23,7 +326,7 @@ export type Database = {
           performed_by: string | null
           role_id: string
           user_agent: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           action: string
@@ -33,7 +336,7 @@ export type Database = {
           performed_by?: string | null
           role_id: string
           user_agent?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           action?: string
@@ -43,7 +346,7 @@ export type Database = {
           performed_by?: string | null
           role_id?: string
           user_agent?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -190,6 +493,144 @@ export type Database = {
         }
         Relationships: []
       }
+      therapist_availability: {
+        Row: {
+          created_at: string | null
+          day_of_week: number
+          end_time: string
+          id: string
+          is_active: boolean | null
+          start_time: string
+          therapist_profile_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          day_of_week: number
+          end_time: string
+          id?: string
+          is_active?: boolean | null
+          start_time: string
+          therapist_profile_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_active?: boolean | null
+          start_time?: string
+          therapist_profile_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "therapist_availability_therapist_profile_id_fkey"
+            columns: ["therapist_profile_id"]
+            isOneToOne: false
+            referencedRelation: "therapist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      therapist_availability_overrides: {
+        Row: {
+          created_at: string | null
+          end_time: string | null
+          id: string
+          is_available: boolean
+          override_date: string
+          reason: string | null
+          start_time: string | null
+          therapist_profile_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          end_time?: string | null
+          id?: string
+          is_available: boolean
+          override_date: string
+          reason?: string | null
+          start_time?: string | null
+          therapist_profile_id: string
+        }
+        Update: {
+          created_at?: string | null
+          end_time?: string | null
+          id?: string
+          is_available?: boolean
+          override_date?: string
+          reason?: string | null
+          start_time?: string | null
+          therapist_profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "therapist_availability_overrides_therapist_profile_id_fkey"
+            columns: ["therapist_profile_id"]
+            isOneToOne: false
+            referencedRelation: "therapist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      therapist_booking_settings: {
+        Row: {
+          accepts_online_booking: boolean | null
+          buffer_minutes: number | null
+          created_at: string | null
+          google_calendar_connected: boolean | null
+          id: string
+          max_booking_days_ahead: number | null
+          microsoft_calendar_connected: boolean | null
+          min_booking_notice_hours: number | null
+          requires_approval: boolean | null
+          slot_duration_minutes: number
+          therapist_profile_id: string
+          timezone: string
+          updated_at: string | null
+        }
+        Insert: {
+          accepts_online_booking?: boolean | null
+          buffer_minutes?: number | null
+          created_at?: string | null
+          google_calendar_connected?: boolean | null
+          id?: string
+          max_booking_days_ahead?: number | null
+          microsoft_calendar_connected?: boolean | null
+          min_booking_notice_hours?: number | null
+          requires_approval?: boolean | null
+          slot_duration_minutes?: number
+          therapist_profile_id: string
+          timezone?: string
+          updated_at?: string | null
+        }
+        Update: {
+          accepts_online_booking?: boolean | null
+          buffer_minutes?: number | null
+          created_at?: string | null
+          google_calendar_connected?: boolean | null
+          id?: string
+          max_booking_days_ahead?: number | null
+          microsoft_calendar_connected?: boolean | null
+          min_booking_notice_hours?: number | null
+          requires_approval?: boolean | null
+          slot_duration_minutes?: number
+          therapist_profile_id?: string
+          timezone?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "therapist_booking_settings_therapist_profile_id_fkey"
+            columns: ["therapist_profile_id"]
+            isOneToOne: true
+            referencedRelation: "therapist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       therapist_profiles: {
         Row: {
           address_line1: string | null
@@ -299,7 +740,15 @@ export type Database = {
           website_url?: string | null
           years_experience?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "therapist_profiles_public_users_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       therapist_services: {
         Row: {
@@ -316,19 +765,19 @@ export type Database = {
           name: string
           outcome_focus: string | null
           price: number | null
-          price_display_mode: Database['public']['Enums']['price_display_mode']
+          price_display_mode: Database["public"]["Enums"]["price_display_mode"]
           price_max: number | null
           price_min: number | null
-          service_type: Database['public']['Enums']['service_type']
+          service_type: Database["public"]["Enums"]["service_type"]
           session_count: number
           session_count_max: number | null
           session_count_min: number | null
           short_description: string | null
+          show_includes: boolean | null
+          show_outcome_focus: boolean | null
           show_per_session_price: boolean | null
           show_price: boolean | null
           show_session_details: boolean | null
-          show_includes: boolean | null
-          show_outcome_focus: boolean | null
           sort_priority: number | null
           therapist_profile_id: string
           updated_at: string | null
@@ -337,6 +786,7 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           description?: string | null
+          directory_price?: number | null
           display_order?: number | null
           duration_minutes?: number
           id?: string
@@ -346,19 +796,19 @@ export type Database = {
           name: string
           outcome_focus?: string | null
           price?: number | null
-          price_display_mode?: Database['public']['Enums']['price_display_mode']
+          price_display_mode?: Database["public"]["Enums"]["price_display_mode"]
           price_max?: number | null
           price_min?: number | null
-          service_type?: Database['public']['Enums']['service_type']
+          service_type?: Database["public"]["Enums"]["service_type"]
           session_count?: number
           session_count_max?: number | null
           session_count_min?: number | null
           short_description?: string | null
+          show_includes?: boolean | null
+          show_outcome_focus?: boolean | null
           show_per_session_price?: boolean | null
           show_price?: boolean | null
           show_session_details?: boolean | null
-          show_includes?: boolean | null
-          show_outcome_focus?: boolean | null
           sort_priority?: number | null
           therapist_profile_id: string
           updated_at?: string | null
@@ -367,6 +817,7 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           description?: string | null
+          directory_price?: number | null
           display_order?: number | null
           duration_minutes?: number
           id?: string
@@ -376,19 +827,19 @@ export type Database = {
           name?: string
           outcome_focus?: string | null
           price?: number | null
-          price_display_mode?: Database['public']['Enums']['price_display_mode']
+          price_display_mode?: Database["public"]["Enums"]["price_display_mode"]
           price_max?: number | null
           price_min?: number | null
-          service_type?: Database['public']['Enums']['service_type']
+          service_type?: Database["public"]["Enums"]["service_type"]
           session_count?: number
           session_count_max?: number | null
           session_count_min?: number | null
           short_description?: string | null
+          show_includes?: boolean | null
+          show_outcome_focus?: boolean | null
           show_per_session_price?: boolean | null
           show_price?: boolean | null
           show_session_details?: boolean | null
-          show_includes?: boolean | null
-          show_outcome_focus?: boolean | null
           sort_priority?: number | null
           therapist_profile_id?: string
           updated_at?: string | null
@@ -442,6 +893,68 @@ export type Database = {
           },
         ]
       }
+      therapist_videos: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          duration_seconds: number | null
+          fts: unknown
+          id: string
+          published_at: string | null
+          session_format: string[] | null
+          status: Database["public"]["Enums"]["video_status"] | null
+          therapist_profile_id: string
+          thumbnail_url: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+          video_url: string
+          view_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          duration_seconds?: number | null
+          fts?: unknown
+          id?: string
+          published_at?: string | null
+          session_format?: string[] | null
+          status?: Database["public"]["Enums"]["video_status"] | null
+          therapist_profile_id: string
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+          video_url: string
+          view_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          duration_seconds?: number | null
+          fts?: unknown
+          id?: string
+          published_at?: string | null
+          session_format?: string[] | null
+          status?: Database["public"]["Enums"]["video_status"] | null
+          therapist_profile_id?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+          video_url?: string
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "therapist_videos_therapist_profile_id_fkey"
+            columns: ["therapist_profile_id"]
+            isOneToOne: false
+            referencedRelation: "therapist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           assigned_at: string
@@ -473,6 +986,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      verified_visitor_emails: {
+        Row: {
+          id: string
+          email: string
+          first_verified_at: string
+          verified_via: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          email: string
+          first_verified_at?: string
+          verified_via: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          email?: string
+          first_verified_at?: string
+          verified_via?: string
+          created_at?: string | null
+        }
+        Relationships: []
       }
       users: {
         Row: {
@@ -513,44 +1050,75 @@ export type Database = {
         Args: { profile_user_id: string; user_name: string }
         Returns: string
       }
-      get_user_roles: { Args: never; Returns: string[] }
-      has_active_subscription: { Args: never; Returns: boolean }
+      get_user_roles: { Args: Record<PropertyKey, never>; Returns: string[] }
+      has_active_subscription: { Args: Record<PropertyKey, never>; Returns: boolean }
       has_role: { Args: { role_name: string }; Returns: boolean }
-      is_admin: { Args: never; Returns: boolean }
+      is_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
       search_therapists: {
         Args: {
-          search_query?: string
           location_filter?: string
-          specialization_slugs?: string[]
-          session_format_filter?: string
           page_number?: number
           page_size?: number
+          search_query?: string
+          session_format_filter?: string
+          specialization_slugs?: string[]
         }
         Returns: {
-          id: string
-          user_id: string
-          professional_title: string
           bio: string
           city: string
-          state_province: string
-          postal_code: string
           country: string
-          session_format: string[]
-          session_fee: number
           currency: string
-          offers_free_consultation: boolean
-          slug: string
+          id: string
           is_verified: boolean
-          photo_url: string
           name: string
+          offers_free_consultation: boolean
+          photo_url: string
+          postal_code: string
+          professional_title: string
+          session_fee: number
+          session_format: string[]
+          slug: string
           specializations: Json
+          state_province: string
           total_count: number
+          user_id: string
+        }[]
+      }
+      search_videos: {
+        Args: {
+          page_number?: number
+          page_size?: number
+          search_query?: string
+          session_format_filter?: string
+        }
+        Returns: {
+          created_at: string
+          description: string
+          duration_seconds: number
+          id: string
+          published_at: string
+          session_format: string[]
+          therapist_name: string
+          therapist_photo_url: string
+          therapist_profile_id: string
+          therapist_session_format: string[]
+          therapist_slug: string
+          thumbnail_url: string
+          title: string
+          total_count: number
+          video_url: string
         }[]
       }
     }
     Enums: {
-      price_display_mode: 'exact' | 'from' | 'range' | 'contact' | 'free'
-      service_type: 'single_session' | 'package' | 'programme' | 'consultation' | 'subscription'
+      price_display_mode: "exact" | "from" | "range" | "contact" | "free"
+      service_type:
+        | "single_session"
+        | "package"
+        | "programme"
+        | "consultation"
+        | "subscription"
+      video_status: "processing" | "published" | "rejected" | "deleted"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -678,12 +1246,20 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      price_display_mode: ['exact', 'from', 'range', 'contact', 'free'] as const,
-      service_type: ['single_session', 'package', 'programme', 'consultation', 'subscription'] as const,
+      price_display_mode: ["exact", "from", "range", "contact", "free"],
+      service_type: [
+        "single_session",
+        "package",
+        "programme",
+        "consultation",
+        "subscription",
+      ],
+      video_status: ["processing", "published", "rejected", "deleted"],
     },
   },
 } as const
 
-// Convenience type exports
-export type ServiceType = Database['public']['Enums']['service_type']
-export type PriceDisplayMode = Database['public']['Enums']['price_display_mode']
+// Custom type exports derived from database enums
+export type ServiceType = "single_session" | "package" | "programme" | "consultation" | "subscription"
+export type PriceDisplayMode = "exact" | "from" | "range" | "contact" | "free"
+export type VideoStatus = "processing" | "published" | "rejected" | "deleted"

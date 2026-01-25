@@ -29,6 +29,9 @@
       "Bash(stripe events resend:*)",
       "mcp__supabase__get_logs",
       "Bash(npx tsc:*)"
+    ],
+    "additionalDirectories": [
+      "d:\\repos\\findhypnotherapy\\webapp\\app\\book"
     ]
   }
 }

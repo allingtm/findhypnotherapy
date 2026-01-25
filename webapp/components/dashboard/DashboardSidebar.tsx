@@ -9,10 +9,14 @@ import {
   IconBriefcase,
   IconCurrencyPound,
   IconVideo,
+  IconMail,
+  IconCalendarEvent,
+  IconCalendarCheck,
   IconSun,
   IconMoon,
   IconDeviceDesktop,
 } from "@tabler/icons-react";
+import { BillingButton } from "./BillingButton";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -76,6 +80,27 @@ export function DashboardSidebar({ children, user }: DashboardSidebarProps) {
       href: "/dashboard/services",
       icon: (
         <IconCurrencyPound className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: "Availability",
+      href: "/dashboard/availability",
+      icon: (
+        <IconCalendarEvent className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: "Bookings",
+      href: "/dashboard/bookings",
+      icon: (
+        <IconCalendarCheck className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: "Messages",
+      href: "/dashboard/messages",
+      icon: (
+        <IconMail className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
@@ -186,6 +211,7 @@ export function DashboardSidebar({ children, user }: DashboardSidebarProps) {
               }}
               onClick={handleLinkClick}
             />
+            <BillingButton open={open} onClick={handleLinkClick} />
             <button
               onClick={handleLogout}
               className="flex items-center justify-start gap-2 group/sidebar py-2 text-left w-full"
