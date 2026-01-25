@@ -24,6 +24,8 @@ interface BookingSettings {
   accepts_online_booking: boolean | null;
   google_calendar_connected: boolean | null;
   microsoft_calendar_connected: boolean | null;
+  send_visitor_reminders: boolean | null;
+  send_therapist_reminders: boolean | null;
 }
 
 interface BookingSettingsFormProps {
@@ -204,6 +206,54 @@ export function BookingSettingsForm({ settings }: BookingSettingsFormProps) {
             </span>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Review and manually approve each booking request before confirmation
+            </p>
+          </div>
+        </label>
+      </div>
+
+      {/* Reminder Settings */}
+      <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-neutral-700">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          Booking Reminders
+        </h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Automatic email reminders are sent 24 hours and 1 hour before appointments.
+        </p>
+
+        {/* Send Visitor Reminders */}
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            name="send_visitor_reminders"
+            value="true"
+            defaultChecked={settings.send_visitor_reminders ?? true}
+            className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <div>
+            <span className="font-medium text-gray-900 dark:text-gray-100">
+              Send Client Reminders
+            </span>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Your clients will receive reminder emails before their appointments
+            </p>
+          </div>
+        </label>
+
+        {/* Send Therapist Reminders */}
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            name="send_therapist_reminders"
+            value="true"
+            defaultChecked={settings.send_therapist_reminders ?? true}
+            className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <div>
+            <span className="font-medium text-gray-900 dark:text-gray-100">
+              Send Me Reminders
+            </span>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              You will receive reminder emails before your appointments
             </p>
           </div>
         </label>

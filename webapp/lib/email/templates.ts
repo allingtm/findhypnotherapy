@@ -359,3 +359,83 @@ export function getBookingCancelledEmail(props: BookingCancelledEmailProps): { s
     html: getEmailWrapper(content),
   };
 }
+
+// Booking reminder email sent to visitor
+interface BookingReminderEmailProps extends BaseEmailProps {
+  therapistName: string;
+  bookingDate: string;
+  startTime: string;
+  reminderType: "24h" | "1h";
+}
+
+export function getBookingReminderEmail(props: BookingReminderEmailProps): { subject: string; html: string } {
+  const timeUntil = props.reminderType === "24h" ? "tomorrow" : "in 1 hour";
+  const urgency = props.reminderType === "1h" ? "starting soon" : "coming up";
+
+  const content = `
+    <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">Appointment Reminder</h2>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Hi ${props.recipientName},
+    </p>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      This is a friendly reminder that your appointment with <strong>${props.therapistName}</strong> is ${urgency}.
+    </p>
+    <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #1e40af; font-size: 14px; margin: 0 0 8px; font-weight: 600;">Your Appointment</p>
+      <p style="color: #1e40af; font-size: 14px; line-height: 1.5; margin: 0;">
+        <strong>Date:</strong> ${formatBookingDate(props.bookingDate)}<br>
+        <strong>Time:</strong> ${formatBookingTime(props.startTime)}
+      </p>
+    </div>
+    <p style="color: #666666; font-size: 14px; margin: 0;">
+      If you need to reschedule or cancel, please contact ${props.therapistName} as soon as possible.
+    </p>
+  `;
+
+  const subjectPrefix = props.reminderType === "1h" ? "Starting soon" : "Reminder";
+
+  return {
+    subject: `${subjectPrefix}: Appointment ${timeUntil} with ${props.therapistName}`,
+    html: getEmailWrapper(content),
+  };
+}
+
+// Booking reminder email sent to therapist
+interface TherapistBookingReminderEmailProps extends BaseEmailProps {
+  visitorName: string;
+  visitorEmail: string;
+  bookingDate: string;
+  startTime: string;
+  reminderType: "24h" | "1h";
+}
+
+export function getTherapistBookingReminderEmail(props: TherapistBookingReminderEmailProps): { subject: string; html: string } {
+  const timeUntil = props.reminderType === "24h" ? "tomorrow" : "in 1 hour";
+  const urgency = props.reminderType === "1h" ? "starting soon" : "coming up";
+
+  const content = `
+    <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">Appointment Reminder</h2>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Hi ${props.recipientName},
+    </p>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      This is a reminder that you have an appointment ${urgency} with <strong>${props.visitorName}</strong>.
+    </p>
+    <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #1e40af; font-size: 14px; margin: 0 0 8px; font-weight: 600;">Appointment Details</p>
+      <p style="color: #1e40af; font-size: 14px; line-height: 1.5; margin: 0;">
+        <strong>Client:</strong> ${props.visitorName}<br>
+        <strong>Email:</strong> ${props.visitorEmail}<br>
+        <strong>Date:</strong> ${formatBookingDate(props.bookingDate)}<br>
+        <strong>Time:</strong> ${formatBookingTime(props.startTime)}
+      </p>
+    </div>
+  `;
+
+  const subjectPrefix = props.reminderType === "1h" ? "Starting soon" : "Reminder";
+
+  return {
+    subject: `${subjectPrefix}: Client appointment ${timeUntil}`,
+    html: getEmailWrapper(content),
+  };
+}

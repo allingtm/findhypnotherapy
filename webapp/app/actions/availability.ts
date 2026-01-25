@@ -123,6 +123,8 @@ export async function updateBookingSettingsAction(
       timezone: formData.get('timezone') || 'Europe/London',
       requires_approval: formData.get('requires_approval') === 'true',
       accepts_online_booking: formData.get('accepts_online_booking') !== 'false',
+      send_visitor_reminders: formData.get('send_visitor_reminders') !== 'false',
+      send_therapist_reminders: formData.get('send_therapist_reminders') !== 'false',
     }
 
     const validation = bookingSettingsSchema.safeParse(rawData)
@@ -147,6 +149,8 @@ export async function updateBookingSettingsAction(
         timezone: data.timezone,
         requires_approval: data.requires_approval,
         accepts_online_booking: data.accepts_online_booking,
+        send_visitor_reminders: rawData.send_visitor_reminders,
+        send_therapist_reminders: rawData.send_therapist_reminders,
       })
       .eq('therapist_profile_id', profileId)
 

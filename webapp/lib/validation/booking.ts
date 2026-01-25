@@ -28,6 +28,8 @@ export const bookingSettingsSchema = z.object({
     .max(100, "Invalid timezone"),
   requires_approval: z.coerce.boolean(),
   accepts_online_booking: z.coerce.boolean(),
+  send_visitor_reminders: z.coerce.boolean().optional(),
+  send_therapist_reminders: z.coerce.boolean().optional(),
 });
 
 export type BookingSettingsData = z.infer<typeof bookingSettingsSchema>;

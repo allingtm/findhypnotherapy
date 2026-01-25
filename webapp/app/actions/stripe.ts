@@ -106,3 +106,39 @@ export async function createBillingPortalSession() {
 
   redirect(session.url)
 }
+
+/**
+ * Cancel all active subscriptions for a customer
+ * Used during account deletion process
+ */
+export async function cancelCustomerSubscriptions(stripeCustomerId: string): Promise<{ cancelled: number; error?: string }> {
+  try {
+    // List all active subscriptions for the customer
+    const subscriptions = await stripe.subscriptions.list({
+      customer: stripeCustomerId,
+      status: 'active',
+    })
+
+    let cancelled = 0
+    for (const subscription of subscriptions.data) {
+      await stripe.subscriptions.cancel(subscription.id)
+      cancelled++
+    }
+
+    // Also cancel any trialing subscriptions
+    const trialingSubscriptions = await stripe.subscriptions.list({
+      customer: stripeCustomerId,
+      status: 'trialing',
+    })
+
+    for (const subscription of trialingSubscriptions.data) {
+      await stripe.subscriptions.cancel(subscription.id)
+      cancelled++
+    }
+
+    return { cancelled }
+  } catch (error) {
+    console.error('Error cancelling subscriptions:', error)
+    return { cancelled: 0, error: 'Failed to cancel subscriptions' }
+  }
+}

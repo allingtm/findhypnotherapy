@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ProfileForm } from '@/components/profile/ProfileForm'
+import { DeleteAccountSection } from '@/components/profile/DeleteAccountSection'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -29,6 +30,7 @@ export default async function ProfilePage() {
           photo_url: profile?.photo_url,
         }}
       />
+      <DeleteAccountSection userEmail={user.email || ''} />
     </div>
   )
 }

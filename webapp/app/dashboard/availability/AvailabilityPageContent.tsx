@@ -29,6 +29,8 @@ interface BookingSettings {
   accepts_online_booking: boolean | null;
   google_calendar_connected: boolean | null;
   microsoft_calendar_connected: boolean | null;
+  send_visitor_reminders: boolean | null;
+  send_therapist_reminders: boolean | null;
 }
 
 interface CalendarConnection {
