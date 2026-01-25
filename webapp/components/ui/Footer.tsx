@@ -12,6 +12,7 @@ import {
 import Link from "next/link"
 import React, { useEffect, useState } from "react"
 import { useTheme } from "next-themes"
+import { CookieSettingsLink } from "@/components/cookies/CookieSettingsLink"
 
 export function Footer() {
   const pages = [
@@ -42,6 +43,9 @@ export function Footer() {
                 </Link>
               </li>
             ))}
+            <li className="list-none">
+              <CookieSettingsLink />
+            </li>
           </ul>
 
           <GridLineHorizontal className="mx-auto mt-8 max-w-7xl" />

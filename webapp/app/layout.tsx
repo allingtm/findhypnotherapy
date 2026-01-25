@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { CookieConsentProvider } from "@/components/providers/CookieConsentProvider";
+import { CookieConsentBanner } from "@/components/cookies/CookieConsentBanner";
 
 export const metadata: Metadata = {
   title: "Find Hypnotherapy",
@@ -15,7 +17,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <CookieConsentProvider>
+            {children}
+            <CookieConsentBanner />
+          </CookieConsentProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
