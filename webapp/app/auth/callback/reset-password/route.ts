@@ -10,6 +10,6 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code)
   }
 
-  // Redirect to dashboard after email confirmation
-  return NextResponse.redirect(new URL('/dashboard', request.url))
+  // Always redirect to reset password page
+  return NextResponse.redirect(new URL('/reset-password', request.url))
 }
