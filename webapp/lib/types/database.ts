@@ -647,6 +647,7 @@ export type Database = {
         Row: {
           address_line1: string | null
           address_line2: string | null
+          address_visibility: string | null
           availability_notes: string | null
           banner_url: string | null
           bio: string | null
@@ -684,6 +685,7 @@ export type Database = {
         Insert: {
           address_line1?: string | null
           address_line2?: string | null
+          address_visibility?: string | null
           availability_notes?: string | null
           banner_url?: string | null
           bio?: string | null
@@ -721,6 +723,7 @@ export type Database = {
         Update: {
           address_line1?: string | null
           address_line2?: string | null
+          address_visibility?: string | null
           availability_notes?: string | null
           banner_url?: string | null
           bio?: string | null

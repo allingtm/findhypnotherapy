@@ -248,6 +248,53 @@ export function TherapistProfileForm({
             />
           </div>
 
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Address Visibility on Public Profile
+            </label>
+            <div className="space-y-2">
+              <label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800 cursor-pointer">
+                <input
+                  type="radio"
+                  name="address_visibility"
+                  value="full"
+                  defaultChecked={!profile.address_visibility || profile.address_visibility === 'full'}
+                  className="mt-0.5 w-4 h-4 border-gray-300 dark:border-neutral-600 text-blue-600 focus:ring-blue-500"
+                />
+                <div>
+                  <span className="block text-sm font-medium text-gray-900 dark:text-gray-100">Show full address</span>
+                  <span className="block text-xs text-gray-500 dark:text-gray-400">Display your complete address on your public profile</span>
+                </div>
+              </label>
+              <label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800 cursor-pointer">
+                <input
+                  type="radio"
+                  name="address_visibility"
+                  value="city_only"
+                  defaultChecked={profile.address_visibility === 'city_only'}
+                  className="mt-0.5 w-4 h-4 border-gray-300 dark:border-neutral-600 text-blue-600 focus:ring-blue-500"
+                />
+                <div>
+                  <span className="block text-sm font-medium text-gray-900 dark:text-gray-100">Show city/county only</span>
+                  <span className="block text-xs text-gray-500 dark:text-gray-400">Only display your city, county/state, and country</span>
+                </div>
+              </label>
+              <label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800 cursor-pointer">
+                <input
+                  type="radio"
+                  name="address_visibility"
+                  value="hidden"
+                  defaultChecked={profile.address_visibility === 'hidden'}
+                  className="mt-0.5 w-4 h-4 border-gray-300 dark:border-neutral-600 text-blue-600 focus:ring-blue-500"
+                />
+                <div>
+                  <span className="block text-sm font-medium text-gray-900 dark:text-gray-100">Hide location</span>
+                  <span className="block text-xs text-gray-500 dark:text-gray-400">Do not display any location information on your profile</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
           <hr className="my-6 dark:border-neutral-700" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Session Details</h3>
 

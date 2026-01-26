@@ -200,7 +200,7 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
                   )}
 
                   {/* Location */}
-                  {(profile.city || profile.state_province || profile.country) && (
+                  {profile.address_visibility !== 'hidden' && (profile.city || profile.state_province || profile.country) && (
                     <p className="text-gray-500 dark:text-gray-500 mt-2 flex items-center gap-1">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -395,14 +395,19 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
             </div>
 
             {/* Location Card */}
-            {profile.address_line1 && (
+            {profile.address_visibility !== 'hidden' && (profile.address_line1 || profile.city) && (
               <div className="bg-white dark:bg-neutral-900 rounded-lg shadow p-6">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Location</h2>
                 <address className="not-italic text-gray-700 dark:text-gray-300">
-                  {profile.address_line1}<br />
-                  {profile.address_line2 && <>{profile.address_line2}<br /></>}
-                  {profile.city}{profile.city && profile.state_province && ', '}{profile.state_province}<br />
-                  {profile.postal_code}<br />
+                  {profile.address_visibility === 'full' && (
+                    <>
+                      {profile.address_line1 && <>{profile.address_line1}<br /></>}
+                      {profile.address_line2 && <>{profile.address_line2}<br /></>}
+                    </>
+                  )}
+                  {profile.city}{profile.city && profile.state_province && ', '}{profile.state_province}
+                  {(profile.city || profile.state_province) && <br />}
+                  {profile.address_visibility === 'full' && profile.postal_code && <>{profile.postal_code}<br /></>}
                   {profile.country}
                 </address>
               </div>
