@@ -44,6 +44,22 @@ export const registerSchema = z.object({
   path: ['confirmPassword'],
 })
 
+// Forgot password schema (email only)
+export const forgotPasswordSchema = z.object({
+  email: emailSchema,
+})
+
+// Reset password schema (new password + confirmation)
+export const resetPasswordSchema = z.object({
+  password: passwordSchema,
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ['confirmPassword'],
+})
+
 // Types inferred from schemas
 export type LoginInput = z.infer<typeof loginSchema>
 export type RegisterInput = z.infer<typeof registerSchema>
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>

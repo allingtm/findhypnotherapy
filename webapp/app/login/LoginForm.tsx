@@ -83,6 +83,15 @@ export function LoginForm() {
         onBlur={(e) => validateField('password', e.target.value)}
       />
 
+      <div className="text-right mb-4">
+        <Link
+          href="/forgot-password"
+          className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+        >
+          Forgot password?
+        </Link>
+      </div>
+
       <SubmitButton />
 
       <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
