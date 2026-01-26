@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface CollapsibleSectionProps {
   title: string
   defaultOpen?: boolean
+  defaultOpenMobile?: boolean // Override for mobile (< md breakpoint)
   children: React.ReactNode
   className?: string
 }
@@ -12,10 +13,22 @@ interface CollapsibleSectionProps {
 export function CollapsibleSection({
   title,
   defaultOpen = false,
+  defaultOpenMobile,
   children,
   className = '',
 }: CollapsibleSectionProps) {
+  // Use defaultOpen initially, then adjust for mobile on mount
   const [isOpen, setIsOpen] = useState(defaultOpen)
+  const [hasInitialized, setHasInitialized] = useState(false)
+
+  useEffect(() => {
+    // Only run once on mount to set responsive default
+    if (!hasInitialized && defaultOpenMobile !== undefined) {
+      const isMobile = window.innerWidth < 768 // md breakpoint
+      setIsOpen(isMobile ? defaultOpenMobile : defaultOpen)
+      setHasInitialized(true)
+    }
+  }, [hasInitialized, defaultOpen, defaultOpenMobile])
 
   return (
     <section className={`bg-white dark:bg-neutral-900 rounded-lg shadow overflow-hidden ${className}`}>

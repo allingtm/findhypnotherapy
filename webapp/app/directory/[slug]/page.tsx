@@ -309,9 +309,7 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Contact Card */}
-            <div className="bg-white dark:bg-neutral-900 rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Contact</h2>
-
+            <CollapsibleSection title="Contact" defaultOpen={true} defaultOpenMobile={false}>
               <div className="space-y-4">
                 {/* Mobile Price Display */}
                 <div className="md:hidden mb-4 pb-4 border-b border-gray-200 dark:border-neutral-700">
@@ -354,7 +352,7 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
                         : 'bg-blue-600 text-white hover:bg-blue-700'
                     }`}
                   >
-                    {acceptsOnlineBooking ? 'View External Calendar' : 'Book an Appointment'}
+                    {acceptsOnlineBooking ? 'View Calendar' : 'Book an Appointment'}
                   </a>
                 )}
 
@@ -392,12 +390,11 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
                   />
                 </div>
               </div>
-            </div>
+            </CollapsibleSection>
 
             {/* Location Card */}
             {profile.address_visibility !== 'hidden' && (profile.address_line1 || profile.city) && (
-              <div className="bg-white dark:bg-neutral-900 rounded-lg shadow p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Location</h2>
+              <CollapsibleSection title="Location" defaultOpen={true} defaultOpenMobile={false}>
                 <address className="not-italic text-gray-700 dark:text-gray-300">
                   {profile.address_visibility === 'full' && (
                     <>
@@ -410,7 +407,7 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
                   {profile.address_visibility === 'full' && profile.postal_code && <>{profile.postal_code}<br /></>}
                   {profile.country}
                 </address>
-              </div>
+              </CollapsibleSection>
             )}
 
             {/* Availability */}
