@@ -1,16 +1,18 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import type { EmailOtpType } from '@supabase/supabase-js'
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
-  const code = requestUrl.searchParams.get('code')
+  const token_hash = requestUrl.searchParams.get('token_hash')
+  const type = requestUrl.searchParams.get('type') as EmailOtpType | null
 
   // Create the redirect response first
   const redirectUrl = new URL('/reset-password', request.url)
   const response = NextResponse.redirect(redirectUrl)
 
-  if (code) {
+  if (token_hash && type) {
     const cookieStore = await cookies()
 
     // Create a Supabase client that writes cookies to BOTH the cookie store AND the response
@@ -34,7 +36,18 @@ export async function GET(request: Request) {
       }
     )
 
-    await supabase.auth.exchangeCodeForSession(code)
+    // Use verifyOtp instead of exchangeCodeForSession - doesn't require PKCE code verifier
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash,
+      type,
+    })
+
+    if (error) {
+      // Redirect to forgot-password with error if token is invalid/expired
+      const errorUrl = new URL('/forgot-password', request.url)
+      errorUrl.searchParams.set('error', 'expired')
+      return NextResponse.redirect(errorUrl)
+    }
   }
 
   // Return the response with cookies attached
