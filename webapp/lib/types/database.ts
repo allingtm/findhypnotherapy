@@ -60,6 +60,7 @@ export type Database = {
           visitor_notes: string | null
           visitor_phone: string | null
           visitor_token: string
+          meeting_url: string | null
         }
         Insert: {
           booking_date: string
@@ -85,6 +86,7 @@ export type Database = {
           visitor_notes?: string | null
           visitor_phone?: string | null
           visitor_token: string
+          meeting_url?: string | null
         }
         Update: {
           booking_date?: string
@@ -110,6 +112,7 @@ export type Database = {
           visitor_notes?: string | null
           visitor_phone?: string | null
           visitor_token?: string
+          meeting_url?: string | null
         }
         Relationships: [
           {
@@ -590,6 +593,9 @@ export type Database = {
           therapist_profile_id: string
           timezone: string
           updated_at: string | null
+          video_platform_preference: string | null
+          default_video_link: string | null
+          zoom_connected: boolean | null
         }
         Insert: {
           accepts_online_booking?: boolean | null
@@ -605,6 +611,9 @@ export type Database = {
           therapist_profile_id: string
           timezone?: string
           updated_at?: string | null
+          video_platform_preference?: string | null
+          default_video_link?: string | null
+          zoom_connected?: boolean | null
         }
         Update: {
           accepts_online_booking?: boolean | null
@@ -620,6 +629,9 @@ export type Database = {
           therapist_profile_id?: string
           timezone?: string
           updated_at?: string | null
+          video_platform_preference?: string | null
+          default_video_link?: string | null
+          zoom_connected?: boolean | null
         }
         Relationships: [
           {
@@ -636,6 +648,7 @@ export type Database = {
           address_line1: string | null
           address_line2: string | null
           availability_notes: string | null
+          banner_url: string | null
           bio: string | null
           booking_url: string | null
           city: string | null
@@ -672,6 +685,7 @@ export type Database = {
           address_line1?: string | null
           address_line2?: string | null
           availability_notes?: string | null
+          banner_url?: string | null
           bio?: string | null
           booking_url?: string | null
           city?: string | null
@@ -708,6 +722,7 @@ export type Database = {
           address_line1?: string | null
           address_line2?: string | null
           availability_notes?: string | null
+          banner_url?: string | null
           bio?: string | null
           booking_url?: string | null
           city?: string | null
@@ -759,6 +774,7 @@ export type Database = {
           display_order: number | null
           duration_minutes: number
           id: string
+          image_url: string | null
           includes: string[] | null
           is_active: boolean | null
           is_featured: boolean | null
@@ -790,6 +806,7 @@ export type Database = {
           display_order?: number | null
           duration_minutes?: number
           id?: string
+          image_url?: string | null
           includes?: string[] | null
           is_active?: boolean | null
           is_featured?: boolean | null
@@ -821,6 +838,7 @@ export type Database = {
           display_order?: number | null
           duration_minutes?: number
           id?: string
+          image_url?: string | null
           includes?: string[] | null
           is_active?: boolean | null
           is_featured?: boolean | null

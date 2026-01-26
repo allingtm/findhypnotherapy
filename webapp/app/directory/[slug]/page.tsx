@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { Navbar } from '@/components/ui/Navbar'
 import { Footer } from '@/components/ui/Footer'
+import { CollapsibleSection } from '@/components/ui/CollapsibleSection'
 import { ContactForm } from '@/components/messages/ContactForm'
 import Link from 'next/link'
 import type { Metadata } from 'next'
@@ -81,6 +82,7 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
     name: string
     description: string | null
     short_description: string | null
+    image_url: string | null
     service_type: ServiceType
     price_display_mode: PriceDisplayMode
     price: number | null
@@ -145,9 +147,23 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
       <Navbar />
 
       <div className="flex-1 bg-gray-50 dark:bg-neutral-950">
+        {/* Profile Banner */}
+        {profile.banner_url ? (
+          <div className="relative w-full h-48 md:h-64 lg:h-72 overflow-hidden">
+            <img
+              src={profile.banner_url}
+              alt={`${userData.name}'s banner`}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-white/60 dark:from-neutral-900/60 to-transparent" />
+          </div>
+        ) : (
+          <div className="w-full h-24 md:h-32 bg-gradient-to-r from-blue-500 to-indigo-600" />
+        )}
+
         {/* Profile Header */}
-      <div className="bg-white dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-800">
-        <div className="container mx-auto px-4 py-8">
+        <div className="bg-white dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-800">
+          <div className={`container mx-auto px-4 py-8 ${profile.banner_url ? '-mt-16 relative z-10' : ''}`}>
           <div className="flex flex-col md:flex-row gap-6">
             {/* Photo */}
             <div className="flex-shrink-0">
@@ -251,20 +267,18 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Column */}
           <div className="lg:col-span-2 space-y-8">
-            {/* About */}
+            {/* About - Collapsible, default open */}
             {profile.bio && (
-              <section className="bg-white dark:bg-neutral-900 rounded-lg shadow p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">About</h2>
+              <CollapsibleSection title="About" defaultOpen={true}>
                 <div className="prose dark:prose-invert max-w-none">
                   <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{profile.bio}</p>
                 </div>
-              </section>
+              </CollapsibleSection>
             )}
 
-            {/* Specializations */}
+            {/* Specializations - Collapsible, default closed */}
             {specializations.length > 0 && (
-              <section className="bg-white dark:bg-neutral-900 rounded-lg shadow p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Specialisations</h2>
+              <CollapsibleSection title="Specialisations" defaultOpen={false}>
                 <div className="flex flex-wrap gap-2">
                   {specializations.map((spec) => (
                     <Link
@@ -276,17 +290,16 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
                     </Link>
                   ))}
                 </div>
-              </section>
+              </CollapsibleSection>
             )}
 
-            {/* Experience */}
+            {/* Experience - Collapsible, default closed */}
             {profile.years_experience && (
-              <section className="bg-white dark:bg-neutral-900 rounded-lg shadow p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Experience</h2>
+              <CollapsibleSection title="Experience" defaultOpen={false}>
                 <p className="text-gray-700 dark:text-gray-300">
                   {profile.years_experience} years of professional experience
                 </p>
-              </section>
+              </CollapsibleSection>
             )}
           </div>
 
@@ -430,6 +443,16 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
                           service.is_featured ? 'bg-blue-50 dark:bg-blue-900/10 -mx-2 px-2 py-2 rounded-lg' : ''
                         }`}
                       >
+                        {/* Service Image */}
+                        {service.image_url && (
+                          <div className="w-full h-32 mb-3 rounded-lg overflow-hidden">
+                            <img
+                              src={service.image_url}
+                              alt={service.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 flex-wrap">

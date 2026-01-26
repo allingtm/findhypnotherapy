@@ -24,8 +24,11 @@ interface BookingSettings {
   accepts_online_booking: boolean | null;
   google_calendar_connected: boolean | null;
   microsoft_calendar_connected: boolean | null;
+  zoom_connected: boolean | null;
   send_visitor_reminders: boolean | null;
   send_therapist_reminders: boolean | null;
+  video_platform_preference: string | null;
+  default_video_link: string | null;
 }
 
 interface BookingSettingsFormProps {
@@ -257,6 +260,66 @@ export function BookingSettingsForm({ settings }: BookingSettingsFormProps) {
             </p>
           </div>
         </label>
+      </div>
+
+      {/* Video Conferencing Settings */}
+      <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-neutral-700">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          Video Conferencing for Online Sessions
+        </h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Automatically include video meeting links in booking confirmations for online sessions.
+        </p>
+
+        <div>
+          <label
+            htmlFor="video_platform_preference"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
+            Preferred Video Platform
+          </label>
+          <select
+            id="video_platform_preference"
+            name="video_platform_preference"
+            defaultValue={settings.video_platform_preference || "none"}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="none">No automatic video link</option>
+            {settings.google_calendar_connected && (
+              <option value="google_meet">Google Meet</option>
+            )}
+            {settings.microsoft_calendar_connected && (
+              <option value="teams">Microsoft Teams</option>
+            )}
+            {settings.zoom_connected && (
+              <option value="zoom_oauth">Zoom (automatic)</option>
+            )}
+            <option value="manual_link">Use my personal meeting link</option>
+          </select>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Meeting links will be automatically generated and included in confirmation emails
+          </p>
+        </div>
+
+        <div>
+          <label
+            htmlFor="default_video_link"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
+            Personal Meeting Link
+          </label>
+          <input
+            type="url"
+            id="default_video_link"
+            name="default_video_link"
+            defaultValue={settings.default_video_link || ""}
+            placeholder="https://zoom.us/j/1234567890"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Enter your Zoom Personal Meeting Room URL or other video platform link (used when &quot;Use my personal meeting link&quot; is selected)
+          </p>
+        </div>
       </div>
 
       {/* Submit Button */}

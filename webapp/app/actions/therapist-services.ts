@@ -3,12 +3,19 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { validateImageFile, getFileExtension } from '@/lib/utils/fileValidation'
+import { generateServiceImageFilename } from '@/lib/utils/imageCrop'
 
 // Response type for form actions
 type ActionResponse = {
   success: boolean
   error?: string
   data?: unknown
+}
+
+// Response type for service image upload
+type ServiceImageUploadResponse = ActionResponse & {
+  imageUrl?: string
 }
 
 // Service type and price display mode enums
@@ -472,5 +479,224 @@ export async function reorderServicesAction(serviceIds: string[]): Promise<Actio
   } catch (err) {
     console.error('Service reorder error:', err)
     return { success: false, error: 'An unexpected error occurred' }
+  }
+}
+
+// Upload service image action
+export async function uploadServiceImageAction(
+  prevState: any,
+  formData: FormData
+): Promise<ServiceImageUploadResponse> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return {
+        success: false,
+        error: 'Not authenticated',
+      }
+    }
+
+    const serviceId = formData.get('service_id') as string
+    const file = formData.get('image') as File
+
+    if (!serviceId) {
+      return {
+        success: false,
+        error: 'Service ID required',
+      }
+    }
+
+    if (!file || file.size === 0) {
+      return {
+        success: false,
+        error: 'No file provided',
+      }
+    }
+
+    // Validate file
+    const validation = validateImageFile(file)
+    if (!validation.valid) {
+      return {
+        success: false,
+        error: validation.error,
+      }
+    }
+
+    // Get service and verify ownership
+    const { data: service } = await supabase
+      .from('therapist_services')
+      .select('therapist_profile_id, image_url')
+      .eq('id', serviceId)
+      .single()
+
+    if (!service) {
+      return { success: false, error: 'Service not found' }
+    }
+
+    // Check profile ownership
+    const { data: profile } = await supabase
+      .from('therapist_profiles')
+      .select('user_id')
+      .eq('id', service.therapist_profile_id)
+      .single()
+
+    if (!profile || profile.user_id !== user.id) {
+      return { success: false, error: 'Not authorised to edit this service' }
+    }
+
+    // Generate unique filename
+    const fileExtension = getFileExtension(file.type)
+    const filename = generateServiceImageFilename(user.id, serviceId, fileExtension)
+
+    // Upload to Supabase Storage
+    const { error: uploadError } = await supabase.storage
+      .from('service-images')
+      .upload(filename, file, {
+        cacheControl: '3600',
+        upsert: false,
+      })
+
+    if (uploadError) {
+      console.error('Service image upload error:', uploadError)
+      return {
+        success: false,
+        error: 'Failed to upload image',
+      }
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('service-images')
+      .getPublicUrl(filename)
+
+    // Update service with new image URL
+    const { error: updateError } = await supabase
+      .from('therapist_services')
+      .update({ image_url: publicUrl })
+      .eq('id', serviceId)
+
+    if (updateError) {
+      // Rollback: delete uploaded file
+      await supabase.storage
+        .from('service-images')
+        .remove([filename])
+
+      return {
+        success: false,
+        error: 'Failed to update service',
+      }
+    }
+
+    // Delete old image if exists
+    if (service.image_url) {
+      try {
+        const urlParts = service.image_url.split('/storage/v1/object/public/service-images/')
+        if (urlParts.length > 1) {
+          const oldPath = urlParts[1]
+          await supabase.storage
+            .from('service-images')
+            .remove([oldPath])
+        }
+      } catch (err) {
+        console.warn('Failed to delete old service image:', err)
+      }
+    }
+
+    revalidatePath('/dashboard/services')
+    revalidatePath('/directory')
+
+    return {
+      success: true,
+      imageUrl: publicUrl,
+    }
+  } catch (err) {
+    console.error('Service image upload error:', err)
+    return {
+      success: false,
+      error: 'An unexpected error occurred',
+    }
+  }
+}
+
+// Delete service image action
+export async function deleteServiceImageAction(serviceId: string): Promise<ActionResponse> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return {
+        success: false,
+        error: 'Not authenticated',
+      }
+    }
+
+    // Get service and verify ownership
+    const { data: service } = await supabase
+      .from('therapist_services')
+      .select('therapist_profile_id, image_url')
+      .eq('id', serviceId)
+      .single()
+
+    if (!service) {
+      return { success: false, error: 'Service not found' }
+    }
+
+    // Check profile ownership
+    const { data: profile } = await supabase
+      .from('therapist_profiles')
+      .select('user_id')
+      .eq('id', service.therapist_profile_id)
+      .single()
+
+    if (!profile || profile.user_id !== user.id) {
+      return { success: false, error: 'Not authorised to edit this service' }
+    }
+
+    if (!service.image_url) {
+      return {
+        success: false,
+        error: 'No image to delete',
+      }
+    }
+
+    // Delete from storage
+    try {
+      const urlParts = service.image_url.split('/storage/v1/object/public/service-images/')
+      if (urlParts.length > 1) {
+        const filePath = urlParts[1]
+        await supabase.storage
+          .from('service-images')
+          .remove([filePath])
+      }
+    } catch (err) {
+      console.warn('Failed to delete service image file:', err)
+    }
+
+    // Update service to remove image URL
+    const { error: updateError } = await supabase
+      .from('therapist_services')
+      .update({ image_url: null })
+      .eq('id', serviceId)
+
+    if (updateError) {
+      return {
+        success: false,
+        error: 'Failed to update service',
+      }
+    }
+
+    revalidatePath('/dashboard/services')
+    revalidatePath('/directory')
+
+    return { success: true }
+  } catch (err) {
+    console.error('Service image delete error:', err)
+    return {
+      success: false,
+      error: 'An unexpected error occurred',
+    }
   }
 }

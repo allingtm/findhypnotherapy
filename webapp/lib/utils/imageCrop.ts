@@ -74,3 +74,23 @@ export function generatePhotoFilename(userId: string, extension: string): string
   const timestamp = Date.now()
   return `${userId}/avatar-${timestamp}.${extension}`
 }
+
+/**
+ * Generates a unique filename for the uploaded banner
+ */
+export function generateBannerFilename(userId: string, extension: string): string {
+  const timestamp = Date.now()
+  return `${userId}/banner-${timestamp}.${extension}`
+}
+
+/**
+ * Generates a unique filename for a service image
+ */
+export function generateServiceImageFilename(
+  userId: string,
+  serviceId: string,
+  extension: string
+): string {
+  const timestamp = Date.now()
+  return `${userId}/service-${serviceId}-${timestamp}.${extension}`
+}

@@ -6,6 +6,7 @@ import { createServiceAction, updateServiceAction } from '@/app/actions/therapis
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
+import { ServiceImageUpload } from './ServiceImageUpload'
 import type { Tables, ServiceType, PriceDisplayMode } from '@/lib/types/database'
 import {
   SERVICE_TYPE_LABELS,
@@ -453,6 +454,20 @@ export function ServiceForm({ service, onClose, onSuccess }: ServiceFormProps) {
                 placeholder="e.g., Session recording, Follow-up email"
               />
             </div>
+
+            {/* Service Image (only for existing services) */}
+            {isEditing && (
+              <div className="border-t border-gray-200 dark:border-neutral-700 pt-6">
+                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Service Image</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                  Add an image to make your service stand out. JPG, PNG or WebP, max 5MB.
+                </p>
+                <ServiceImageUpload
+                  serviceId={service.id}
+                  currentImageUrl={service.image_url}
+                />
+              </div>
+            )}
 
             {/* Display Options */}
             <div className="border-t border-gray-200 dark:border-neutral-700 pt-6">

@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
+import { BannerUpload } from './BannerUpload'
 import type { Tables } from '@/lib/types/database'
 
 interface TherapistProfileFormProps {
@@ -111,6 +112,17 @@ export function TherapistProfileForm({
           </form>
         </div>
         {publishState.error && <Alert type="error" message={publishState.error} />}
+      </div>
+
+      {/* Profile Banner */}
+      <div className="bg-white dark:bg-neutral-900 rounded-lg shadow p-6">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+          Profile Banner
+        </h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Add a banner image to personalise your profile page. This appears at the top of your public profile.
+        </p>
+        <BannerUpload currentBannerUrl={profile.banner_url} />
       </div>
 
       {/* Professional Information */}

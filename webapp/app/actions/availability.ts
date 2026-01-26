@@ -22,6 +22,8 @@ const bookingSettingsSchema = z.object({
   timezone: z.string().min(1).max(100),
   requires_approval: z.coerce.boolean(),
   accepts_online_booking: z.coerce.boolean(),
+  video_platform_preference: z.enum(['google_meet', 'teams', 'zoom_oauth', 'manual_link', 'none']).optional().default('none'),
+  default_video_link: z.string().url().optional().nullable().or(z.literal('')),
 })
 
 // Weekly availability slot schema
@@ -125,6 +127,8 @@ export async function updateBookingSettingsAction(
       accepts_online_booking: formData.get('accepts_online_booking') !== 'false',
       send_visitor_reminders: formData.get('send_visitor_reminders') !== 'false',
       send_therapist_reminders: formData.get('send_therapist_reminders') !== 'false',
+      video_platform_preference: formData.get('video_platform_preference') || 'none',
+      default_video_link: formData.get('default_video_link') || null,
     }
 
     const validation = bookingSettingsSchema.safeParse(rawData)
@@ -151,6 +155,8 @@ export async function updateBookingSettingsAction(
         accepts_online_booking: data.accepts_online_booking,
         send_visitor_reminders: rawData.send_visitor_reminders,
         send_therapist_reminders: rawData.send_therapist_reminders,
+        video_platform_preference: data.video_platform_preference,
+        default_video_link: data.default_video_link || null,
       })
       .eq('therapist_profile_id', profileId)
 
@@ -437,7 +443,7 @@ export async function getCalendarConnectionStatus() {
 }
 
 // Disconnect a calendar
-export async function disconnectCalendarAction(provider: 'google' | 'microsoft'): Promise<ActionResponse> {
+export async function disconnectCalendarAction(provider: 'google' | 'microsoft' | 'zoom'): Promise<ActionResponse> {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -458,19 +464,23 @@ export async function disconnectCalendarAction(provider: 'google' | 'microsoft')
       return { success: false, error: 'Failed to disconnect calendar' }
     }
 
-    // Delete cached busy times
-    await supabase
-      .from('calendar_busy_times')
-      .delete()
-      .eq('user_id', user.id)
-      .eq('provider', provider)
+    // Delete cached busy times (only for calendar providers, not Zoom)
+    if (provider !== 'zoom') {
+      await supabase
+        .from('calendar_busy_times')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('provider', provider)
+    }
 
     // Update booking settings
     const { profileId } = await getTherapistProfileId()
     if (profileId) {
       const updateField = provider === 'google'
         ? { google_calendar_connected: false }
-        : { microsoft_calendar_connected: false }
+        : provider === 'microsoft'
+        ? { microsoft_calendar_connected: false }
+        : { zoom_connected: false }
 
       await supabase
         .from('therapist_booking_settings')

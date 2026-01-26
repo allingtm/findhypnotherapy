@@ -3,11 +3,18 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { validateImageFile, getFileExtension } from '@/lib/utils/fileValidation'
+import { generateBannerFilename } from '@/lib/utils/imageCrop'
 
 // Response type for form actions
 type ActionResponse = {
   success: boolean
   error?: string
+}
+
+// Response type for banner upload
+type BannerUploadResponse = ActionResponse & {
+  bannerUrl?: string
 }
 
 // Therapist profile update schema
@@ -346,4 +353,189 @@ export async function getTherapistSpecializations(profileId: string) {
   }
 
   return data || []
+}
+
+// Upload banner action
+export async function uploadBannerAction(
+  prevState: any,
+  formData: FormData
+): Promise<BannerUploadResponse> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return {
+        success: false,
+        error: 'Not authenticated',
+      }
+    }
+
+    const file = formData.get('banner') as File
+
+    if (!file || file.size === 0) {
+      return {
+        success: false,
+        error: 'No file provided',
+      }
+    }
+
+    // Validate file
+    const validation = validateImageFile(file)
+    if (!validation.valid) {
+      return {
+        success: false,
+        error: validation.error,
+      }
+    }
+
+    // Generate unique filename
+    const fileExtension = getFileExtension(file.type)
+    const filename = generateBannerFilename(user.id, fileExtension)
+
+    // Get current banner_url to delete later
+    const { data: currentProfile } = await supabase
+      .from('therapist_profiles')
+      .select('banner_url')
+      .eq('user_id', user.id)
+      .single()
+
+    // Upload to Supabase Storage
+    const { error: uploadError } = await supabase.storage
+      .from('profile-banners')
+      .upload(filename, file, {
+        cacheControl: '3600',
+        upsert: false,
+      })
+
+    if (uploadError) {
+      console.error('Banner upload error:', uploadError)
+      return {
+        success: false,
+        error: 'Failed to upload banner',
+      }
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('profile-banners')
+      .getPublicUrl(filename)
+
+    // Update therapist profile with new banner URL
+    const { error: updateError } = await supabase
+      .from('therapist_profiles')
+      .update({ banner_url: publicUrl })
+      .eq('user_id', user.id)
+
+    if (updateError) {
+      // Rollback: delete uploaded file
+      await supabase.storage
+        .from('profile-banners')
+        .remove([filename])
+
+      return {
+        success: false,
+        error: 'Failed to update profile',
+      }
+    }
+
+    // Delete old banner if exists
+    if (currentProfile?.banner_url) {
+      try {
+        const urlParts = currentProfile.banner_url.split('/storage/v1/object/public/profile-banners/')
+        if (urlParts.length > 1) {
+          const oldPath = urlParts[1]
+          await supabase.storage
+            .from('profile-banners')
+            .remove([oldPath])
+        }
+      } catch (err) {
+        // Non-critical error, log but don't fail
+        console.warn('Failed to delete old banner:', err)
+      }
+    }
+
+    revalidatePath('/dashboard/profile/therapist')
+    revalidatePath('/directory')
+
+    return {
+      success: true,
+      bannerUrl: publicUrl,
+    }
+  } catch (err) {
+    console.error('Banner upload error:', err)
+    return {
+      success: false,
+      error: 'An unexpected error occurred',
+    }
+  }
+}
+
+// Delete banner action
+export async function deleteBannerAction(
+  prevState: any,
+  formData: FormData
+): Promise<ActionResponse> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return {
+        success: false,
+        error: 'Not authenticated',
+      }
+    }
+
+    // Get current banner URL
+    const { data: profile } = await supabase
+      .from('therapist_profiles')
+      .select('banner_url')
+      .eq('user_id', user.id)
+      .single()
+
+    if (!profile?.banner_url) {
+      return {
+        success: false,
+        error: 'No banner to delete',
+      }
+    }
+
+    // Delete from storage
+    try {
+      const urlParts = profile.banner_url.split('/storage/v1/object/public/profile-banners/')
+      if (urlParts.length > 1) {
+        const filePath = urlParts[1]
+        await supabase.storage
+          .from('profile-banners')
+          .remove([filePath])
+      }
+    } catch (err) {
+      console.warn('Failed to delete banner file:', err)
+    }
+
+    // Update profile to remove banner URL
+    const { error: updateError } = await supabase
+      .from('therapist_profiles')
+      .update({ banner_url: null })
+      .eq('user_id', user.id)
+
+    if (updateError) {
+      return {
+        success: false,
+        error: 'Failed to update profile',
+      }
+    }
+
+    revalidatePath('/dashboard/profile/therapist')
+    revalidatePath('/directory')
+
+    return { success: true }
+  } catch (err) {
+    console.error('Banner delete error:', err)
+    return {
+      success: false,
+      error: 'An unexpected error occurred',
+    }
+  }
 }

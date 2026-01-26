@@ -41,6 +41,8 @@ interface CalendarEvent {
   }>;
   isReminderOn?: boolean;
   reminderMinutesBeforeStart?: number;
+  isOnlineMeeting?: boolean;
+  onlineMeetingProvider?: string;
 }
 
 export function getMicrosoftAuthUrl(state: string): string {
@@ -335,8 +337,9 @@ export async function createMicrosoftCalendarEvent(
     timezone: string;
     attendeeEmail?: string;
     attendeeName?: string;
+    addTeamsLink?: boolean;
   }
-): Promise<{ success: boolean; eventId?: string; error?: string }> {
+): Promise<{ success: boolean; eventId?: string; meetingUrl?: string; error?: string }> {
   const accessToken = await getValidAccessToken(userId);
   if (!accessToken) {
     return { success: false, error: 'No valid access token' };
@@ -359,6 +362,11 @@ export async function createMicrosoftCalendarEvent(
     },
     isReminderOn: true,
     reminderMinutesBeforeStart: 30,
+    // Add Teams meeting if requested
+    ...(event.addTeamsLink && {
+      isOnlineMeeting: true,
+      onlineMeetingProvider: 'teamsForBusiness',
+    }),
   };
 
   // Add attendee if provided
@@ -391,7 +399,9 @@ export async function createMicrosoftCalendarEvent(
     }
 
     const data = await response.json();
-    return { success: true, eventId: data.id };
+    // Extract Teams meeting URL from response
+    const meetingUrl = data.onlineMeeting?.joinUrl;
+    return { success: true, eventId: data.id, meetingUrl };
   } catch (error) {
     console.error('Failed to create Microsoft Calendar event:', error);
     return { success: false, error: 'Failed to create calendar event' };

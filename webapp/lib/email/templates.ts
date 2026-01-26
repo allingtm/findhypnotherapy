@@ -295,9 +295,28 @@ interface BookingConfirmedEmailProps extends BaseEmailProps {
   therapistName: string;
   bookingDate: string;
   startTime: string;
+  meetingUrl?: string;
+  sessionFormat?: string;
 }
 
 export function getBookingConfirmedEmail(props: BookingConfirmedEmailProps): { subject: string; html: string } {
+  // Video meeting section for online sessions
+  const meetingSection = props.meetingUrl && props.sessionFormat === 'online' ? `
+    <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #1e40af; font-size: 14px; margin: 0 0 8px; font-weight: 600;">
+        Video Meeting
+      </p>
+      <p style="color: #1e40af; font-size: 14px; line-height: 1.5; margin: 0 0 12px;">
+        Join your online session using the link below:
+      </p>
+      <div style="text-align: center;">
+        <a href="${props.meetingUrl}" style="display: inline-block; background-color: #2563eb; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 10px 24px; border-radius: 6px;">
+          Join Video Session
+        </a>
+      </div>
+    </div>
+  ` : '';
+
   const content = `
     <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">Your booking is confirmed!</h2>
     <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
@@ -313,6 +332,7 @@ export function getBookingConfirmedEmail(props: BookingConfirmedEmailProps): { s
         <strong>Time:</strong> ${formatBookingTime(props.startTime)}
       </p>
     </div>
+    ${meetingSection}
     <p style="color: #666666; font-size: 14px; margin: 0;">
       We recommend adding this to your calendar. If you need to reschedule or cancel, please contact ${props.therapistName} directly.
     </p>

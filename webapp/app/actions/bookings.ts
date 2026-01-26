@@ -14,6 +14,7 @@ import {
 import crypto from "crypto";
 import { createGoogleCalendarEvent } from "@/lib/calendar/google";
 import { createMicrosoftCalendarEvent } from "@/lib/calendar/microsoft";
+import { createZoomMeeting } from "@/lib/calendar/zoom";
 
 type ActionResponse = {
   success: boolean;
@@ -705,7 +706,7 @@ export async function confirmBookingAction(
     // Get the booking with duration info (RLS will ensure ownership)
     const { data: booking, error: bookingError } = await supabase
       .from("bookings")
-      .select("id, visitor_name, visitor_email, booking_date, start_time, end_time, duration_minutes, status, is_verified")
+      .select("id, visitor_name, visitor_email, booking_date, start_time, end_time, duration_minutes, status, is_verified, session_format")
       .eq("id", bookingId)
       .eq("therapist_profile_id", profileId)
       .single();
@@ -743,7 +744,10 @@ export async function confirmBookingAction(
         therapist_booking_settings(
           timezone,
           google_calendar_connected,
-          microsoft_calendar_connected
+          microsoft_calendar_connected,
+          zoom_connected,
+          video_platform_preference,
+          default_video_link
         )
       `)
       .eq("id", profileId)
@@ -756,6 +760,9 @@ export async function confirmBookingAction(
       timezone?: string;
       google_calendar_connected?: boolean;
       microsoft_calendar_connected?: boolean;
+      zoom_connected?: boolean;
+      video_platform_preference?: string;
+      default_video_link?: string;
     } | null;
 
     // Create calendar event if calendar is connected
@@ -779,23 +786,63 @@ export async function confirmBookingAction(
       attendeeName: booking.visitor_name,
     };
 
-    // Try Google Calendar first, then Microsoft
+    // Determine if we need a video link (only for online sessions)
+    const needsVideoLink = booking.session_format === "online";
+    const videoPreference = bookingSettings?.video_platform_preference || "none";
+    let meetingUrl: string | null = null;
+
+    // Create calendar event and generate video link based on preference
     if (bookingSettings?.google_calendar_connected) {
-      const calendarResult = await createGoogleCalendarEvent(
-        userId,
-        calendarEventDetails
-      );
+      const addMeetLink = needsVideoLink && videoPreference === "google_meet";
+      const calendarResult = await createGoogleCalendarEvent(userId, {
+        ...calendarEventDetails,
+        addMeetLink,
+      });
       if (!calendarResult.success) {
         console.warn("Failed to create Google Calendar event:", calendarResult.error);
+      } else if (calendarResult.meetingUrl) {
+        meetingUrl = calendarResult.meetingUrl;
       }
     } else if (bookingSettings?.microsoft_calendar_connected) {
-      const calendarResult = await createMicrosoftCalendarEvent(
-        userId,
-        calendarEventDetails
-      );
+      const addTeamsLink = needsVideoLink && videoPreference === "teams";
+      const calendarResult = await createMicrosoftCalendarEvent(userId, {
+        ...calendarEventDetails,
+        addTeamsLink,
+      });
       if (!calendarResult.success) {
         console.warn("Failed to create Microsoft Calendar event:", calendarResult.error);
+      } else if (calendarResult.meetingUrl) {
+        meetingUrl = calendarResult.meetingUrl;
       }
+    }
+
+    // Handle Zoom OAuth - create meeting independently of calendar
+    if (needsVideoLink && videoPreference === "zoom_oauth" && bookingSettings?.zoom_connected) {
+      const zoomResult = await createZoomMeeting(userId, {
+        topic: calendarEventDetails.title,
+        startTime,
+        duration: booking.duration_minutes,
+        timezone,
+        attendeeEmail: booking.visitor_email,
+      });
+      if (zoomResult.success && zoomResult.joinUrl) {
+        meetingUrl = zoomResult.joinUrl;
+      } else {
+        console.warn("Failed to create Zoom meeting:", zoomResult.error);
+      }
+    }
+
+    // Handle manual video link
+    if (needsVideoLink && videoPreference === "manual_link" && bookingSettings?.default_video_link) {
+      meetingUrl = bookingSettings.default_video_link;
+    }
+
+    // Update booking with meeting URL if generated
+    if (meetingUrl) {
+      await supabase
+        .from("bookings")
+        .update({ meeting_url: meetingUrl })
+        .eq("id", bookingId);
     }
 
     // Send confirmation email to visitor
@@ -804,6 +851,8 @@ export async function confirmBookingAction(
       therapistName,
       bookingDate: booking.booking_date,
       startTime: booking.start_time,
+      meetingUrl: meetingUrl || undefined,
+      sessionFormat: booking.session_format || undefined,
     });
 
     const emailSent = await sendEmail({

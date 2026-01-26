@@ -23,6 +23,7 @@ interface Booking {
   cancelled_at: string | null;
   cancellation_reason: string | null;
   cancelled_by: string | null;
+  meeting_url: string | null;
 }
 
 type FilterType = "pending" | "upcoming" | "past" | "all";

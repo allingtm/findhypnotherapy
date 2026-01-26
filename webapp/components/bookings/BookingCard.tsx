@@ -13,6 +13,7 @@ import {
   IconPhone,
   IconCheck,
   IconX,
+  IconVideo,
 } from "@tabler/icons-react";
 
 interface Booking {
@@ -33,6 +34,7 @@ interface Booking {
   cancelled_at: string | null;
   cancellation_reason: string | null;
   cancelled_by: string | null;
+  meeting_url: string | null;
 }
 
 interface BookingCardProps {
@@ -210,6 +212,21 @@ export function BookingCard({ booking, onStatusChange }: BookingCardProps) {
             <span>{booking.visitor_phone}</span>
           </div>
         )}
+        {booking.status === "confirmed" &&
+          booking.session_format === "online" &&
+          booking.meeting_url && (
+            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+              <IconVideo className="w-4 h-4" />
+              <a
+                href={booking.meeting_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline"
+              >
+                Join Video Session
+              </a>
+            </div>
+          )}
       </div>
 
       {booking.visitor_notes && (
