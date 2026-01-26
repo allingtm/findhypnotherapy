@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { Navbar } from '@/components/ui/Navbar'
 import { Footer } from '@/components/ui/Footer'
 import { CollapsibleSection } from '@/components/ui/CollapsibleSection'
+import { ExpandableText } from '@/components/ui/ExpandableText'
 import { ContactForm } from '@/components/messages/ContactForm'
 import Link from 'next/link'
 import type { Metadata } from 'next'
@@ -270,9 +271,11 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
             {/* About - Collapsible, default open */}
             {profile.bio && (
               <CollapsibleSection title="About" defaultOpen={true}>
-                <div className="prose dark:prose-invert max-w-none">
-                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{profile.bio}</p>
-                </div>
+                <ExpandableText
+                  text={profile.bio}
+                  maxLength={200}
+                  className="prose dark:prose-invert max-w-none"
+                />
               </CollapsibleSection>
             )}
 
