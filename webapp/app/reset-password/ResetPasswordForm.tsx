@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useActionState } from 'react'
+import { useState, useEffect, useActionState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useFormStatus } from 'react-dom'
 import Link from 'next/link'
 import { resetPasswordSchema } from '@/lib/validation/auth'
@@ -9,6 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
 import { parseFieldErrors } from '@/lib/utils/errorParsing'
+import { PasswordStrengthBar } from '@/components/ui/PasswordStrengthBar'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -20,8 +22,20 @@ function SubmitButton() {
 }
 
 export function ResetPasswordForm() {
+  const router = useRouter()
   const [state, formAction] = useActionState(resetPasswordAction, { success: false })
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({})
+  const [password, setPassword] = useState('')
+
+  // Redirect to login after successful password reset
+  useEffect(() => {
+    if (state.success) {
+      const timer = setTimeout(() => {
+        router.push('/login')
+      }, 2000) // 2 second delay to show success message
+      return () => clearTimeout(timer)
+    }
+  }, [state.success, router])
 
   const validateField = (name: string, value: string, formData?: FormData) => {
     try {
@@ -64,12 +78,12 @@ export function ResetPasswordForm() {
       <div>
         <Alert
           type="success"
-          message="Your password has been updated successfully."
+          message="Your password has been updated successfully. Redirecting to login..."
         />
         <div className="mt-6">
           <Link href="/login">
             <Button variant="primary" className="w-full">
-              Sign In
+              Sign In Now
             </Button>
           </Link>
         </div>
@@ -88,8 +102,11 @@ export function ResetPasswordForm() {
         placeholder="At least 8 characters"
         required
         error={errors.password}
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
         onBlur={(e) => validateField('password', e.target.value)}
       />
+      <PasswordStrengthBar password={password} />
 
       <Input
         label="Confirm New Password"

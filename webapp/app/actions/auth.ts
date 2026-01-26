@@ -273,7 +273,7 @@ export async function resetPasswordAction(prevState: any, formData: FormData): P
     if (error) {
       return {
         success: false,
-        error: 'Failed to update password. Please try again.',
+        error: error.message || 'Failed to update password. Please try again.',
       }
     }
 

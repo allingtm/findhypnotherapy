@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
 import { parseFieldErrors } from '@/lib/utils/errorParsing'
+import { PasswordStrengthBar } from '@/components/ui/PasswordStrengthBar'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -22,6 +23,7 @@ function SubmitButton() {
 export function RegisterForm() {
   const [state, formAction] = useActionState(registerAction, { success: false })
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({})
+  const [password, setPassword] = useState('')
 
   // Diagnostic logging in development
   if (process.env.NODE_ENV === 'development' && state.fieldErrors) {
@@ -140,8 +142,11 @@ export function RegisterForm() {
         placeholder="At least 8 characters"
         required
         error={errors.password}
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
         onBlur={(e) => validateField('password', e.target.value)}
       />
+      <PasswordStrengthBar password={password} />
 
       <Input
         label="Confirm Password"
