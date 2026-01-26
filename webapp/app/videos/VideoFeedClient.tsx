@@ -6,12 +6,20 @@ import { DesktopVideoFeed } from '@/components/video-feed/DesktopVideoFeed'
 import { VideoFeedFilters } from '@/components/video-feed/VideoFeedFilters'
 import type { VideoFeedItem } from '@/lib/types/videos'
 
+interface Specialization {
+  id: string
+  name: string
+  slug: string
+  category: string | null
+}
+
 interface VideoFeedClientProps {
   initialVideos: VideoFeedItem[]
   hasMore: boolean
+  specializations: Specialization[]
 }
 
-export function VideoFeedClient({ initialVideos, hasMore }: VideoFeedClientProps) {
+export function VideoFeedClient({ initialVideos, hasMore, specializations }: VideoFeedClientProps) {
   const [isMobile, setIsMobile] = useState(false)
   const [showFilters, setShowFilters] = useState(true)
 
@@ -41,7 +49,7 @@ export function VideoFeedClient({ initialVideos, hasMore }: VideoFeedClientProps
             Videos
           </h1>
 
-          <VideoFeedFilters />
+          <VideoFeedFilters specializations={specializations} />
 
           <div className="text-center py-16 bg-white dark:bg-neutral-900 rounded-lg shadow">
             <svg
@@ -92,7 +100,7 @@ export function VideoFeedClient({ initialVideos, hasMore }: VideoFeedClientProps
         {showFilters && (
           <div className="fixed inset-0 z-40 bg-black/80 flex items-start justify-center pt-16 px-4">
             <div className="w-full max-w-md">
-              <VideoFeedFilters />
+              <VideoFeedFilters specializations={specializations} />
               <button
                 onClick={() => setShowFilters(false)}
                 className="w-full mt-4 px-4 py-2 bg-white text-black rounded-lg font-medium"
@@ -116,7 +124,7 @@ export function VideoFeedClient({ initialVideos, hasMore }: VideoFeedClientProps
           Videos
         </h1>
 
-        <VideoFeedFilters />
+        <VideoFeedFilters specializations={specializations} />
 
         <DesktopVideoFeed videos={initialVideos} hasMore={hasMore} />
       </div>

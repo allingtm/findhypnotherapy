@@ -12,7 +12,8 @@ export const metadata = {
 interface VideosPageProps {
   searchParams: Promise<{
     q?: string
-    format?: string
+    specialization?: string
+    location?: string
     page?: string
   }>
 }
@@ -22,14 +23,23 @@ export default async function VideosPage({ searchParams }: VideosPageProps) {
   const supabase = await createClient()
 
   const searchQuery = params.q || null
-  const sessionFormat = params.format || null
+  const specializationSlug = params.specialization || null
+  const locationFilter = params.location || null
   const page = parseInt(params.page || '1', 10)
   const pageSize = 20
+
+  // Fetch specializations for filter dropdown
+  const { data: specializations } = await supabase
+    .from('specializations')
+    .select('id, name, slug, category')
+    .eq('is_active', true)
+    .order('display_order')
 
   // Fetch videos using RPC function
   const { data: videos, error } = await supabase.rpc('search_videos', {
     search_query: searchQuery,
-    session_format_filter: sessionFormat,
+    specialization_slug: specializationSlug,
+    location_filter: locationFilter,
     page_number: page,
     page_size: pageSize,
   })
@@ -46,7 +56,11 @@ export default async function VideosPage({ searchParams }: VideosPageProps) {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <div className="flex-1 bg-gray-50 dark:bg-neutral-950">
-        <VideoFeedClient initialVideos={videoList} hasMore={hasMore} />
+        <VideoFeedClient
+          initialVideos={videoList}
+          hasMore={hasMore}
+          specializations={specializations || []}
+        />
       </div>
       <Footer />
     </div>

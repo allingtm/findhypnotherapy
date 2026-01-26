@@ -3,20 +3,43 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useTransition } from 'react'
 
-export function VideoFeedFilters() {
+interface Specialization {
+  id: string
+  name: string
+  slug: string
+  category: string | null
+}
+
+interface VideoFeedFiltersProps {
+  specializations: Specialization[]
+}
+
+export function VideoFeedFilters({ specializations }: VideoFeedFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
 
   const [query, setQuery] = useState(searchParams.get('q') || '')
-  const [format, setFormat] = useState(searchParams.get('format') || '')
+  const [location, setLocation] = useState(searchParams.get('location') || '')
+  const [specialization, setSpecialization] = useState(searchParams.get('specialization') || '')
+
+  // Group specializations by category
+  const groupedSpecializations = specializations.reduce((acc, spec) => {
+    const category = spec.category || 'Other'
+    if (!acc[category]) {
+      acc[category] = []
+    }
+    acc[category].push(spec)
+    return acc
+  }, {} as Record<string, Specialization[]>)
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
 
     const params = new URLSearchParams()
     if (query) params.set('q', query)
-    if (format) params.set('format', format)
+    if (location) params.set('location', location)
+    if (specialization) params.set('specialization', specialization)
 
     startTransition(() => {
       router.push(`/videos?${params.toString()}`)
@@ -25,22 +48,23 @@ export function VideoFeedFilters() {
 
   const handleClear = () => {
     setQuery('')
-    setFormat('')
+    setLocation('')
+    setSpecialization('')
 
     startTransition(() => {
       router.push('/videos')
     })
   }
 
-  const hasFilters = query || format
+  const hasFilters = query || location || specialization
 
   return (
     <form onSubmit={handleSearch} className="bg-white dark:bg-neutral-900 rounded-lg shadow p-4 mb-6">
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Search query */}
-        <div className="flex-1">
-          <label htmlFor="query" className="sr-only">
-            Search videos
+        <div>
+          <label htmlFor="query" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Search
           </label>
           <input
             type="text"
@@ -52,26 +76,47 @@ export function VideoFeedFilters() {
           />
         </div>
 
-        {/* Session Format */}
-        <div className="sm:w-48">
-          <label htmlFor="format" className="sr-only">
-            Session Format
+        {/* Location */}
+        <div>
+          <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Location
+          </label>
+          <input
+            type="text"
+            id="location"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="City or postal code..."
+            className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300 dark:border-neutral-600"
+          />
+        </div>
+
+        {/* Specialization */}
+        <div>
+          <label htmlFor="specialization" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Specialisation
           </label>
           <select
-            id="format"
-            value={format}
-            onChange={(e) => setFormat(e.target.value)}
+            id="specialization"
+            value={specialization}
+            onChange={(e) => setSpecialization(e.target.value)}
             className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300 dark:border-neutral-600"
           >
-            <option value="">All formats</option>
-            <option value="in-person">Face to Face</option>
-            <option value="online">Online</option>
-            <option value="phone">Phone</option>
+            <option value="">All specialisations</option>
+            {Object.entries(groupedSpecializations).map(([category, specs]) => (
+              <optgroup key={category} label={category}>
+                {specs.map((spec) => (
+                  <option key={spec.slug} value={spec.slug}>
+                    {spec.name}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
           </select>
         </div>
 
         {/* Buttons */}
-        <div className="flex gap-2">
+        <div className="flex items-end gap-2">
           <button
             type="submit"
             disabled={isPending}
