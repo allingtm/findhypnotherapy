@@ -28,7 +28,8 @@
       "Bash(stripe webhook_endpoints:*)",
       "Bash(stripe events resend:*)",
       "mcp__supabase__get_logs",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Read(//c/Users/allin/AppData/Local/npm-cache/_logs/**)"
     ],
     "additionalDirectories": [
       "d:\\repos\\findhypnotherapy\\webapp\\app\\book",
