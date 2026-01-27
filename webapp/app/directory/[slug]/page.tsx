@@ -5,6 +5,8 @@ import { Footer } from '@/components/ui/Footer'
 import { CollapsibleSection } from '@/components/ui/CollapsibleSection'
 import { ExpandableText } from '@/components/ui/ExpandableText'
 import { ContactForm } from '@/components/messages/ContactForm'
+import { VideoWall } from '@/components/video-feed/VideoWall'
+import { getRelatedVideos } from '@/app/actions/therapist-videos'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import type { ServiceType, PriceDisplayMode } from '@/lib/types/database'
@@ -71,6 +73,9 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
   if (error || !profile) {
     notFound()
   }
+
+  // Fetch therapist's videos
+  const videos = await getRelatedVideos(profile.id, undefined, 8)
 
   const userData = profile.users as { name: string; photo_url: string | null; email: string }
   const specializations = (profile.therapist_specializations as Array<{
@@ -302,6 +307,13 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
                 <p className="text-gray-700 dark:text-gray-300">
                   {profile.years_experience} years of professional experience
                 </p>
+              </CollapsibleSection>
+            )}
+
+            {/* Videos - Collapsible, default closed */}
+            {videos.length > 0 && (
+              <CollapsibleSection title="Videos" defaultOpen={false}>
+                <VideoWall videos={videos} showTherapistInfo={false} />
               </CollapsibleSection>
             )}
           </div>

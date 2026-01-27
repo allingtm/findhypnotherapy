@@ -3,7 +3,7 @@ export const VIDEO_CONSTRAINTS = {
   MAX_DURATION_SECONDS: 90,
   MIN_DURATION_SECONDS: 3,
   ALLOWED_TYPES: ['video/mp4', 'video/webm', 'video/quicktime'] as const,
-  ASPECT_RATIO: 1, // 1:1 square
+  ASPECT_RATIO: 16 / 9, // 16:9 landscape
   ASPECT_RATIO_TOLERANCE: 0.1, // Allow 10% variance
 }
 
@@ -66,7 +66,7 @@ export function validateVideoAspectRatio(width: number, height: number): Validat
   if (Math.abs(aspectRatio - targetRatio) > tolerance) {
     return {
       valid: false,
-      error: 'Video must be square (1:1 aspect ratio)',
+      error: 'Video must be landscape (16:9 aspect ratio)',
     }
   }
 

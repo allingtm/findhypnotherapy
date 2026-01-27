@@ -29,7 +29,7 @@ export function VideoCard({ video, onEdit }: VideoCardProps) {
   return (
     <div className="bg-white dark:bg-neutral-800 rounded-lg shadow overflow-hidden">
       {/* Thumbnail */}
-      <div className="relative aspect-square bg-gray-100 dark:bg-neutral-700">
+      <div className="relative aspect-video bg-gray-100 dark:bg-neutral-700">
         {video.thumbnail_url ? (
           <img
             src={video.thumbnail_url}

@@ -31,7 +31,8 @@
       "Bash(npx tsc:*)"
     ],
     "additionalDirectories": [
-      "d:\\repos\\findhypnotherapy\\webapp\\app\\book"
+      "d:\\repos\\findhypnotherapy\\webapp\\app\\book",
+      "d:\\repos\\findhypnotherapy\\webapp\\app\\videos"
     ]
   }
 }

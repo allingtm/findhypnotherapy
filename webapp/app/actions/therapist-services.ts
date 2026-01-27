@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { validateImageFile, getFileExtension } from '@/lib/utils/fileValidation'
 import { generateServiceImageFilename } from '@/lib/utils/imageCrop'
+import { uploadFile, deleteFile, getPublicUrl, extractR2Path, parsePath } from '@/lib/r2/storage'
 
 // Response type for form actions
 type ActionResponse = {
@@ -550,16 +551,18 @@ export async function uploadServiceImageAction(
     const fileExtension = getFileExtension(file.type)
     const filename = generateServiceImageFilename(user.id, serviceId, fileExtension)
 
-    // Upload to Supabase Storage
-    const { error: uploadError } = await supabase.storage
-      .from('service-images')
-      .upload(filename, file, {
-        cacheControl: '3600',
-        upsert: false,
-      })
+    // Convert File to Buffer for R2 upload
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
 
-    if (uploadError) {
-      console.error('Service image upload error:', uploadError)
+    // Upload to R2 Storage
+    const uploadResult = await uploadFile('service-images', filename, buffer, {
+      contentType: file.type,
+      cacheControl: 'max-age=3600',
+    })
+
+    if (!uploadResult.success) {
+      console.error('Service image upload error:', uploadResult.error)
       return {
         success: false,
         error: 'Failed to upload image',
@@ -567,9 +570,7 @@ export async function uploadServiceImageAction(
     }
 
     // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('service-images')
-      .getPublicUrl(filename)
+    const publicUrl = getPublicUrl('service-images', filename)
 
     // Update service with new image URL
     const { error: updateError } = await supabase
@@ -579,9 +580,7 @@ export async function uploadServiceImageAction(
 
     if (updateError) {
       // Rollback: delete uploaded file
-      await supabase.storage
-        .from('service-images')
-        .remove([filename])
+      await deleteFile('service-images', filename)
 
       return {
         success: false,
@@ -592,12 +591,12 @@ export async function uploadServiceImageAction(
     // Delete old image if exists
     if (service.image_url) {
       try {
-        const urlParts = service.image_url.split('/storage/v1/object/public/service-images/')
-        if (urlParts.length > 1) {
-          const oldPath = urlParts[1]
-          await supabase.storage
-            .from('service-images')
-            .remove([oldPath])
+        const oldPath = extractR2Path(service.image_url)
+        if (oldPath) {
+          const parsed = parsePath(oldPath)
+          if (parsed) {
+            await deleteFile(parsed.folder, parsed.filename)
+          }
         }
       } catch (err) {
         console.warn('Failed to delete old service image:', err)
@@ -662,14 +661,14 @@ export async function deleteServiceImageAction(serviceId: string): Promise<Actio
       }
     }
 
-    // Delete from storage
+    // Delete from R2 storage
     try {
-      const urlParts = service.image_url.split('/storage/v1/object/public/service-images/')
-      if (urlParts.length > 1) {
-        const filePath = urlParts[1]
-        await supabase.storage
-          .from('service-images')
-          .remove([filePath])
+      const fullPath = extractR2Path(service.image_url)
+      if (fullPath) {
+        const parsed = parsePath(fullPath)
+        if (parsed) {
+          await deleteFile(parsed.folder, parsed.filename)
+        }
       }
     } catch (err) {
       console.warn('Failed to delete service image file:', err)

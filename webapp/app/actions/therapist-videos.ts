@@ -10,7 +10,8 @@ import {
   generateThumbnailFilename,
   getVideoExtension,
 } from '@/lib/utils/videoValidation'
-import type { TherapistVideo, SessionFormat } from '@/lib/types/videos'
+import type { TherapistVideo, SessionFormat, VideoFeedItem } from '@/lib/types/videos'
+import { uploadFile, deleteFile, getPublicUrl, extractR2Path, parsePath } from '@/lib/r2/storage'
 
 type ActionResponse = {
   success: boolean
@@ -34,6 +35,18 @@ const videoUpdateSchema = z.object({
   description: z.string().max(500, 'Description must be 500 characters or less').optional(),
   session_format: z.array(z.enum(['in-person', 'online', 'phone'])).optional(),
 })
+
+// Generate URL-friendly slug from title
+function generateVideoSlug(title: string, id: string): string {
+  const base = title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .substring(0, 50)
+    .replace(/^-|-$/g, '')
+  return `${base}-${id.substring(0, 8)}`
+}
 
 // Get user's therapist profile
 async function getTherapistProfile(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
@@ -102,25 +115,26 @@ export async function uploadVideoAction(
     const extension = getVideoExtension(videoFile.type)
     const videoFilename = generateVideoFilename(user.id, extension)
 
-    const { error: uploadError } = await supabase.storage
-      .from('therapist-videos')
-      .upload(videoFilename, videoFile, {
-        cacheControl: '3600',
-        upsert: false,
-      })
+    // Convert File to Buffer for R2 upload
+    const videoArrayBuffer = await videoFile.arrayBuffer()
+    const videoBuffer = Buffer.from(videoArrayBuffer)
 
-    if (uploadError) {
-      console.error('Video upload error:', uploadError)
+    const videoUploadResult = await uploadFile('therapist-videos', videoFilename, videoBuffer, {
+      contentType: videoFile.type,
+      cacheControl: 'max-age=3600',
+    })
+
+    if (!videoUploadResult.success) {
+      console.error('Video upload error:', videoUploadResult.error)
       return { success: false, error: 'Failed to upload video' }
     }
 
     // Get public URL
-    const { data: { publicUrl: videoUrl } } = supabase.storage
-      .from('therapist-videos')
-      .getPublicUrl(videoFilename)
+    const videoUrl = getPublicUrl('therapist-videos', videoFilename)
 
     // Handle thumbnail if provided
     let thumbnailUrl: string | null = null
+    let thumbnailFilename: string | null = null
     const thumbnailFile = formData.get('thumbnail') as File
     if (thumbnailFile && thumbnailFile.size > 0) {
       const thumbValidation = validateThumbnailFile(thumbnailFile)
@@ -128,25 +142,24 @@ export async function uploadVideoAction(
         // We'll generate the thumbnail filename after we have the video ID
         // For now, use a temp ID
         const tempId = crypto.randomUUID()
-        const thumbnailFilename = generateThumbnailFilename(user.id, tempId)
+        thumbnailFilename = generateThumbnailFilename(user.id, tempId)
 
-        const { error: thumbUploadError } = await supabase.storage
-          .from('video-thumbnails')
-          .upload(thumbnailFilename, thumbnailFile, {
-            cacheControl: '3600',
-            upsert: false,
-          })
+        // Convert File to Buffer
+        const thumbArrayBuffer = await thumbnailFile.arrayBuffer()
+        const thumbBuffer = Buffer.from(thumbArrayBuffer)
 
-        if (!thumbUploadError) {
-          const { data: { publicUrl } } = supabase.storage
-            .from('video-thumbnails')
-            .getPublicUrl(thumbnailFilename)
-          thumbnailUrl = publicUrl
+        const thumbUploadResult = await uploadFile('video-thumbnails', thumbnailFilename, thumbBuffer, {
+          contentType: thumbnailFile.type,
+          cacheControl: 'max-age=3600',
+        })
+
+        if (thumbUploadResult.success) {
+          thumbnailUrl = getPublicUrl('video-thumbnails', thumbnailFilename)
         }
       }
     }
 
-    // Create database record
+    // Create database record (first without slug to get the ID)
     const { data: video, error: insertError } = await supabase
       .from('therapist_videos')
       .insert({
@@ -164,9 +177,21 @@ export async function uploadVideoAction(
       .select('id')
       .single()
 
+    // Generate and update slug after we have the ID
+    if (video) {
+      const slug = generateVideoSlug(sanitizedTitle, video.id)
+      await supabase
+        .from('therapist_videos')
+        .update({ slug })
+        .eq('id', video.id)
+    }
+
     if (insertError) {
-      // Rollback: delete uploaded video
-      await supabase.storage.from('therapist-videos').remove([videoFilename])
+      // Rollback: delete uploaded video and thumbnail
+      await deleteFile('therapist-videos', videoFilename)
+      if (thumbnailFilename) {
+        await deleteFile('video-thumbnails', thumbnailFilename)
+      }
       console.error('Database insert error:', insertError)
       return { success: false, error: 'Failed to save video' }
     }
@@ -290,24 +315,30 @@ export async function deleteVideoAction(
       return { success: false, error: 'Failed to delete video' }
     }
 
-    // Delete video file from storage
+    // Delete video file from R2 storage
     if (video.video_url) {
       try {
-        const videoPath = extractStoragePath(video.video_url, 'therapist-videos')
-        if (videoPath) {
-          await supabase.storage.from('therapist-videos').remove([videoPath])
+        const fullPath = extractR2Path(video.video_url)
+        if (fullPath) {
+          const parsed = parsePath(fullPath)
+          if (parsed) {
+            await deleteFile(parsed.folder, parsed.filename)
+          }
         }
       } catch (err) {
         console.warn('Failed to delete video file:', err)
       }
     }
 
-    // Delete thumbnail from storage
+    // Delete thumbnail from R2 storage
     if (video.thumbnail_url) {
       try {
-        const thumbPath = extractStoragePath(video.thumbnail_url, 'video-thumbnails')
-        if (thumbPath) {
-          await supabase.storage.from('video-thumbnails').remove([thumbPath])
+        const fullPath = extractR2Path(video.thumbnail_url)
+        if (fullPath) {
+          const parsed = parsePath(fullPath)
+          if (parsed) {
+            await deleteFile(parsed.folder, parsed.filename)
+          }
         }
       } catch (err) {
         console.warn('Failed to delete thumbnail:', err)
@@ -322,14 +353,6 @@ export async function deleteVideoAction(
     console.error('Video delete error:', err)
     return { success: false, error: 'An unexpected error occurred' }
   }
-}
-
-// Helper to extract storage path from public URL
-function extractStoragePath(url: string, bucket: string): string | null {
-  const marker = `/storage/v1/object/public/${bucket}/`
-  const index = url.indexOf(marker)
-  if (index === -1) return null
-  return url.substring(index + marker.length)
 }
 
 // Get user's videos
@@ -380,5 +403,209 @@ export async function getVideoById(videoId: string): Promise<TherapistVideo | nu
   } catch (err) {
     console.error('Error fetching video:', err)
     return null
+  }
+}
+
+// Get single video by slug with therapist data for public viewing
+export async function getVideoBySlug(slug: string): Promise<VideoFeedItem | null> {
+  try {
+    const supabase = await createClient()
+
+    const { data: video, error } = await supabase
+      .from('therapist_videos')
+      .select(`
+        id,
+        slug,
+        title,
+        description,
+        video_url,
+        thumbnail_url,
+        duration_seconds,
+        session_format,
+        created_at,
+        published_at,
+        therapist_profile_id,
+        therapist_profiles!inner (
+          slug,
+          session_format,
+          users!inner (
+            name,
+            photo_url
+          )
+        )
+      `)
+      .eq('slug', slug)
+      .eq('status', 'published')
+      .single()
+
+    if (error || !video) {
+      console.error('Error fetching video:', error)
+      return null
+    }
+
+    const profile = video.therapist_profiles as any
+    const user = profile.users
+
+    return {
+      id: video.id,
+      slug: video.slug,
+      title: video.title,
+      description: video.description,
+      video_url: video.video_url,
+      thumbnail_url: video.thumbnail_url,
+      duration_seconds: video.duration_seconds,
+      session_format: video.session_format,
+      created_at: video.created_at,
+      published_at: video.published_at,
+      therapist_profile_id: video.therapist_profile_id,
+      therapist_name: user?.name || 'Therapist',
+      therapist_slug: profile.slug,
+      therapist_photo_url: user?.photo_url || null,
+      therapist_session_format: profile.session_format,
+      total_count: 1,
+    } as VideoFeedItem
+  } catch (err) {
+    console.error('Error fetching video:', err)
+    return null
+  }
+}
+
+// Get single video by ID with therapist data for public viewing (legacy)
+export async function getVideoByIdPublic(videoId: string): Promise<VideoFeedItem | null> {
+  try {
+    const supabase = await createClient()
+
+    const { data: video, error } = await supabase
+      .from('therapist_videos')
+      .select(`
+        id,
+        slug,
+        title,
+        description,
+        video_url,
+        thumbnail_url,
+        duration_seconds,
+        session_format,
+        created_at,
+        published_at,
+        therapist_profile_id,
+        therapist_profiles!inner (
+          slug,
+          session_format,
+          users!inner (
+            name,
+            photo_url
+          )
+        )
+      `)
+      .eq('id', videoId)
+      .eq('status', 'published')
+      .single()
+
+    if (error || !video) {
+      console.error('Error fetching video:', error)
+      return null
+    }
+
+    const profile = video.therapist_profiles as any
+    const user = profile.users
+
+    return {
+      id: video.id,
+      slug: video.slug,
+      title: video.title,
+      description: video.description,
+      video_url: video.video_url,
+      thumbnail_url: video.thumbnail_url,
+      duration_seconds: video.duration_seconds,
+      session_format: video.session_format,
+      created_at: video.created_at,
+      published_at: video.published_at,
+      therapist_profile_id: video.therapist_profile_id,
+      therapist_name: user?.name || 'Therapist',
+      therapist_slug: profile.slug,
+      therapist_photo_url: user?.photo_url || null,
+      therapist_session_format: profile.session_format,
+      total_count: 1,
+    } as VideoFeedItem
+  } catch (err) {
+    console.error('Error fetching video:', err)
+    return null
+  }
+}
+
+// Get related videos from same therapist
+export async function getRelatedVideos(
+  therapistProfileId: string,
+  excludeVideoId?: string,
+  limit: number = 8
+): Promise<VideoFeedItem[]> {
+  try {
+    const supabase = await createClient()
+
+    let query = supabase
+      .from('therapist_videos')
+      .select(`
+        id,
+        slug,
+        title,
+        description,
+        video_url,
+        thumbnail_url,
+        duration_seconds,
+        session_format,
+        created_at,
+        published_at,
+        therapist_profile_id,
+        therapist_profiles!inner (
+          slug,
+          session_format,
+          users!inner (
+            name,
+            photo_url
+          )
+        )
+      `)
+      .eq('therapist_profile_id', therapistProfileId)
+      .eq('status', 'published')
+      .order('published_at', { ascending: false })
+      .limit(limit)
+
+    if (excludeVideoId) {
+      query = query.neq('id', excludeVideoId)
+    }
+
+    const { data: videos, error } = await query
+
+    if (error || !videos) {
+      console.error('Error fetching related videos:', error)
+      return []
+    }
+
+    return videos.map((video: any) => {
+      const profile = video.therapist_profiles
+      const user = profile.users
+      return {
+        id: video.id,
+        slug: video.slug,
+        title: video.title,
+        description: video.description,
+        video_url: video.video_url,
+        thumbnail_url: video.thumbnail_url,
+        duration_seconds: video.duration_seconds,
+        session_format: video.session_format,
+        created_at: video.created_at,
+        published_at: video.published_at,
+        therapist_profile_id: video.therapist_profile_id,
+        therapist_name: user?.name || 'Therapist',
+        therapist_slug: profile.slug,
+        therapist_photo_url: user?.photo_url || null,
+        therapist_session_format: profile.session_format,
+        total_count: videos.length,
+      } as VideoFeedItem
+    })
+  } catch (err) {
+    console.error('Error fetching related videos:', err)
+    return []
   }
 }

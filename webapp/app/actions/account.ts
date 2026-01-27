@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { cancelCustomerSubscriptions } from './stripe'
 import { revalidatePath } from 'next/cache'
+import { deleteFile, extractR2Path, parsePath } from '@/lib/r2/storage'
 
 type ActionResponse = {
   success: boolean
@@ -89,21 +90,27 @@ export async function requestAccountDeletionAction(
       console.error('Failed to delete calendar busy times:', busyError)
     }
 
-    // 4. Delete files from storage if therapist profile exists
+    // 4. Delete files from R2 storage if therapist profile exists
     if (therapistProfile) {
       // Delete profile photo
       if (therapistProfile.photo_url) {
-        const photoPath = extractStoragePath(therapistProfile.photo_url)
-        if (photoPath) {
-          await adminClient.storage.from('profile-photos').remove([photoPath])
+        const fullPath = extractR2Path(therapistProfile.photo_url)
+        if (fullPath) {
+          const parsed = parsePath(fullPath)
+          if (parsed) {
+            await deleteFile(parsed.folder, parsed.filename)
+          }
         }
       }
 
       // Delete profile video
       if (therapistProfile.video_url) {
-        const videoPath = extractStoragePath(therapistProfile.video_url)
-        if (videoPath) {
-          await adminClient.storage.from('profile-videos').remove([videoPath])
+        const fullPath = extractR2Path(therapistProfile.video_url)
+        if (fullPath) {
+          const parsed = parsePath(fullPath)
+          if (parsed) {
+            await deleteFile(parsed.folder, parsed.filename)
+          }
         }
       }
 
@@ -182,19 +189,6 @@ export async function requestAccountDeletionAction(
   } catch (error) {
     console.error('Account deletion error:', error)
     return { success: false, error: 'An unexpected error occurred during account deletion' }
-  }
-}
-
-/**
- * Extract storage path from full URL
- */
-function extractStoragePath(url: string): string | null {
-  try {
-    // URLs typically look like: https://xxx.supabase.co/storage/v1/object/public/bucket-name/path/to/file
-    const match = url.match(/\/storage\/v1\/object\/public\/[^/]+\/(.+)$/)
-    return match ? match[1] : null
-  } catch {
-    return null
   }
 }
 

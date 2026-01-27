@@ -55,30 +55,15 @@ export function ThumbnailSelector({
     const canvas = canvasRef.current
     if (!video || !canvas) return
 
-    // Set canvas size to match video dimensions (square)
-    const size = Math.min(video.videoWidth, video.videoHeight)
-    canvas.width = size
-    canvas.height = size
+    // Set canvas size to match video dimensions (16:9)
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
 
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // Calculate crop area for center square
-    const offsetX = (video.videoWidth - size) / 2
-    const offsetY = (video.videoHeight - size) / 2
-
-    // Draw video frame to canvas (cropped to square)
-    ctx.drawImage(
-      video,
-      offsetX,
-      offsetY,
-      size,
-      size,
-      0,
-      0,
-      size,
-      size
-    )
+    // Draw full video frame to canvas
+    ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight)
 
     // Generate preview
     const previewUrl = canvas.toDataURL('image/webp', 0.9)
@@ -135,7 +120,7 @@ export function ThumbnailSelector({
 
         {/* Video Preview */}
         <div className="p-6">
-          <div className="relative aspect-square bg-black rounded-lg overflow-hidden">
+          <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
             <video
               ref={videoRef}
               src={videoUrl}
@@ -178,7 +163,7 @@ export function ThumbnailSelector({
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Thumbnail Preview
               </p>
-              <div className="w-32 h-32 rounded-lg overflow-hidden border border-gray-200 dark:border-neutral-700">
+              <div className="w-40 aspect-video rounded-lg overflow-hidden border border-gray-200 dark:border-neutral-700">
                 <img
                   src={thumbnailPreview}
                   alt="Thumbnail preview"

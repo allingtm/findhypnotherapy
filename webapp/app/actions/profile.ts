@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { validateImageFile, getFileExtension } from '@/lib/utils/fileValidation'
 import { generatePhotoFilename } from '@/lib/utils/imageCrop'
+import { uploadFile, deleteFile, getPublicUrl, extractR2Path, parsePath } from '@/lib/r2/storage'
 
 // Response type for form actions
 type ActionResponse = {
@@ -227,16 +228,18 @@ export async function uploadProfilePhotoAction(
       .eq('id', user.id)
       .single()
 
-    // Upload to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('profile-photos')
-      .upload(filename, file, {
-        cacheControl: '3600',
-        upsert: false,
-      })
+    // Convert File to Buffer for R2 upload
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
 
-    if (uploadError) {
-      console.error('Upload error:', uploadError)
+    // Upload to R2 Storage
+    const uploadResult = await uploadFile('profile-photos', filename, buffer, {
+      contentType: file.type,
+      cacheControl: 'max-age=3600',
+    })
+
+    if (!uploadResult.success) {
+      console.error('Upload error:', uploadResult.error)
       return {
         success: false,
         error: 'Failed to upload photo',
@@ -244,9 +247,7 @@ export async function uploadProfilePhotoAction(
     }
 
     // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('profile-photos')
-      .getPublicUrl(filename)
+    const publicUrl = getPublicUrl('profile-photos', filename)
 
     // Update user profile with new photo URL
     const { error: updateError } = await supabase
@@ -256,9 +257,7 @@ export async function uploadProfilePhotoAction(
 
     if (updateError) {
       // Rollback: delete uploaded file
-      await supabase.storage
-        .from('profile-photos')
-        .remove([filename])
+      await deleteFile('profile-photos', filename)
 
       return {
         success: false,
@@ -269,13 +268,12 @@ export async function uploadProfilePhotoAction(
     // Delete old photo if exists
     if (currentProfile?.photo_url) {
       try {
-        // Extract the path from the URL
-        const urlParts = currentProfile.photo_url.split('/storage/v1/object/public/profile-photos/')
-        if (urlParts.length > 1) {
-          const oldPath = urlParts[1]
-          await supabase.storage
-            .from('profile-photos')
-            .remove([oldPath])
+        const oldPath = extractR2Path(currentProfile.photo_url)
+        if (oldPath) {
+          const parsed = parsePath(oldPath)
+          if (parsed) {
+            await deleteFile(parsed.folder, parsed.filename)
+          }
         }
       } catch (err) {
         // Non-critical error, log but don't fail
@@ -330,22 +328,26 @@ export async function deleteProfilePhotoAction(
     }
 
     // Extract path from URL
-    const urlParts = profile.photo_url.split('/storage/v1/object/public/profile-photos/')
-    if (urlParts.length <= 1) {
+    const fullPath = extractR2Path(profile.photo_url)
+    if (!fullPath) {
       return {
         success: false,
         error: 'Invalid photo URL',
       }
     }
 
-    const filePath = urlParts[1]
+    const parsed = parsePath(fullPath)
+    if (!parsed) {
+      return {
+        success: false,
+        error: 'Invalid photo URL',
+      }
+    }
 
-    // Delete from storage
-    const { error: deleteError } = await supabase.storage
-      .from('profile-photos')
-      .remove([filePath])
+    // Delete from R2 storage
+    const deleteResult = await deleteFile(parsed.folder, parsed.filename)
 
-    if (deleteError) {
+    if (!deleteResult.success) {
       return {
         success: false,
         error: 'Failed to delete photo',

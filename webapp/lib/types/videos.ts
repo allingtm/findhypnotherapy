@@ -7,6 +7,7 @@ export interface TherapistVideo {
   therapist_profile_id: string
   user_id: string
   title: string
+  slug: string | null
   description: string | null
   video_url: string
   thumbnail_url: string | null
@@ -21,6 +22,7 @@ export interface TherapistVideo {
 
 export interface VideoFeedItem {
   id: string
+  slug: string | null
   title: string
   description: string | null
   video_url: string

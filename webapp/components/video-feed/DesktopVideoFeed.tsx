@@ -63,7 +63,7 @@ export function DesktopVideoFeed({ videos, onLoadMore, hasMore }: DesktopVideoFe
     <div className="flex gap-6">
       {/* Main video player */}
       <div className="flex-1">
-        <div className="relative aspect-square bg-black rounded-lg overflow-hidden max-w-2xl mx-auto">
+        <div className="relative aspect-video bg-black rounded-lg overflow-hidden max-w-2xl mx-auto">
           <VideoPlayer
             src={currentVideo.video_url}
             poster={currentVideo.thumbnail_url}
@@ -122,7 +122,7 @@ export function DesktopVideoFeed({ videos, onLoadMore, hasMore }: DesktopVideoFe
                   : 'hover:opacity-80'
               }`}
             >
-              <div className="relative aspect-square bg-gray-100 dark:bg-neutral-800">
+              <div className="relative aspect-video bg-gray-100 dark:bg-neutral-800">
                 {video.thumbnail_url ? (
                   <img
                     src={video.thumbnail_url}

@@ -191,7 +191,7 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
         {!isEditing && (
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Video (1:1 square, max {VIDEO_CONSTRAINTS.MAX_DURATION_SECONDS}s)
+              Video (16:9 landscape, max {VIDEO_CONSTRAINTS.MAX_DURATION_SECONDS}s)
             </label>
 
             {!videoPreviewUrl ? (
@@ -232,7 +232,7 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
               </div>
             ) : (
               <div className="relative">
-                <div className="aspect-square bg-black rounded-lg overflow-hidden">
+                <div className="aspect-video bg-black rounded-lg overflow-hidden">
                   <video
                     ref={videoPreviewRef}
                     src={videoPreviewUrl}

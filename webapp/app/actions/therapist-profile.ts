@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { validateImageFile, getFileExtension } from '@/lib/utils/fileValidation'
 import { generateBannerFilename } from '@/lib/utils/imageCrop'
+import { uploadFile, deleteFile, getPublicUrl, extractR2Path, parsePath } from '@/lib/r2/storage'
 
 // Response type for form actions
 type ActionResponse = {
@@ -403,16 +404,18 @@ export async function uploadBannerAction(
       .eq('user_id', user.id)
       .single()
 
-    // Upload to Supabase Storage
-    const { error: uploadError } = await supabase.storage
-      .from('profile-banners')
-      .upload(filename, file, {
-        cacheControl: '3600',
-        upsert: false,
-      })
+    // Convert File to Buffer for R2 upload
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
 
-    if (uploadError) {
-      console.error('Banner upload error:', uploadError)
+    // Upload to R2 Storage
+    const uploadResult = await uploadFile('profile-banners', filename, buffer, {
+      contentType: file.type,
+      cacheControl: 'max-age=3600',
+    })
+
+    if (!uploadResult.success) {
+      console.error('Banner upload error:', uploadResult.error)
       return {
         success: false,
         error: 'Failed to upload banner',
@@ -420,9 +423,7 @@ export async function uploadBannerAction(
     }
 
     // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('profile-banners')
-      .getPublicUrl(filename)
+    const publicUrl = getPublicUrl('profile-banners', filename)
 
     // Update therapist profile with new banner URL
     const { error: updateError } = await supabase
@@ -432,9 +433,7 @@ export async function uploadBannerAction(
 
     if (updateError) {
       // Rollback: delete uploaded file
-      await supabase.storage
-        .from('profile-banners')
-        .remove([filename])
+      await deleteFile('profile-banners', filename)
 
       return {
         success: false,
@@ -445,12 +444,12 @@ export async function uploadBannerAction(
     // Delete old banner if exists
     if (currentProfile?.banner_url) {
       try {
-        const urlParts = currentProfile.banner_url.split('/storage/v1/object/public/profile-banners/')
-        if (urlParts.length > 1) {
-          const oldPath = urlParts[1]
-          await supabase.storage
-            .from('profile-banners')
-            .remove([oldPath])
+        const oldPath = extractR2Path(currentProfile.banner_url)
+        if (oldPath) {
+          const parsed = parsePath(oldPath)
+          if (parsed) {
+            await deleteFile(parsed.folder, parsed.filename)
+          }
         }
       } catch (err) {
         // Non-critical error, log but don't fail
@@ -504,14 +503,14 @@ export async function deleteBannerAction(
       }
     }
 
-    // Delete from storage
+    // Delete from R2 storage
     try {
-      const urlParts = profile.banner_url.split('/storage/v1/object/public/profile-banners/')
-      if (urlParts.length > 1) {
-        const filePath = urlParts[1]
-        await supabase.storage
-          .from('profile-banners')
-          .remove([filePath])
+      const fullPath = extractR2Path(profile.banner_url)
+      if (fullPath) {
+        const parsed = parsePath(fullPath)
+        if (parsed) {
+          await deleteFile(parsed.folder, parsed.filename)
+        }
       }
     } catch (err) {
       console.warn('Failed to delete banner file:', err)
