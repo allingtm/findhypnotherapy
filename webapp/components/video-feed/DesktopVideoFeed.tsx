@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import Image from 'next/image'
 import { VideoPlayer } from './VideoPlayer'
 import { VideoOverlay } from './VideoOverlay'
 import type { VideoFeedItem } from '@/lib/types/videos'
@@ -124,10 +125,11 @@ export function DesktopVideoFeed({ videos, onLoadMore, hasMore }: DesktopVideoFe
             >
               <div className="relative aspect-video bg-gray-100 dark:bg-neutral-800">
                 {video.thumbnail_url ? (
-                  <img
+                  <Image
                     src={video.thumbnail_url}
                     alt={video.title}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">

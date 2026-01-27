@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import type { VideoFeedItem } from '@/lib/types/videos'
 import { formatDuration } from '@/lib/utils/videoValidation'
 
@@ -46,12 +47,13 @@ function VideoWallCard({ video, showTherapistInfo = true }: VideoWallCardProps) 
       className="group block rounded-lg overflow-hidden bg-white dark:bg-neutral-800 shadow-sm hover:shadow-md transition-shadow"
     >
       {/* Thumbnail */}
-      <div className="relative aspect-video bg-gray-100 dark:bg-neutral-700">
+      <div className="relative aspect-video bg-gray-100 dark:bg-neutral-700 overflow-hidden">
         {video.thumbnail_url ? (
-          <img
+          <Image
             src={video.thumbnail_url}
             alt={video.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -99,11 +101,14 @@ function VideoWallCard({ video, showTherapistInfo = true }: VideoWallCardProps) 
         {showTherapistInfo && (
           <div className="mt-2 flex items-center gap-2">
             {video.therapist_photo_url ? (
-              <img
-                src={video.therapist_photo_url}
-                alt={video.therapist_name}
-                className="w-6 h-6 rounded-full object-cover"
-              />
+              <div className="relative w-6 h-6 flex-shrink-0">
+                <Image
+                  src={video.therapist_photo_url}
+                  alt={video.therapist_name}
+                  fill
+                  className="rounded-full object-cover"
+                />
+              </div>
             ) : (
               <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-neutral-600 flex items-center justify-center">
                 <span className="text-xs text-gray-500 dark:text-gray-400">

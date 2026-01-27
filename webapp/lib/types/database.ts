@@ -47,6 +47,9 @@ export type Database = {
           end_time: string
           id: string
           is_verified: boolean | null
+          meeting_url: string | null
+          reminder_1h_sent_at: string | null
+          reminder_24h_sent_at: string | null
           service_id: string | null
           session_format: string | null
           start_time: string
@@ -60,7 +63,6 @@ export type Database = {
           visitor_notes: string | null
           visitor_phone: string | null
           visitor_token: string
-          meeting_url: string | null
         }
         Insert: {
           booking_date: string
@@ -73,6 +75,9 @@ export type Database = {
           end_time: string
           id?: string
           is_verified?: boolean | null
+          meeting_url?: string | null
+          reminder_1h_sent_at?: string | null
+          reminder_24h_sent_at?: string | null
           service_id?: string | null
           session_format?: string | null
           start_time: string
@@ -86,7 +91,6 @@ export type Database = {
           visitor_notes?: string | null
           visitor_phone?: string | null
           visitor_token: string
-          meeting_url?: string | null
         }
         Update: {
           booking_date?: string
@@ -99,6 +103,9 @@ export type Database = {
           end_time?: string
           id?: string
           is_verified?: boolean | null
+          meeting_url?: string | null
+          reminder_1h_sent_at?: string | null
+          reminder_24h_sent_at?: string | null
           service_id?: string | null
           session_format?: string | null
           start_time?: string
@@ -112,7 +119,6 @@ export type Database = {
           visitor_notes?: string | null
           visitor_phone?: string | null
           visitor_token?: string
-          meeting_url?: string | null
         }
         Relationships: [
           {
@@ -203,8 +209,336 @@ export type Database = {
         }
         Relationships: []
       }
+      client_invitations: {
+        Row: {
+          client_id: string
+          completed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          opened_at: string | null
+          sent_at: string | null
+          token: string
+        }
+        Insert: {
+          client_id: string
+          completed_at?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          opened_at?: string | null
+          sent_at?: string | null
+          token: string
+        }
+        Update: {
+          client_id?: string
+          completed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          opened_at?: string | null
+          sent_at?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_invitations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_notes: {
+        Row: {
+          client_id: string
+          content: string
+          created_at: string
+          id: string
+          is_private: boolean
+          note_type: string
+          session_id: string | null
+          therapist_profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          content: string
+          created_at?: string
+          id?: string
+          is_private?: boolean
+          note_type: string
+          session_id?: string | null
+          therapist_profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_private?: boolean
+          note_type?: string
+          session_id?: string | null
+          therapist_profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_notes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_notes_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "client_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_notes_therapist_profile_id_fkey"
+            columns: ["therapist_profile_id"]
+            isOneToOne: false
+            referencedRelation: "therapist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_sessions: {
+        Row: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          client_id: string
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          end_time: string
+          google_event_id: string | null
+          id: string
+          location: string | null
+          meeting_url: string | null
+          microsoft_event_id: string | null
+          service_id: string | null
+          session_date: string
+          session_format: string | null
+          start_time: string
+          status: string
+          therapist_notes: string | null
+          therapist_profile_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          client_id: string
+          created_at?: string
+          description?: string | null
+          duration_minutes: number
+          end_time: string
+          google_event_id?: string | null
+          id?: string
+          location?: string | null
+          meeting_url?: string | null
+          microsoft_event_id?: string | null
+          service_id?: string | null
+          session_date: string
+          session_format?: string | null
+          start_time: string
+          status?: string
+          therapist_notes?: string | null
+          therapist_profile_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          end_time?: string
+          google_event_id?: string | null
+          id?: string
+          location?: string | null
+          meeting_url?: string | null
+          microsoft_event_id?: string | null
+          service_id?: string | null
+          session_date?: string
+          session_format?: string | null
+          start_time?: string
+          status?: string
+          therapist_notes?: string | null
+          therapist_profile_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_sessions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_sessions_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "therapist_services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_sessions_therapist_profile_id_fkey"
+            columns: ["therapist_profile_id"]
+            isOneToOne: false
+            referencedRelation: "therapist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_terms_acceptance: {
+        Row: {
+          accepted_at: string
+          client_id: string
+          id: string
+          ip_address: string | null
+          terms_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          accepted_at?: string
+          client_id: string
+          id?: string
+          ip_address?: string | null
+          terms_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          accepted_at?: string
+          client_id?: string
+          id?: string
+          ip_address?: string | null
+          terms_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_terms_acceptance_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_terms_acceptance_terms_id_fkey"
+            columns: ["terms_id"]
+            isOneToOne: false
+            referencedRelation: "therapist_terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clients: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          allergies: string | null
+          archived_at: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          email: string
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          emergency_contact_relationship: string | null
+          first_name: string | null
+          gp_name: string | null
+          gp_practice: string | null
+          health_conditions: string | null
+          id: string
+          last_name: string | null
+          medications: string | null
+          onboarded_at: string | null
+          phone: string | null
+          postal_code: string | null
+          slug: string
+          status: string
+          therapist_profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          allergies?: string | null
+          archived_at?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relationship?: string | null
+          first_name?: string | null
+          gp_name?: string | null
+          gp_practice?: string | null
+          health_conditions?: string | null
+          id?: string
+          last_name?: string | null
+          medications?: string | null
+          onboarded_at?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          slug: string
+          status?: string
+          therapist_profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          allergies?: string | null
+          archived_at?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relationship?: string | null
+          first_name?: string | null
+          gp_name?: string | null
+          gp_practice?: string | null
+          health_conditions?: string | null
+          id?: string
+          last_name?: string | null
+          medications?: string | null
+          onboarded_at?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          slug?: string
+          status?: string
+          therapist_profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_therapist_profile_id_fkey"
+            columns: ["therapist_profile_id"]
+            isOneToOne: false
+            referencedRelation: "therapist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
+          client_id: string | null
           created_at: string | null
           id: string
           is_blocked: boolean | null
@@ -217,6 +551,7 @@ export type Database = {
           visitor_token: string
         }
         Insert: {
+          client_id?: string | null
           created_at?: string | null
           id?: string
           is_blocked?: boolean | null
@@ -229,6 +564,7 @@ export type Database = {
           visitor_token: string
         }
         Update: {
+          client_id?: string | null
           created_at?: string | null
           id?: string
           is_blocked?: boolean | null
@@ -241,6 +577,13 @@ export type Database = {
           visitor_token?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "conversations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "conversations_public_users_fkey"
             columns: ["member_id"]
@@ -583,54 +926,60 @@ export type Database = {
           accepts_online_booking: boolean | null
           buffer_minutes: number | null
           created_at: string | null
+          default_video_link: string | null
           google_calendar_connected: boolean | null
           id: string
           max_booking_days_ahead: number | null
           microsoft_calendar_connected: boolean | null
           min_booking_notice_hours: number | null
           requires_approval: boolean | null
+          send_therapist_reminders: boolean | null
+          send_visitor_reminders: boolean | null
           slot_duration_minutes: number
           therapist_profile_id: string
           timezone: string
           updated_at: string | null
           video_platform_preference: string | null
-          default_video_link: string | null
           zoom_connected: boolean | null
         }
         Insert: {
           accepts_online_booking?: boolean | null
           buffer_minutes?: number | null
           created_at?: string | null
+          default_video_link?: string | null
           google_calendar_connected?: boolean | null
           id?: string
           max_booking_days_ahead?: number | null
           microsoft_calendar_connected?: boolean | null
           min_booking_notice_hours?: number | null
           requires_approval?: boolean | null
+          send_therapist_reminders?: boolean | null
+          send_visitor_reminders?: boolean | null
           slot_duration_minutes?: number
           therapist_profile_id: string
           timezone?: string
           updated_at?: string | null
           video_platform_preference?: string | null
-          default_video_link?: string | null
           zoom_connected?: boolean | null
         }
         Update: {
           accepts_online_booking?: boolean | null
           buffer_minutes?: number | null
           created_at?: string | null
+          default_video_link?: string | null
           google_calendar_connected?: boolean | null
           id?: string
           max_booking_days_ahead?: number | null
           microsoft_calendar_connected?: boolean | null
           min_booking_notice_hours?: number | null
           requires_approval?: boolean | null
+          send_therapist_reminders?: boolean | null
+          send_visitor_reminders?: boolean | null
           slot_duration_minutes?: number
           therapist_profile_id?: string
           timezone?: string
           updated_at?: string | null
           video_platform_preference?: string | null
-          default_video_link?: string | null
           zoom_connected?: boolean | null
         }
         Relationships: [
@@ -914,6 +1263,44 @@ export type Database = {
           },
         ]
       }
+      therapist_terms: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean
+          therapist_profile_id: string
+          title: string
+          version: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          therapist_profile_id: string
+          title?: string
+          version: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          therapist_profile_id?: string
+          title?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "therapist_terms_therapist_profile_id_fkey"
+            columns: ["therapist_profile_id"]
+            isOneToOne: false
+            referencedRelation: "therapist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       therapist_videos: {
         Row: {
           created_at: string | null
@@ -923,6 +1310,7 @@ export type Database = {
           id: string
           published_at: string | null
           session_format: string[] | null
+          slug: string | null
           status: Database["public"]["Enums"]["video_status"] | null
           therapist_profile_id: string
           thumbnail_url: string | null
@@ -940,6 +1328,7 @@ export type Database = {
           id?: string
           published_at?: string | null
           session_format?: string[] | null
+          slug?: string | null
           status?: Database["public"]["Enums"]["video_status"] | null
           therapist_profile_id: string
           thumbnail_url?: string | null
@@ -957,6 +1346,7 @@ export type Database = {
           id?: string
           published_at?: string | null
           session_format?: string[] | null
+          slug?: string | null
           status?: Database["public"]["Enums"]["video_status"] | null
           therapist_profile_id?: string
           thumbnail_url?: string | null
@@ -1008,33 +1398,11 @@ export type Database = {
           },
         ]
       }
-      verified_visitor_emails: {
-        Row: {
-          id: string
-          email: string
-          first_verified_at: string
-          verified_via: string
-          created_at: string | null
-        }
-        Insert: {
-          id?: string
-          email: string
-          first_verified_at?: string
-          verified_via: string
-          created_at?: string | null
-        }
-        Update: {
-          id?: string
-          email?: string
-          first_verified_at?: string
-          verified_via?: string
-          created_at?: string | null
-        }
-        Relationships: []
-      }
       users: {
         Row: {
           created_at: string
+          deleted_at: string | null
+          deletion_requested_at: string | null
           email: string
           id: string
           name: string
@@ -1044,6 +1412,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
+          deletion_requested_at?: string | null
           email: string
           id: string
           name?: string
@@ -1053,12 +1423,38 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
+          deletion_requested_at?: string | null
           email?: string
           id?: string
           name?: string
           photo_url?: string | null
           stripe_customer_id?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      verified_visitor_emails: {
+        Row: {
+          created_at: string | null
+          email: string
+          first_verified_at: string
+          id: string
+          verified_via: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          first_verified_at?: string
+          id?: string
+          verified_via: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          first_verified_at?: string
+          id?: string
+          verified_via?: string
         }
         Relationships: []
       }
@@ -1107,10 +1503,11 @@ export type Database = {
       }
       search_videos: {
         Args: {
+          location_filter?: string
           page_number?: number
           page_size?: number
           search_query?: string
-          session_format_filter?: string
+          specialization_slug?: string
         }
         Returns: {
           created_at: string
@@ -1119,6 +1516,9 @@ export type Database = {
           id: string
           published_at: string
           session_format: string[]
+          slug: string
+          therapist_city: string
+          therapist_country: string
           therapist_name: string
           therapist_photo_url: string
           therapist_profile_id: string
@@ -1130,6 +1530,7 @@ export type Database = {
           video_url: string
         }[]
       }
+      send_booking_reminders: { Args: Record<PropertyKey, never>; Returns: undefined }
     }
     Enums: {
       price_display_mode: "exact" | "from" | "range" | "contact" | "free"
@@ -1284,3 +1685,9 @@ export const Constants = {
 export type ServiceType = "single_session" | "package" | "programme" | "consultation" | "subscription"
 export type PriceDisplayMode = "exact" | "from" | "range" | "contact" | "free"
 export type VideoStatus = "processing" | "published" | "rejected" | "deleted"
+
+// Client-related type exports
+export type ClientStatus = "invited" | "onboarding" | "active" | "archived"
+export type ClientSessionStatus = "scheduled" | "completed" | "cancelled" | "no_show"
+export type ClientSessionFormat = "online" | "in-person" | "phone"
+export type ClientNoteType = "session_note" | "general_note" | "progress_note"

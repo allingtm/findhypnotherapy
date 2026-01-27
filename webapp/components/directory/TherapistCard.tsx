@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Json } from '@/lib/types/database'
 
 interface Specialization {
@@ -52,11 +53,14 @@ export function TherapistCard({ therapist }: TherapistCardProps) {
           {/* Photo */}
           <div className="flex-shrink-0">
             {therapist.photo_url ? (
-              <img
-                src={therapist.photo_url}
-                alt={therapist.name || 'Therapist'}
-                className="w-16 h-16 rounded-full object-cover"
-              />
+              <div className="relative w-16 h-16">
+                <Image
+                  src={therapist.photo_url}
+                  alt={therapist.name || 'Therapist'}
+                  fill
+                  className="rounded-full object-cover"
+                />
+              </div>
             ) : (
               <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
                 <span className="text-xl font-semibold text-blue-600 dark:text-blue-300">

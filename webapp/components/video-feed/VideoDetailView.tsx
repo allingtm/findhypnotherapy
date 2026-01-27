@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { VideoPlayer } from './VideoPlayer'
 import { VideoWall } from './VideoWall'
 import type { VideoFeedItem } from '@/lib/types/videos'
@@ -80,11 +81,14 @@ export function VideoDetailView({ video, relatedVideos }: VideoDetailViewProps) 
         <div className="flex items-center gap-4">
           {/* Photo */}
           {video.therapist_photo_url ? (
-            <img
-              src={video.therapist_photo_url}
-              alt={video.therapist_name}
-              className="w-16 h-16 rounded-full object-cover"
-            />
+            <div className="relative w-16 h-16 flex-shrink-0">
+              <Image
+                src={video.therapist_photo_url}
+                alt={video.therapist_name}
+                fill
+                className="rounded-full object-cover"
+              />
+            </div>
           ) : (
             <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-neutral-600 flex items-center justify-center">
               <span className="text-2xl text-gray-500 dark:text-gray-400">

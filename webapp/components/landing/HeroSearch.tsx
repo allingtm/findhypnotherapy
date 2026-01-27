@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface Specialization {
   id: string
@@ -45,54 +46,82 @@ export function HeroSearch({ specializations }: HeroSearchProps) {
 
       {/* Top left - 2 visible on mobile */}
       <div className="absolute top-16 left-[5%] w-14 h-14 md:w-24 md:h-24 lg:w-28 lg:h-28 bg-[#FEF3C7] dark:bg-amber-900/50 rounded-3xl rotate-12 opacity-90 p-1 md:p-1.5 lg:p-2 overflow-hidden">
-        <img src="/images/headshots/headshot-1.png" alt="" className="w-full h-full object-cover rounded-2xl" />
+        <div className="relative w-full h-full">
+          <Image src="/images/headshots/headshot-1.png" alt="" fill className="object-cover rounded-2xl" />
+        </div>
       </div>
       <div className="hidden md:block absolute top-36 left-[12%] w-14 h-14 lg:w-16 lg:h-16 bg-[#BFDBFE] dark:bg-blue-900/50 rounded-xl -rotate-6 opacity-90 p-1 lg:p-1.5 overflow-hidden">
-        <img src="/images/headshots/headshot-2.png" alt="" className="w-full h-full object-cover rounded-lg" />
+        <div className="relative w-full h-full">
+          <Image src="/images/headshots/headshot-2.png" alt="" fill className="object-cover rounded-lg" />
+        </div>
       </div>
       <div className="absolute top-40 left-[3%] w-10 h-10 md:top-56 md:left-[5%] md:w-20 md:h-20 lg:w-24 lg:h-24 bg-[#E9D5FF] dark:bg-purple-900/50 rounded-2xl rotate-3 opacity-90 p-1 md:p-1.5 lg:p-2 overflow-hidden">
-        <img src="/images/headshots/headshot-3.png" alt="" className="w-full h-full object-cover rounded-xl" />
+        <div className="relative w-full h-full">
+          <Image src="/images/headshots/headshot-3.png" alt="" fill className="object-cover rounded-xl" />
+        </div>
       </div>
 
       {/* Top right - 2 visible on mobile */}
       <div className="absolute top-20 right-[5%] w-16 h-16 md:w-28 md:h-28 lg:w-32 lg:h-32 bg-[#DBEAFE] dark:bg-blue-800/50 rounded-[2rem] -rotate-6 opacity-90 p-1 md:p-2 lg:p-2.5 overflow-hidden">
-        <img src="/images/headshots/headshot-4.png" alt="" className="w-full h-full object-cover rounded-3xl" />
+        <div className="relative w-full h-full">
+          <Image src="/images/headshots/headshot-4.png" alt="" fill className="object-cover rounded-3xl" />
+        </div>
       </div>
       <div className="absolute top-44 right-[8%] w-10 h-10 md:top-40 md:right-[18%] md:w-16 md:h-16 lg:w-20 lg:h-20 bg-[#FECACA] dark:bg-rose-900/50 rounded-xl rotate-8 opacity-90 p-1 md:p-1.5 overflow-hidden">
-        <img src="/images/headshots/headshot-5.png" alt="" className="w-full h-full object-cover rounded-lg" />
+        <div className="relative w-full h-full">
+          <Image src="/images/headshots/headshot-5.png" alt="" fill className="object-cover rounded-lg" />
+        </div>
       </div>
       <div className="hidden md:block absolute top-20 right-[28%] w-12 h-12 lg:w-14 lg:h-14 bg-[#D1FAE5] dark:bg-emerald-900/50 rounded-lg rotate-12 opacity-90 p-1 overflow-hidden">
-        <img src="/images/headshots/headshot-6.png" alt="" className="w-full h-full object-cover rounded-md" />
+        <div className="relative w-full h-full">
+          <Image src="/images/headshots/headshot-6.png" alt="" fill className="object-cover rounded-md" />
+        </div>
       </div>
 
       {/* Middle area (sides) - desktop only */}
       <div className="hidden md:block absolute top-1/2 left-[2%] w-20 h-20 lg:w-24 lg:h-24 bg-[#FDE68A] dark:bg-amber-800/50 rounded-3xl -rotate-12 opacity-90 p-1.5 lg:p-2 overflow-hidden">
-        <img src="/images/headshots/headshot-7.png" alt="" className="w-full h-full object-cover rounded-2xl" />
+        <div className="relative w-full h-full">
+          <Image src="/images/headshots/headshot-7.png" alt="" fill className="object-cover rounded-2xl" />
+        </div>
       </div>
       <div className="hidden md:block absolute top-1/2 right-[3%] w-20 h-20 lg:w-24 lg:h-24 bg-[#DDD6FE] dark:bg-violet-900/50 rounded-[2rem] rotate-6 opacity-90 p-1.5 lg:p-2 overflow-hidden">
-        <img src="/images/headshots/headshot-8.png" alt="" className="w-full h-full object-cover rounded-3xl" />
+        <div className="relative w-full h-full">
+          <Image src="/images/headshots/headshot-8.png" alt="" fill className="object-cover rounded-3xl" />
+        </div>
       </div>
 
       {/* Bottom left - 1 visible on mobile */}
       <div className="absolute bottom-32 left-[5%] w-12 h-12 md:w-20 md:h-20 lg:w-24 lg:h-24 bg-[#D1FAE5] dark:bg-emerald-800/50 rounded-3xl rotate-6 opacity-90 p-1 md:p-1.5 lg:p-2 overflow-hidden">
-        <img src="/images/headshots/headshot-9.png" alt="" className="w-full h-full object-cover rounded-2xl" />
+        <div className="relative w-full h-full">
+          <Image src="/images/headshots/headshot-9.png" alt="" fill className="object-cover rounded-2xl" />
+        </div>
       </div>
       <div className="hidden md:block absolute bottom-20 left-[15%] w-14 h-14 lg:w-16 lg:h-16 bg-[#FECACA] dark:bg-rose-800/50 rounded-xl -rotate-8 opacity-90 p-1 lg:p-1.5 overflow-hidden">
-        <img src="/images/headshots/headshot-10.png" alt="" className="w-full h-full object-cover rounded-lg" />
+        <div className="relative w-full h-full">
+          <Image src="/images/headshots/headshot-10.png" alt="" fill className="object-cover rounded-lg" />
+        </div>
       </div>
       <div className="hidden md:block absolute bottom-56 left-[2%] w-12 h-12 lg:w-14 lg:h-14 bg-[#BFDBFE] dark:bg-blue-800/50 rounded-lg rotate-[15deg] opacity-90 p-1 overflow-hidden">
-        <img src="/images/headshots/headshot-11.png" alt="" className="w-full h-full object-cover rounded-md" />
+        <div className="relative w-full h-full">
+          <Image src="/images/headshots/headshot-11.png" alt="" fill className="object-cover rounded-md" />
+        </div>
       </div>
 
       {/* Bottom right - 1 visible on mobile */}
       <div className="absolute bottom-28 right-[5%] w-14 h-14 md:w-24 md:h-24 lg:w-28 lg:h-28 bg-[#FECACA] dark:bg-rose-900/50 rounded-[2rem] -rotate-12 opacity-90 p-1 md:p-1.5 lg:p-2 overflow-hidden">
-        <img src="/images/headshots/headshot-12.png" alt="" className="w-full h-full object-cover rounded-3xl" />
+        <div className="relative w-full h-full">
+          <Image src="/images/headshots/headshot-12.png" alt="" fill className="object-cover rounded-3xl" />
+        </div>
       </div>
       <div className="hidden md:block absolute bottom-48 right-[12%] w-20 h-20 lg:w-24 lg:h-24 bg-[#A7F3D0] dark:bg-emerald-800/50 rounded-3xl rotate-8 opacity-90 p-1.5 lg:p-2 overflow-hidden">
-        <img src="/images/headshots/headshot-13.png" alt="" className="w-full h-full object-cover rounded-2xl" />
+        <div className="relative w-full h-full">
+          <Image src="/images/headshots/headshot-13.png" alt="" fill className="object-cover rounded-2xl" />
+        </div>
       </div>
       <div className="hidden md:block absolute bottom-16 right-[20%] w-16 h-16 lg:w-20 lg:h-20 bg-[#E9D5FF] dark:bg-purple-800/50 rounded-2xl -rotate-3 opacity-90 p-1 lg:p-1.5 overflow-hidden">
-        <img src="/images/headshots/headshot-14.png" alt="" className="w-full h-full object-cover rounded-xl" />
+        <div className="relative w-full h-full">
+          <Image src="/images/headshots/headshot-14.png" alt="" fill className="object-cover rounded-xl" />
+        </div>
       </div>
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">

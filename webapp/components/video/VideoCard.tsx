@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useActionState } from 'react'
+import Image from 'next/image'
 import { deleteVideoAction } from '@/app/actions/therapist-videos'
 import { Button } from '@/components/ui/Button'
 import type { TherapistVideo } from '@/lib/types/videos'
@@ -31,10 +32,11 @@ export function VideoCard({ video, onEdit }: VideoCardProps) {
       {/* Thumbnail */}
       <div className="relative aspect-video bg-gray-100 dark:bg-neutral-700">
         {video.thumbnail_url ? (
-          <img
+          <Image
             src={video.thumbnail_url}
             alt={video.title}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">

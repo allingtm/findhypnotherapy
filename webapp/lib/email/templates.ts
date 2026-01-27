@@ -459,3 +459,266 @@ export function getTherapistBookingReminderEmail(props: TherapistBookingReminder
     html: getEmailWrapper(content),
   };
 }
+
+// =====================
+// CLIENT INVITATION EMAIL
+// =====================
+
+interface ClientInvitationEmailProps {
+  therapistName: string;
+  clientName?: string;
+  personalMessage?: string;
+  invitationUrl: string;
+}
+
+export function getClientInvitationEmail(props: ClientInvitationEmailProps): { subject: string; html: string } {
+  const greeting = props.clientName ? `Hi ${props.clientName},` : "Hello,";
+
+  const personalMessageSection = props.personalMessage ? `
+    <div style="background-color: #f8f8f8; border-radius: 6px; padding: 16px; margin: 0 0 24px; border-left: 4px solid #2563eb;">
+      <p style="color: #333333; font-size: 14px; line-height: 1.6; margin: 0; font-style: italic;">
+        "${props.personalMessage}"
+      </p>
+      <p style="color: #666666; font-size: 12px; margin: 12px 0 0 0;">
+        — ${props.therapistName}
+      </p>
+    </div>
+  ` : '';
+
+  const content = `
+    <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">You're Invited to Join as a Client</h2>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      ${greeting}
+    </p>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      <strong>${props.therapistName}</strong> has invited you to join as a client on Find Hypnotherapy.
+    </p>
+    ${personalMessageSection}
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      To get started, please complete a brief onboarding form with your contact details and health information. This helps your therapist provide the best possible care.
+    </p>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${props.invitationUrl}" style="display: inline-block; background-color: #2563eb; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 6px;">
+        Complete Onboarding
+      </a>
+    </div>
+    <p style="color: #666666; font-size: 14px; text-align: center; margin: 0;">
+      This link will expire in 7 days.
+    </p>
+  `;
+
+  return {
+    subject: `${props.therapistName} has invited you to join as a client`,
+    html: getEmailWrapper(content),
+  };
+}
+
+// =====================
+// CLIENT ONBOARDING COMPLETE (to therapist)
+// =====================
+
+interface ClientOnboardingCompleteEmailProps {
+  therapistName: string;
+  clientName: string;
+  clientEmail: string;
+  dashboardUrl: string;
+}
+
+export function getClientOnboardingCompleteEmail(props: ClientOnboardingCompleteEmailProps): { subject: string; html: string } {
+  const content = `
+    <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">New Client Onboarded</h2>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Hi ${props.therapistName},
+    </p>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Great news! <strong>${props.clientName}</strong> has completed their onboarding and is now an active client.
+    </p>
+    <div style="background-color: #dcfce7; border: 1px solid #86efac; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #166534; font-size: 14px; margin: 0 0 8px; font-weight: 600;">Client Details</p>
+      <p style="color: #166534; font-size: 14px; line-height: 1.5; margin: 0;">
+        <strong>Name:</strong> ${props.clientName}<br>
+        <strong>Email:</strong> ${props.clientEmail}
+      </p>
+    </div>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      You can now schedule sessions with this client and view their health information in your dashboard.
+    </p>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${props.dashboardUrl}" style="display: inline-block; background-color: #2563eb; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 6px;">
+        View Clients
+      </a>
+    </div>
+  `;
+
+  return {
+    subject: `${props.clientName} has completed onboarding`,
+    html: getEmailWrapper(content),
+  };
+}
+
+// =====================
+// SESSION CREATED EMAIL (to client)
+// =====================
+
+interface SessionCreatedEmailProps {
+  clientName: string;
+  therapistName: string;
+  sessionTitle: string;
+  sessionDate: string;
+  startTime: string;
+  endTime: string;
+  sessionFormat?: string | null;
+  location?: string | null;
+  meetingUrl?: string | null;
+}
+
+export function getSessionCreatedEmail(props: SessionCreatedEmailProps): { subject: string; html: string } {
+  const formatLabel = props.sessionFormat === 'online' ? 'Online Session' :
+                      props.sessionFormat === 'in-person' ? 'In-Person Session' :
+                      props.sessionFormat === 'phone' ? 'Phone Session' : 'Session';
+
+  const locationSection = props.location ? `
+    <p style="color: #1e40af; font-size: 14px; line-height: 1.5; margin: 8px 0 0 0;">
+      <strong>Location:</strong> ${props.location}
+    </p>
+  ` : '';
+
+  const meetingSection = props.meetingUrl && props.sessionFormat === 'online' ? `
+    <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 16px; margin: 20px 0 0 0;">
+      <p style="color: #1e40af; font-size: 14px; margin: 0 0 12px; font-weight: 600;">
+        Video Meeting Link
+      </p>
+      <div style="text-align: center;">
+        <a href="${props.meetingUrl}" style="display: inline-block; background-color: #2563eb; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 10px 24px; border-radius: 6px;">
+          Join Video Session
+        </a>
+      </div>
+    </div>
+  ` : '';
+
+  const content = `
+    <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">New Session Scheduled</h2>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Hi ${props.clientName},
+    </p>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      <strong>${props.therapistName}</strong> has scheduled a new session with you.
+    </p>
+    <div style="background-color: #dcfce7; border: 1px solid #86efac; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #166534; font-size: 14px; margin: 0 0 8px; font-weight: 600;">${props.sessionTitle}</p>
+      <p style="color: #166534; font-size: 14px; line-height: 1.5; margin: 0;">
+        <strong>Date:</strong> ${formatBookingDate(props.sessionDate)}<br>
+        <strong>Time:</strong> ${formatBookingTime(props.startTime)} - ${formatBookingTime(props.endTime)}<br>
+        <strong>Format:</strong> ${formatLabel}
+      </p>
+      ${locationSection}
+    </div>
+    ${meetingSection}
+    <p style="color: #666666; font-size: 14px; margin: 20px 0 0 0;">
+      Please add this to your calendar. If you need to reschedule, please contact ${props.therapistName} directly.
+    </p>
+  `;
+
+  return {
+    subject: `New session scheduled: ${props.sessionTitle}`,
+    html: getEmailWrapper(content),
+  };
+}
+
+// =====================
+// SESSION UPDATED EMAIL (to client)
+// =====================
+
+interface SessionUpdatedEmailProps {
+  clientName: string;
+  therapistName: string;
+  sessionTitle: string;
+  sessionDate: string;
+  startTime: string;
+  endTime: string;
+  changesDescription: string;
+  sessionFormat?: string | null;
+  location?: string | null;
+  meetingUrl?: string | null;
+}
+
+export function getSessionUpdatedEmail(props: SessionUpdatedEmailProps): { subject: string; html: string } {
+  const formatLabel = props.sessionFormat === 'online' ? 'Online Session' :
+                      props.sessionFormat === 'in-person' ? 'In-Person Session' :
+                      props.sessionFormat === 'phone' ? 'Phone Session' : 'Session';
+
+  const content = `
+    <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">Session Updated</h2>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Hi ${props.clientName},
+    </p>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      <strong>${props.therapistName}</strong> has updated your upcoming session.
+    </p>
+    <div style="background-color: #fef3c7; border: 1px solid #fcd34d; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #92400e; font-size: 14px; margin: 0 0 8px; font-weight: 600;">What Changed</p>
+      <p style="color: #92400e; font-size: 14px; line-height: 1.5; margin: 0;">
+        ${props.changesDescription}
+      </p>
+    </div>
+    <div style="background-color: #f3f4f6; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #374151; font-size: 14px; margin: 0 0 8px; font-weight: 600;">Updated Session Details</p>
+      <p style="color: #374151; font-size: 14px; line-height: 1.5; margin: 0;">
+        <strong>Session:</strong> ${props.sessionTitle}<br>
+        <strong>Date:</strong> ${formatBookingDate(props.sessionDate)}<br>
+        <strong>Time:</strong> ${formatBookingTime(props.startTime)} - ${formatBookingTime(props.endTime)}<br>
+        <strong>Format:</strong> ${formatLabel}
+      </p>
+    </div>
+    <p style="color: #666666; font-size: 14px; margin: 0;">
+      Please update your calendar accordingly.
+    </p>
+  `;
+
+  return {
+    subject: `Session updated: ${props.sessionTitle}`,
+    html: getEmailWrapper(content),
+  };
+}
+
+// =====================
+// SESSION CANCELLED EMAIL (to client)
+// =====================
+
+interface SessionCancelledEmailProps {
+  clientName: string;
+  therapistName: string;
+  sessionTitle: string;
+  sessionDate: string;
+  startTime: string;
+  reason?: string;
+}
+
+export function getSessionCancelledEmail(props: SessionCancelledEmailProps): { subject: string; html: string } {
+  const content = `
+    <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">Session Cancelled</h2>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Hi ${props.clientName},
+    </p>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      <strong>${props.therapistName}</strong> has cancelled your upcoming session.
+    </p>
+    <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #991b1b; font-size: 14px; margin: 0 0 8px; font-weight: 600;">Cancelled Session</p>
+      <p style="color: #991b1b; font-size: 14px; line-height: 1.5; margin: 0;">
+        <strong>Session:</strong> ${props.sessionTitle}<br>
+        <strong>Date:</strong> ${formatBookingDate(props.sessionDate)}<br>
+        <strong>Time:</strong> ${formatBookingTime(props.startTime)}
+      </p>
+      ${props.reason ? `<p style="color: #991b1b; font-size: 14px; line-height: 1.5; margin: 12px 0 0 0;"><strong>Reason:</strong> ${props.reason}</p>` : ""}
+    </div>
+    <p style="color: #666666; font-size: 14px; margin: 0;">
+      Please remove this from your calendar. If you'd like to reschedule, please contact ${props.therapistName} directly.
+    </p>
+  `;
+
+  return {
+    subject: `Session cancelled: ${props.sessionTitle}`,
+    html: getEmailWrapper(content),
+  };
+}

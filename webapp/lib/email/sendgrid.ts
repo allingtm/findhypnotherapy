@@ -9,11 +9,19 @@ if (!process.env.SENDGRID_API_KEY) {
 const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || "noreply@findhypnotherapy.com";
 const FROM_NAME = "Find Hypnotherapy";
 
+export interface EmailAttachment {
+  content: string; // Base64 encoded content
+  filename: string;
+  type: string; // MIME type
+  disposition?: "attachment" | "inline";
+}
+
 export interface EmailOptions {
   to: string;
   subject: string;
   html: string;
   text?: string;
+  attachments?: EmailAttachment[];
 }
 
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
@@ -23,7 +31,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
   }
 
   try {
-    await sgMail.send({
+    const mailData: sgMail.MailDataRequired = {
       to: options.to,
       from: {
         email: FROM_EMAIL,
@@ -32,7 +40,19 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
       subject: options.subject,
       html: options.html,
       text: options.text || stripHtml(options.html),
-    });
+    };
+
+    // Add attachments if provided
+    if (options.attachments && options.attachments.length > 0) {
+      mailData.attachments = options.attachments.map((att) => ({
+        content: att.content,
+        filename: att.filename,
+        type: att.type,
+        disposition: att.disposition || "attachment",
+      }));
+    }
+
+    await sgMail.send(mailData);
     return true;
   } catch (error) {
     console.error("Failed to send email:", error);

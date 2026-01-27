@@ -14,7 +14,9 @@ import {
   IconCheck,
   IconX,
   IconVideo,
+  IconUserPlus,
 } from "@tabler/icons-react";
+import { InviteClientDialog } from "@/components/clients/InviteClientDialog";
 
 interface Booking {
   id: string;
@@ -109,6 +111,7 @@ export function BookingCard({ booking, onStatusChange }: BookingCardProps) {
   const [isConfirming, setIsConfirming] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isStartingConversation, setIsStartingConversation] = useState(false);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleConfirm = async () => {
@@ -281,15 +284,36 @@ export function BookingCard({ booking, onStatusChange }: BookingCardProps) {
 
       {/* Contact link for confirmed bookings */}
       {booking.status === "confirmed" && (
-        <button
-          onClick={handleStartConversation}
-          disabled={isStartingConversation}
-          className="flex items-center justify-center gap-2 w-full mt-2 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors disabled:opacity-50"
-        >
-          <IconMessage className="w-4 h-4" />
-          {isStartingConversation ? "Opening..." : "Send Message"}
-        </button>
+        <div className="space-y-2 mt-2">
+          <button
+            onClick={handleStartConversation}
+            disabled={isStartingConversation}
+            className="flex items-center justify-center gap-2 w-full px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors disabled:opacity-50"
+          >
+            <IconMessage className="w-4 h-4" />
+            {isStartingConversation ? "Opening..." : "Send Message"}
+          </button>
+          <button
+            onClick={() => setShowInviteDialog(true)}
+            className="flex items-center justify-center gap-2 w-full px-4 py-2 text-sm font-medium text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+          >
+            <IconUserPlus className="w-4 h-4" />
+            Invite as Client
+          </button>
+        </div>
       )}
+
+      {/* Invite Client Dialog */}
+      <InviteClientDialog
+        isOpen={showInviteDialog}
+        onClose={() => setShowInviteDialog(false)}
+        onSuccess={() => {
+          setShowInviteDialog(false);
+          router.push("/dashboard/clients");
+        }}
+        prefillEmail={booking.visitor_email}
+        prefillFirstName={booking.visitor_name.split(" ")[0]}
+      />
     </div>
   );
 }

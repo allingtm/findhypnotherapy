@@ -1,0 +1,154 @@
+"use client";
+
+import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { ClientHeader } from "@/components/clients/ClientHeader";
+import { ClientDetailTabs } from "@/components/clients/ClientDetailTabs";
+import { ClientInfoCard } from "@/components/clients/ClientInfoCard";
+import { ClientSessionsList } from "@/components/clients/ClientSessionsList";
+import { ClientNotesList } from "@/components/clients/ClientNotesList";
+import { getClientBySlugAction } from "@/app/actions/clients";
+import { IconCalendarEvent, IconMail, IconNotes, IconUser } from "@tabler/icons-react";
+
+interface ClientDetailContentProps {
+  client: Record<string, unknown>;
+  initialTab: string;
+}
+
+export function ClientDetailContent({
+  client: initialClient,
+  initialTab,
+}: ClientDetailContentProps) {
+  const router = useRouter();
+  const [client, setClient] = useState(initialClient);
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const [showAddSession, setShowAddSession] = useState(false);
+
+  const clientData = client as unknown as {
+    id: string;
+    slug: string;
+    email: string;
+    first_name: string | null;
+    last_name: string | null;
+    phone: string | null;
+    status: string;
+    onboarded_at: string | null;
+    address_line1: string | null;
+    address_line2: string | null;
+    city: string | null;
+    postal_code: string | null;
+    country: string | null;
+    emergency_contact_name: string | null;
+    emergency_contact_phone: string | null;
+    emergency_contact_relationship: string | null;
+    health_conditions: string | null;
+    medications: string | null;
+    allergies: string | null;
+    gp_name: string | null;
+    gp_practice: string | null;
+    client_sessions: Array<{
+      id: string;
+      title: string;
+      session_date: string;
+      start_time: string;
+      end_time: string;
+      status: string;
+      session_format: string | null;
+      location: string | null;
+      meeting_url: string | null;
+      therapist_notes: string | null;
+      created_at: string;
+    }>;
+    client_notes: Array<{
+      id: string;
+      note_type: string;
+      content: string;
+      is_private: boolean;
+      created_at: string;
+      session_id: string | null;
+    }>;
+    client_terms_acceptance: Array<{
+      id: string;
+      accepted_at: string;
+      therapist_terms: {
+        title: string;
+        version: string;
+      };
+    }>;
+  };
+
+  const reloadClient = useCallback(async () => {
+    const result = await getClientBySlugAction(clientData.slug);
+    if (result.success && result.data) {
+      setClient(result.data);
+    }
+    router.refresh();
+  }, [clientData.slug, router]);
+
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    // Update URL without navigation
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", tabId);
+    window.history.replaceState({}, "", url.toString());
+  };
+
+  const handleAddSession = () => {
+    setShowAddSession(true);
+    setActiveTab("sessions");
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-6">
+      {/* Header */}
+      <ClientHeader
+        client={clientData}
+        onUpdate={reloadClient}
+        onAddSession={handleAddSession}
+      />
+
+      {/* Tabs */}
+      <ClientDetailTabs activeTab={activeTab} onTabChange={handleTabChange} />
+
+      {/* Tab Content */}
+      <div className="min-h-[400px]">
+        {activeTab === "sessions" && (
+          <ClientSessionsList
+            clientId={clientData.id}
+            clientName={`${clientData.first_name || ""} ${clientData.last_name || ""}`.trim() || "Client"}
+            sessions={clientData.client_sessions || []}
+            onUpdate={reloadClient}
+            showAddDialog={showAddSession}
+            onCloseAddDialog={() => setShowAddSession(false)}
+          />
+        )}
+
+        {activeTab === "messages" && (
+          <div className="bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 p-6">
+            <div className="text-center py-12">
+              <IconMail className="w-12 h-12 mx-auto text-gray-400 dark:text-gray-500 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                Messages Coming Soon
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+                Client messaging will be integrated with the existing conversations
+                system in a future update.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "notes" && (
+          <ClientNotesList
+            clientId={clientData.id}
+            notes={clientData.client_notes || []}
+            sessions={clientData.client_sessions || []}
+            onUpdate={reloadClient}
+          />
+        )}
+
+        {activeTab === "details" && <ClientInfoCard client={clientData} />}
+      </div>
+    </div>
+  );
+}

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import type { VideoFeedItem, SessionFormat } from '@/lib/types/videos'
 
 interface VideoOverlayProps {
@@ -78,11 +79,14 @@ export function VideoOverlay({ video }: VideoOverlayProps) {
           className="flex items-center gap-3 mb-3 hover:opacity-90 transition-opacity"
         >
           {video.therapist_photo_url ? (
-            <img
-              src={video.therapist_photo_url}
-              alt={video.therapist_name}
-              className="w-10 h-10 rounded-full object-cover border-2 border-white"
-            />
+            <div className="relative w-10 h-10 flex-shrink-0">
+              <Image
+                src={video.therapist_photo_url}
+                alt={video.therapist_name}
+                fill
+                className="rounded-full object-cover border-2 border-white"
+              />
+            </div>
           ) : (
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center border-2 border-white">
               <span className="text-sm font-semibold">

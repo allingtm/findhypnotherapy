@@ -8,6 +8,7 @@ import { ContactForm } from '@/components/messages/ContactForm'
 import { VideoWall } from '@/components/video-feed/VideoWall'
 import { getRelatedVideos } from '@/app/actions/therapist-videos'
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Metadata } from 'next'
 import type { ServiceType, PriceDisplayMode } from '@/lib/types/database'
 import { SERVICE_TYPE_LABELS } from '@/lib/types/services'
@@ -157,10 +158,11 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
         {/* Profile Banner */}
         {profile.banner_url ? (
           <div className="relative w-full h-48 md:h-64 lg:h-72 overflow-hidden">
-            <img
+            <Image
               src={profile.banner_url}
               alt={`${userData.name}'s banner`}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-white/60 dark:from-neutral-900/60 to-transparent" />
           </div>
@@ -175,11 +177,14 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
             {/* Photo */}
             <div className="flex-shrink-0">
               {userData.photo_url ? (
-                <img
-                  src={userData.photo_url}
-                  alt={userData.name}
-                  className="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-neutral-800 shadow-lg"
-                />
+                <div className="relative w-32 h-32">
+                  <Image
+                    src={userData.photo_url}
+                    alt={userData.name}
+                    fill
+                    className="rounded-full object-cover border-4 border-white dark:border-neutral-800 shadow-lg"
+                  />
+                </div>
               ) : (
                 <div className="w-32 h-32 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center border-4 border-white dark:border-neutral-800 shadow-lg">
                   <span className="text-4xl font-semibold text-blue-600 dark:text-blue-300">

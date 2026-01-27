@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { Navbar } from '@/components/ui/Navbar'
 import { Footer } from '@/components/ui/Footer'
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Metadata } from 'next'
 import type { ServiceType, PriceDisplayMode } from '@/lib/types/database'
 import { SERVICE_TYPE_LABELS } from '@/lib/types/services'
@@ -121,17 +122,18 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            Back to {therapistName}'s profile
+            Back to {therapistName}&apos;s profile
           </Link>
 
           <div className="bg-white dark:bg-neutral-900 rounded-lg shadow overflow-hidden">
             {/* Service Image */}
             {service.image_url ? (
-              <div className="w-full aspect-video bg-gray-100 dark:bg-neutral-800">
-                <img
+              <div className="relative w-full aspect-video bg-gray-100 dark:bg-neutral-800">
+                <Image
                   src={service.image_url}
                   alt={service.name}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
                 />
               </div>
             ) : (
@@ -225,7 +227,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
               {service.show_includes !== false && service.includes && service.includes.length > 0 && (
                 <div className="mb-6">
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                    What's included
+                    What&apos;s included
                   </h2>
                   <ul className="space-y-2">
                     {(service.includes as string[]).map((item, idx) => (
@@ -248,11 +250,14 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                   className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-neutral-800 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors"
                 >
                   {therapistPhoto ? (
-                    <img
-                      src={therapistPhoto}
-                      alt={therapistName}
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
+                    <div className="relative w-12 h-12 flex-shrink-0">
+                      <Image
+                        src={therapistPhoto}
+                        alt={therapistName}
+                        fill
+                        className="rounded-full object-cover"
+                      />
+                    </div>
                   ) : (
                     <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
                       <span className="text-lg font-semibold text-blue-600 dark:text-blue-300">

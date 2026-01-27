@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import type { ServiceType, PriceDisplayMode } from '@/lib/types/database'
 import { SERVICE_TYPE_LABELS } from '@/lib/types/services'
 import { formatServicePrice } from '@/lib/utils/price-display'
@@ -39,12 +40,13 @@ export function ServiceTile({ service, therapistSlug }: ServiceTileProps) {
       className="group block rounded-lg overflow-hidden bg-white dark:bg-neutral-800 shadow-sm hover:shadow-md transition-shadow border border-gray-200 dark:border-neutral-700"
     >
       {/* Image */}
-      <div className="relative aspect-video bg-gray-100 dark:bg-neutral-700">
+      <div className="relative aspect-video bg-gray-100 dark:bg-neutral-700 overflow-hidden">
         {service.image_url ? (
-          <img
+          <Image
             src={service.image_url}
             alt={service.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
