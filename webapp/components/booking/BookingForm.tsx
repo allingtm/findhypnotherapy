@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
+import { TermsAcceptance } from "./TermsAcceptance";
 import { submitBookingAction } from "@/app/actions/bookings";
 
 interface TimeSlot {
@@ -11,11 +12,19 @@ interface TimeSlot {
   end_time: string;
 }
 
+interface TherapistTerms {
+  id: string;
+  title: string;
+  content: string;
+  version: string;
+}
+
 interface BookingFormProps {
   therapistProfileId: string;
   selectedDate: string | null;
   selectedSlot: TimeSlot | null;
   therapistName: string;
+  therapistTerms: TherapistTerms | null;
   onSuccess?: () => void;
 }
 
@@ -24,12 +33,15 @@ export function BookingForm({
   selectedDate,
   selectedSlot,
   therapistName,
+  therapistTerms,
   onSuccess,
 }: BookingFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successType, setSuccessType] = useState<"verification_sent" | "pre_verified" | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [acceptedTermsId, setAcceptedTermsId] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -42,11 +54,24 @@ export function BookingForm({
       return;
     }
 
+    // Validate terms acceptance if terms exist
+    if (therapistTerms && !termsAccepted) {
+      setError("Please accept the Terms & Conditions to continue");
+      setIsSubmitting(false);
+      return;
+    }
+
     const formData = new FormData(e.currentTarget);
     formData.set("therapistProfileId", therapistProfileId);
     formData.set("bookingDate", selectedDate);
     formData.set("startTime", selectedSlot.start_time);
     formData.set("endTime", selectedSlot.end_time);
+
+    // Include terms acceptance data
+    if (termsAccepted && acceptedTermsId) {
+      formData.set("termsAccepted", "true");
+      formData.set("termsId", acceptedTermsId);
+    }
 
     try {
       const result = await submitBookingAction(formData);
@@ -240,9 +265,26 @@ export function BookingForm({
           />
         </div>
 
+        {/* Terms & Conditions */}
+        {therapistTerms && (
+          <TermsAcceptance
+            terms={{
+              id: therapistTerms.id,
+              title: therapistTerms.title,
+              content: therapistTerms.content,
+            }}
+            accepted={termsAccepted}
+            onAcceptChange={(accepted, termsId) => {
+              setTermsAccepted(accepted);
+              setAcceptedTermsId(termsId);
+            }}
+            disabled={isFormDisabled || isSubmitting}
+          />
+        )}
+
         <Button
           type="submit"
-          disabled={isFormDisabled || isSubmitting}
+          disabled={isFormDisabled || isSubmitting || (!!therapistTerms && !termsAccepted)}
           loading={isSubmitting}
           className="w-full"
         >

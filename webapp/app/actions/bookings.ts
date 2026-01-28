@@ -410,6 +410,9 @@ export async function submitBookingAction(
     visitorPhone: formData.get("visitorPhone") || null,
     visitorNotes: formData.get("visitorNotes") || null,
     honeypot: formData.get("website") || "", // honeypot field
+    // Terms acceptance
+    termsAccepted: formData.get("termsAccepted") === "true",
+    termsId: formData.get("termsId") || null,
   };
 
   const validation = bookingFormSchema.safeParse(rawData);
@@ -516,6 +519,9 @@ export async function submitBookingAction(
         verification_expires_at: verificationExpiresAt,
         status: "pending",
         is_verified: isPreVerified, // Auto-verify if email is already trusted
+        // Terms acceptance tracking
+        terms_accepted_at: data.termsAccepted ? new Date().toISOString() : null,
+        terms_id: data.termsId || null,
       })
       .select()
       .single();

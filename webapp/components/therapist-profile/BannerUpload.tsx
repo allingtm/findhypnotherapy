@@ -103,9 +103,9 @@ export function BannerUpload({ currentBannerUrl }: BannerUploadProps) {
       </div>
 
       {/* Upload Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="space-y-2">
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Recommended size: 1200x300px. JPG, PNG or WebP. Max 5MB.
+          1200x300px. JPG or PNG. Max 5MB.
         </p>
 
         <div className="flex gap-2">
@@ -113,7 +113,7 @@ export function BannerUpload({ currentBannerUrl }: BannerUploadProps) {
             variant="primary"
             onClick={() => fileInputRef.current?.click()}
           >
-            {displayBannerUrl ? 'Change Banner' : 'Upload Banner'}
+            {displayBannerUrl ? 'Change' : 'Upload'}
           </Button>
 
           {displayBannerUrl && (
@@ -129,7 +129,7 @@ export function BannerUpload({ currentBannerUrl }: BannerUploadProps) {
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/jpeg,image/jpg,image/png,image/webp"
+          accept="image/jpeg,image/jpg,image/png"
           onChange={handleFileSelect}
           className="hidden"
         />

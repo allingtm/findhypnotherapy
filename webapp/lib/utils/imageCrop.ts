@@ -7,12 +7,15 @@ export type Area = {
 
 /**
  * Converts image to canvas, applies crop, and returns blob
+ * Optionally resizes to target dimensions for consistent output sizes
  */
 export async function getCroppedImage(
   imageSrc: string,
   pixelCrop: Area,
-  outputFormat: 'image/jpeg' | 'image/png' | 'image/webp' = 'image/webp',
-  quality: number = 0.9
+  outputFormat: 'image/jpeg' | 'image/png' = 'image/jpeg',
+  quality: number = 0.9,
+  targetWidth?: number,
+  targetHeight?: number
 ): Promise<Blob> {
   const image = await createImage(imageSrc)
   const canvas = document.createElement('canvas')
@@ -22,11 +25,15 @@ export async function getCroppedImage(
     throw new Error('Failed to get canvas context')
   }
 
-  // Set canvas size to cropped size
-  canvas.width = pixelCrop.width
-  canvas.height = pixelCrop.height
+  // Use target dimensions if provided, otherwise use crop dimensions
+  const outputWidth = targetWidth || pixelCrop.width
+  const outputHeight = targetHeight || pixelCrop.height
 
-  // Draw cropped image
+  // Set canvas size to output size
+  canvas.width = outputWidth
+  canvas.height = outputHeight
+
+  // Draw cropped image, scaling to target dimensions if needed
   ctx.drawImage(
     image,
     pixelCrop.x,
@@ -35,8 +42,8 @@ export async function getCroppedImage(
     pixelCrop.height,
     0,
     0,
-    pixelCrop.width,
-    pixelCrop.height
+    outputWidth,
+    outputHeight
   )
 
   // Convert to blob
@@ -81,6 +88,22 @@ export function generatePhotoFilename(userId: string, extension: string): string
 export function generateBannerFilename(userId: string, extension: string): string {
   const timestamp = Date.now()
   return `${userId}/banner-${timestamp}.${extension}`
+}
+
+/**
+ * Generates a unique filename for the mobile banner
+ */
+export function generateMobileBannerFilename(userId: string, extension: string): string {
+  const timestamp = Date.now()
+  return `${userId}/mobile-banner-${timestamp}.${extension}`
+}
+
+/**
+ * Generates a unique filename for an OG (social sharing) image
+ */
+export function generateOgImageFilename(userId: string, extension: string): string {
+  const timestamp = Date.now()
+  return `${userId}/og-${timestamp}.${extension}`
 }
 
 /**

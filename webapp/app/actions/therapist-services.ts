@@ -57,6 +57,9 @@ const serviceSchema = z.object({
   show_session_details: z.coerce.boolean().default(true),
   show_includes: z.coerce.boolean().default(true),
   show_outcome_focus: z.coerce.boolean().default(true),
+
+  // Service-specific terms addendum (optional)
+  terms_content: z.string().max(5000, 'Terms addendum must be 5000 characters or less').optional().or(z.literal('')),
 }).superRefine((data, ctx) => {
   // Validate price based on display mode
   if (data.price_display_mode === 'exact' || data.price_display_mode === 'from') {
@@ -123,6 +126,45 @@ export async function getTherapistServices(profileId: string) {
   return data || []
 }
 
+// Get current therapist's active services (for client invitation)
+export async function getMyActiveServicesAction(): Promise<ActionResponse & { services?: { id: string; name: string; duration_minutes: number; price: number | null }[] }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'Not authenticated' }
+    }
+
+    // Get therapist profile
+    const { data: profile } = await supabase
+      .from('therapist_profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .single()
+
+    if (!profile) {
+      return { success: false, error: 'Profile not found' }
+    }
+
+    // Get active services
+    const { data: services, error } = await supabase
+      .from('therapist_services')
+      .select('id, name, duration_minutes, price')
+      .eq('therapist_profile_id', profile.id)
+      .eq('is_active', true)
+      .order('display_order')
+
+    if (error) {
+      return { success: false, error: 'Failed to fetch services' }
+    }
+
+    return { success: true, services: services || [] }
+  } catch {
+    return { success: false, error: 'An unexpected error occurred' }
+  }
+}
+
 // Create a new service
 export async function createServiceAction(
   prevState: ActionResponse,
@@ -158,6 +200,17 @@ export async function createServiceAction(
       }
     }
 
+    // Parse onboarding_requirements from JSON string
+    let onboardingRequirements = null
+    const onboardingRaw = formData.get('onboarding_requirements')
+    if (onboardingRaw && typeof onboardingRaw === 'string') {
+      try {
+        onboardingRequirements = JSON.parse(onboardingRaw)
+      } catch {
+        onboardingRequirements = null
+      }
+    }
+
     // Parse and validate form data
     const rawData = {
       name: formData.get('name') || '',
@@ -182,6 +235,7 @@ export async function createServiceAction(
       show_session_details: formData.get('show_session_details') !== 'false',
       show_includes: formData.get('show_includes') !== 'false',
       show_outcome_focus: formData.get('show_outcome_focus') !== 'false',
+      terms_content: formData.get('terms_content') || '',
     }
 
     const validation = serviceSchema.safeParse(rawData)
@@ -232,6 +286,8 @@ export async function createServiceAction(
         show_session_details: data.show_session_details,
         show_includes: data.show_includes,
         show_outcome_focus: data.show_outcome_focus,
+        terms_content: data.terms_content || null,
+        onboarding_requirements: onboardingRequirements,
         display_order: nextOrder,
       })
 
@@ -301,6 +357,17 @@ export async function updateServiceAction(
       }
     }
 
+    // Parse onboarding_requirements from JSON string
+    let onboardingRequirements = null
+    const onboardingRaw = formData.get('onboarding_requirements')
+    if (onboardingRaw && typeof onboardingRaw === 'string') {
+      try {
+        onboardingRequirements = JSON.parse(onboardingRaw)
+      } catch {
+        onboardingRequirements = null
+      }
+    }
+
     // Parse and validate form data
     const rawData = {
       name: formData.get('name') || '',
@@ -325,6 +392,7 @@ export async function updateServiceAction(
       show_session_details: formData.get('show_session_details') !== 'false',
       show_includes: formData.get('show_includes') !== 'false',
       show_outcome_focus: formData.get('show_outcome_focus') !== 'false',
+      terms_content: formData.get('terms_content') || '',
     }
 
     const validation = serviceSchema.safeParse(rawData)
@@ -364,6 +432,8 @@ export async function updateServiceAction(
         show_session_details: data.show_session_details,
         show_includes: data.show_includes,
         show_outcome_focus: data.show_outcome_focus,
+        terms_content: data.terms_content || null,
+        onboarding_requirements: onboardingRequirements,
         updated_at: new Date().toISOString(),
       })
       .eq('id', serviceId)

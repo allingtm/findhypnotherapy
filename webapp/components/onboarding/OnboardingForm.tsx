@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
@@ -11,6 +11,17 @@ import { HealthInfoStep } from "./HealthInfoStep";
 import { TermsStep } from "./TermsStep";
 import { completeClientOnboardingAction } from "@/app/actions/clients";
 import { IconCheck, IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
+import type { OnboardingFieldRequirement, OnboardingRequirements } from "@/lib/types/database";
+import { DEFAULT_ONBOARDING_REQUIREMENTS } from "@/lib/types/database";
+
+export interface ServiceInfo {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number | null;
+  durationMinutes: number | null;
+  onboardingRequirements: OnboardingRequirements | null;
+}
 
 interface OnboardingFormProps {
   token: string;
@@ -23,6 +34,7 @@ interface OnboardingFormProps {
     title: string;
     content: string;
   };
+  service?: ServiceInfo | null;
 }
 
 export interface OnboardingData {
@@ -50,11 +62,18 @@ export interface OnboardingData {
   termsAccepted: boolean;
 }
 
-const STEPS = [
+interface StepConfig {
+  id: string;
+  title: string;
+  description: string;
+  requirementKey?: keyof OnboardingRequirements;
+}
+
+const ALL_STEPS: StepConfig[] = [
   { id: "personal", title: "Personal Info", description: "Your contact details" },
-  { id: "address", title: "Address", description: "Your postal address" },
-  { id: "emergency", title: "Emergency Contact", description: "In case of emergency" },
-  { id: "health", title: "Health Info", description: "Relevant health information" },
+  { id: "address", title: "Address", description: "Your postal address", requirementKey: "address" },
+  { id: "emergency", title: "Emergency Contact", description: "In case of emergency", requirementKey: "emergency_contact" },
+  { id: "health", title: "Health Info", description: "Relevant health information", requirementKey: "health_info" },
   { id: "terms", title: "Terms", description: "Review and accept" },
 ];
 
@@ -65,12 +84,38 @@ export function OnboardingForm({
   prefillFirstName,
   prefillLastName,
   terms,
+  service,
 }: OnboardingFormProps) {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+
+  // Get onboarding requirements - use service-specific if available, otherwise defaults
+  const requirements: OnboardingRequirements = useMemo(() => {
+    return service?.onboardingRequirements || DEFAULT_ONBOARDING_REQUIREMENTS;
+  }, [service]);
+
+  // Helper to get requirement level
+  const getRequirement = (key: keyof OnboardingRequirements): OnboardingFieldRequirement => {
+    return requirements[key] || "optional";
+  };
+
+  // Filter steps based on requirements (hide steps where requirement is "hidden")
+  const activeSteps = useMemo(() => {
+    const getReq = (key: keyof OnboardingRequirements): OnboardingFieldRequirement => {
+      return requirements[key] || "optional";
+    };
+    return ALL_STEPS.filter((step) => {
+      if (!step.requirementKey) return true; // Always show personal and terms
+      // For health info, show if either health_info or gp_info is not hidden
+      if (step.requirementKey === "health_info") {
+        return getReq("health_info") !== "hidden" || getReq("gp_info") !== "hidden";
+      }
+      return getReq(step.requirementKey) !== "hidden";
+    });
+  }, [requirements]);
 
   const [formData, setFormData] = useState<OnboardingData>({
     firstName: prefillFirstName || "",
@@ -98,25 +143,63 @@ export function OnboardingForm({
 
   const validateCurrentStep = (): boolean => {
     const errors: Record<string, string[]> = {};
+    const currentStepConfig = activeSteps[currentStep];
 
-    switch (currentStep) {
-      case 0: // Personal Info
+    switch (currentStepConfig.id) {
+      case "personal":
+        // First and last name are always required
         if (!formData.firstName.trim()) {
           errors.firstName = ["First name is required"];
         }
         if (!formData.lastName.trim()) {
           errors.lastName = ["Last name is required"];
         }
-        break;
-      case 2: // Emergency Contact
-        if (!formData.emergencyContactName.trim()) {
-          errors.emergencyContactName = ["Emergency contact name is required"];
-        }
-        if (!formData.emergencyContactPhone.trim()) {
-          errors.emergencyContactPhone = ["Emergency contact phone is required"];
+        // Phone is required only if phone requirement is "required"
+        if (getRequirement("phone") === "required" && !formData.phone.trim()) {
+          errors.phone = ["Phone number is required"];
         }
         break;
-      case 4: // Terms
+      case "address":
+        // Only validate if address requirement is "required"
+        if (getRequirement("address") === "required") {
+          if (!formData.addressLine1.trim()) {
+            errors.addressLine1 = ["Address is required"];
+          }
+          if (!formData.city.trim()) {
+            errors.city = ["City is required"];
+          }
+          if (!formData.postalCode.trim()) {
+            errors.postalCode = ["Postal code is required"];
+          }
+        }
+        break;
+      case "emergency":
+        // Only validate if emergency_contact requirement is "required"
+        if (getRequirement("emergency_contact") === "required") {
+          if (!formData.emergencyContactName.trim()) {
+            errors.emergencyContactName = ["Emergency contact name is required"];
+          }
+          if (!formData.emergencyContactPhone.trim()) {
+            errors.emergencyContactPhone = ["Emergency contact phone is required"];
+          }
+        }
+        break;
+      case "health":
+        // Health info and GP info can each be required independently
+        if (getRequirement("health_info") === "required") {
+          // We don't strictly require health fields as they're typically just informational
+          // But we could add validation here if needed
+        }
+        if (getRequirement("gp_info") === "required") {
+          if (!formData.gpName.trim()) {
+            errors.gpName = ["GP name is required"];
+          }
+          if (!formData.gpPractice.trim()) {
+            errors.gpPractice = ["GP practice is required"];
+          }
+        }
+        break;
+      case "terms":
         if (!formData.termsAccepted) {
           errors.termsAccepted = ["You must accept the terms and conditions"];
         }
@@ -129,7 +212,7 @@ export function OnboardingForm({
 
   const handleNext = () => {
     if (validateCurrentStep()) {
-      setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1));
+      setCurrentStep((prev) => Math.min(prev + 1, activeSteps.length - 1));
     }
   };
 
@@ -180,7 +263,8 @@ export function OnboardingForm({
     }
   };
 
-  const isLastStep = currentStep === STEPS.length - 1;
+  const isLastStep = currentStep === activeSteps.length - 1;
+  const currentStepConfig = activeSteps[currentStep];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-neutral-900 py-8 px-4">
@@ -198,10 +282,28 @@ export function OnboardingForm({
           </p>
         </div>
 
+        {/* Service Info Banner */}
+        {service && (
+          <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <h3 className="font-semibold text-blue-900 dark:text-blue-200">{service.name}</h3>
+            {service.description && (
+              <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">{service.description}</p>
+            )}
+            <div className="flex gap-4 mt-2 text-sm text-blue-600 dark:text-blue-400">
+              {service.durationMinutes && (
+                <span>{service.durationMinutes} minutes</span>
+              )}
+              {service.price && (
+                <span>£{service.price}</span>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Progress Steps */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
-            {STEPS.map((step, index) => (
+            {activeSteps.map((step, index) => (
               <div key={step.id} className="flex items-center">
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
@@ -218,7 +320,7 @@ export function OnboardingForm({
                     index + 1
                   )}
                 </div>
-                {index < STEPS.length - 1 && (
+                {index < activeSteps.length - 1 && (
                   <div
                     className={`w-full h-1 mx-2 rounded ${
                       index < currentStep
@@ -233,10 +335,10 @@ export function OnboardingForm({
           </div>
           <div className="mt-4 text-center">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {STEPS[currentStep].title}
+              {currentStepConfig.title}
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {STEPS[currentStep].description}
+              {currentStepConfig.description}
             </p>
           </div>
         </div>
@@ -253,35 +355,40 @@ export function OnboardingForm({
 
           {/* Step Content */}
           <div className="min-h-[300px]">
-            {currentStep === 0 && (
+            {currentStepConfig.id === "personal" && (
               <PersonalInfoStep
                 data={formData}
                 onChange={updateFormData}
                 errors={fieldErrors}
+                phoneRequirement={getRequirement("phone")}
               />
             )}
-            {currentStep === 1 && (
+            {currentStepConfig.id === "address" && (
               <AddressStep
                 data={formData}
                 onChange={updateFormData}
                 errors={fieldErrors}
+                requirement={getRequirement("address")}
               />
             )}
-            {currentStep === 2 && (
+            {currentStepConfig.id === "emergency" && (
               <EmergencyContactStep
                 data={formData}
                 onChange={updateFormData}
                 errors={fieldErrors}
+                requirement={getRequirement("emergency_contact")}
               />
             )}
-            {currentStep === 3 && (
+            {currentStepConfig.id === "health" && (
               <HealthInfoStep
                 data={formData}
                 onChange={updateFormData}
                 errors={fieldErrors}
+                healthRequirement={getRequirement("health_info")}
+                gpRequirement={getRequirement("gp_info")}
               />
             )}
-            {currentStep === 4 && (
+            {currentStepConfig.id === "terms" && (
               <TermsStep
                 data={formData}
                 onChange={updateFormData}

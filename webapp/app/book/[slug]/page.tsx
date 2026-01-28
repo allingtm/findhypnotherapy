@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getTherapistBySlug } from "@/app/actions/bookings";
+import { getActiveTermsForBooking } from "@/app/actions/therapist-terms";
 import { BookingPageContent } from "./BookingPageContent";
 import { Navbar } from "@/components/ui/Navbar";
 import { Footer } from "@/components/ui/Footer";
@@ -51,6 +52,9 @@ export default async function BookingPage({ params }: PageProps) {
     accepts_online_booking: boolean | null;
   } | null;
 
+  // Fetch therapist's active terms
+  const { data: therapistTerms } = await getActiveTermsForBooking(profile.id);
+
   return (
     <>
       <Navbar />
@@ -94,6 +98,7 @@ export default async function BookingPage({ params }: PageProps) {
             therapistProfileId={profile.id}
             therapistName={therapistName}
             maxDaysAhead={settings?.max_booking_days_ahead || 30}
+            therapistTerms={therapistTerms || null}
           />
         </div>
       </main>

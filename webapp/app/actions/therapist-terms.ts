@@ -393,3 +393,40 @@ export async function getTermsAcceptanceStatsAction(termsId: string): Promise<{
     return { success: false, error: "An unexpected error occurred" };
   }
 }
+
+// =====================
+// GET ACTIVE TERMS FOR BOOKING (PUBLIC)
+// =====================
+
+export async function getActiveTermsForBooking(therapistProfileId: string): Promise<{
+  success: boolean;
+  error?: string;
+  data?: {
+    id: string;
+    title: string;
+    content: string;
+    version: string;
+  } | null;
+}> {
+  try {
+    const supabase = await createClient();
+
+    const { data: terms, error } = await supabase
+      .from("therapist_terms")
+      .select("id, title, content, version")
+      .eq("therapist_profile_id", therapistProfileId)
+      .eq("is_active", true)
+      .single();
+
+    if (error && error.code !== "PGRST116") {
+      // PGRST116 is "no rows found" - that's ok, therapist may not have terms
+      console.error("Failed to get terms for booking:", error);
+      return { success: false, error: "Failed to load terms" };
+    }
+
+    return { success: true, data: terms || null };
+  } catch (error) {
+    console.error("Error getting terms for booking:", error);
+    return { success: false, error: "An unexpected error occurred" };
+  }
+}

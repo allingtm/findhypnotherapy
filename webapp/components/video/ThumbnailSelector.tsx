@@ -66,7 +66,7 @@ export function ThumbnailSelector({
     ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight)
 
     // Generate preview
-    const previewUrl = canvas.toDataURL('image/webp', 0.9)
+    const previewUrl = canvas.toDataURL('image/jpeg', 0.9)
     setThumbnailPreview(previewUrl)
   }, [])
 
@@ -84,13 +84,13 @@ export function ThumbnailSelector({
             if (blob) resolve(blob)
             else reject(new Error('Failed to create thumbnail'))
           },
-          'image/webp',
+          'image/jpeg',
           0.9
         )
       })
 
       // Create file from blob
-      const file = new File([blob], 'thumbnail.webp', { type: 'image/webp' })
+      const file = new File([blob], 'thumbnail.jpg', { type: 'image/jpeg' })
       onThumbnailCapture(file)
     } catch (err) {
       console.error('Failed to capture thumbnail:', err)

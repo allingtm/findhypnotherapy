@@ -55,29 +55,36 @@ export default async function ClientOnboardPage({ params }: PageProps) {
   }
 
   const invitation = result.data as {
-    client: {
-      email: string;
-      first_name: string | null;
-      last_name: string | null;
-    };
-    therapist: {
-      display_name: string;
-    };
+    invitationId: string;
+    clientId: string;
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+    therapistName: string;
     terms: {
       id: string;
       title: string;
       content: string;
     };
+    service: {
+      id: string;
+      name: string;
+      description: string | null;
+      price: number | null;
+      durationMinutes: number | null;
+      onboardingRequirements: Record<string, string> | null;
+    } | null;
   };
 
   return (
     <OnboardingForm
       token={token}
-      therapistName={invitation.therapist.display_name}
-      clientEmail={invitation.client.email}
-      prefillFirstName={invitation.client.first_name}
-      prefillLastName={invitation.client.last_name}
+      therapistName={invitation.therapistName}
+      clientEmail={invitation.email}
+      prefillFirstName={invitation.firstName}
+      prefillLastName={invitation.lastName}
       terms={invitation.terms}
+      service={invitation.service}
     />
   );
 }

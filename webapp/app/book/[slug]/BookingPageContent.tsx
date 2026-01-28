@@ -11,16 +11,25 @@ interface TimeSlot {
   end_time: string;
 }
 
+interface TherapistTerms {
+  id: string;
+  title: string;
+  content: string;
+  version: string;
+}
+
 interface BookingPageContentProps {
   therapistProfileId: string;
   therapistName: string;
   maxDaysAhead: number;
+  therapistTerms: TherapistTerms | null;
 }
 
 export function BookingPageContent({
   therapistProfileId,
   therapistName,
   maxDaysAhead,
+  therapistTerms,
 }: BookingPageContentProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [availableDates, setAvailableDates] = useState<string[]>([]);
@@ -128,6 +137,7 @@ export function BookingPageContent({
           selectedDate={selectedDate}
           selectedSlot={selectedSlot}
           therapistName={therapistName}
+          therapistTerms={therapistTerms}
           onSuccess={handleBookingSuccess}
         />
       </div>

@@ -335,14 +335,17 @@ You can include sections like:
           About Terms & Conditions
         </h3>
         <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1 list-disc list-inside">
-          <li>Clients must accept your terms during the onboarding process</li>
+          <li>Clients must accept your terms during the onboarding and booking process</li>
           <li>Each acceptance is recorded with a timestamp for compliance</li>
           <li>
             If you update your terms after clients have accepted, a new version
             will be created
           </li>
           <li>
-            You must create terms before you can invite clients to onboard
+            These are your default terms - they apply to all services unless overridden
+          </li>
+          <li>
+            Services can have their own terms that replace these during booking
           </li>
         </ul>
       </div>

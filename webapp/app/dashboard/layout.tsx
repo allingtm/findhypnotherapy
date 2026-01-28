@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { canAccessDashboard } from '@/lib/auth/subscriptions'
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar'
+import { SyncfusionProvider } from '@/components/providers/SyncfusionProvider'
 
 export default async function DashboardLayout({
   children,
@@ -31,8 +32,10 @@ export default async function DashboardLayout({
     .single()
 
   return (
-    <DashboardSidebar user={{ name: profile?.name, email: user.email }}>
-      {children}
-    </DashboardSidebar>
+    <SyncfusionProvider>
+      <DashboardSidebar user={{ name: profile?.name, email: user.email }}>
+        {children}
+      </DashboardSidebar>
+    </SyncfusionProvider>
   )
 }

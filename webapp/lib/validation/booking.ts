@@ -131,6 +131,9 @@ export const bookingFormSchema = z.object({
     .optional()
     .nullable(),
   honeypot: z.string().max(0, "Bot detected").optional(),
+  // Terms acceptance fields
+  termsAccepted: z.coerce.boolean().optional(),
+  termsId: z.string().uuid("Invalid terms ID").optional().nullable(),
 });
 
 export type BookingFormData = z.infer<typeof bookingFormSchema>;

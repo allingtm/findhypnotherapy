@@ -38,13 +38,15 @@ export function BannerUploadModal({
       const croppedBlob = await getCroppedImage(
         initialImage,
         croppedAreaPixels,
-        'image/webp',
-        0.9
+        'image/jpeg',
+        0.9,
+        1200,  // Enforce exact width
+        300    // Enforce exact height (4:1 ratio)
       )
 
       // Convert blob to File
-      const file = new File([croppedBlob], 'banner.webp', {
-        type: 'image/webp',
+      const file = new File([croppedBlob], 'banner.jpg', {
+        type: 'image/jpeg',
       })
 
       onUpload(file)

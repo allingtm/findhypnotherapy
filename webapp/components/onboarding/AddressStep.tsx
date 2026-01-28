@@ -2,22 +2,29 @@
 
 import { Input } from "@/components/ui/Input";
 import type { OnboardingData } from "./OnboardingForm";
+import type { OnboardingFieldRequirement } from "@/lib/types/database";
 
 interface AddressStepProps {
   data: OnboardingData;
   onChange: (updates: Partial<OnboardingData>) => void;
   errors: Record<string, string[]>;
+  requirement?: OnboardingFieldRequirement;
 }
 
-export function AddressStep({ data, onChange, errors }: AddressStepProps) {
+export function AddressStep({ data, onChange, errors, requirement = "optional" }: AddressStepProps) {
+  const isRequired = requirement === "required";
+  const suffix = isRequired ? " *" : " (optional)";
+
   return (
     <div className="space-y-4">
       <p className="text-gray-600 dark:text-gray-400 mb-6">
-        Your address is optional but may be useful for home visits or correspondence.
+        {isRequired
+          ? "Please provide your postal address."
+          : "Your address is optional but may be useful for home visits or correspondence."}
       </p>
 
       <Input
-        label="Address Line 1"
+        label={`Address Line 1${suffix}`}
         value={data.addressLine1}
         onChange={(e) => onChange({ addressLine1: e.target.value })}
         placeholder="123 Main Street"
@@ -25,7 +32,7 @@ export function AddressStep({ data, onChange, errors }: AddressStepProps) {
       />
 
       <Input
-        label="Address Line 2"
+        label="Address Line 2 (optional)"
         value={data.addressLine2}
         onChange={(e) => onChange({ addressLine2: e.target.value })}
         placeholder="Apartment 4B"
@@ -34,14 +41,14 @@ export function AddressStep({ data, onChange, errors }: AddressStepProps) {
 
       <div className="grid grid-cols-2 gap-4">
         <Input
-          label="City"
+          label={`City${suffix}`}
           value={data.city}
           onChange={(e) => onChange({ city: e.target.value })}
           placeholder="London"
           error={errors.city?.[0]}
         />
         <Input
-          label="Postal Code"
+          label={`Postal Code${suffix}`}
           value={data.postalCode}
           onChange={(e) => onChange({ postalCode: e.target.value })}
           placeholder="SW1A 1AA"
@@ -57,11 +64,13 @@ export function AddressStep({ data, onChange, errors }: AddressStepProps) {
         error={errors.country?.[0]}
       />
 
-      <div className="bg-gray-50 dark:bg-neutral-800/50 border border-gray-200 dark:border-neutral-700 rounded-lg p-4 mt-6">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          All address fields are optional. You can skip this step if you prefer not to provide your address at this time.
-        </p>
-      </div>
+      {!isRequired && (
+        <div className="bg-gray-50 dark:bg-neutral-800/50 border border-gray-200 dark:border-neutral-700 rounded-lg p-4 mt-6">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            All address fields are optional. You can skip this step if you prefer not to provide your address at this time.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

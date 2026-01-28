@@ -6,7 +6,15 @@ import { Input } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
 import { sendClientInvitationAction } from "@/app/actions/clients";
 import { getActiveTermsAction } from "@/app/actions/therapist-terms";
+import { getMyActiveServicesAction } from "@/app/actions/therapist-services";
 import { IconX, IconMail, IconAlertTriangle } from "@tabler/icons-react";
+
+interface Service {
+  id: string;
+  name: string;
+  duration_minutes: number;
+  price: number | null;
+}
 
 interface InviteClientDialogProps {
   isOpen: boolean;
@@ -27,11 +35,14 @@ export function InviteClientDialog({
   const [firstName, setFirstName] = useState(prefillFirstName);
   const [lastName, setLastName] = useState("");
   const [personalMessage, setPersonalMessage] = useState("");
+  const [serviceId, setServiceId] = useState<string>("");
+  const [services, setServices] = useState<Service[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [hasTerms, setHasTerms] = useState<boolean | null>(null);
   const [checkingTerms, setCheckingTerms] = useState(true);
+  const [loadingServices, setLoadingServices] = useState(false);
 
   // Reset form when opened
   useEffect(() => {
@@ -40,26 +51,38 @@ export function InviteClientDialog({
       setFirstName(prefillFirstName);
       setLastName("");
       setPersonalMessage("");
+      setServiceId("");
       setError(null);
       setFieldErrors({});
     }
   }, [isOpen, prefillEmail, prefillFirstName]);
 
-  // Check if therapist has terms set up
+  // Check if therapist has terms set up and load services
   useEffect(() => {
-    async function checkTerms() {
+    async function loadData() {
       if (!isOpen) return;
       setCheckingTerms(true);
+      setLoadingServices(true);
+
       try {
-        const result = await getActiveTermsAction();
-        setHasTerms(result.success && !!result.data);
+        const [termsResult, servicesResult] = await Promise.all([
+          getActiveTermsAction(),
+          getMyActiveServicesAction(),
+        ]);
+
+        setHasTerms(termsResult.success && !!termsResult.data);
+
+        if (servicesResult.success && servicesResult.services) {
+          setServices(servicesResult.services);
+        }
       } catch {
         setHasTerms(false);
       } finally {
         setCheckingTerms(false);
+        setLoadingServices(false);
       }
     }
-    checkTerms();
+    loadData();
   }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -74,6 +97,7 @@ export function InviteClientDialog({
         firstName: firstName || undefined,
         lastName: lastName || undefined,
         personalMessage: personalMessage || undefined,
+        serviceId: serviceId || undefined,
       });
 
       if (result.success) {
@@ -152,6 +176,37 @@ export function InviteClientDialog({
             error={fieldErrors.email?.[0]}
             disabled={isSubmitting}
           />
+
+          {/* Service Selection */}
+          {services.length > 0 && (
+            <div>
+              <label
+                htmlFor="service-select"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                Service (optional)
+              </label>
+              <select
+                id="service-select"
+                value={serviceId}
+                onChange={(e) => setServiceId(e.target.value)}
+                disabled={isSubmitting || loadingServices}
+                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              >
+                <option value="">General onboarding (no specific service)</option>
+                {services.map((service) => (
+                  <option key={service.id} value={service.id}>
+                    {service.name}
+                    {service.price ? ` - £${service.price}` : ""}
+                    {service.duration_minutes ? ` (${service.duration_minutes} min)` : ""}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Select a service to use its specific terms and onboarding requirements
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <Input

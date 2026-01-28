@@ -50,10 +50,13 @@ export type Database = {
           meeting_url: string | null
           reminder_1h_sent_at: string | null
           reminder_24h_sent_at: string | null
+          service_terms_snapshot: string | null
           service_id: string | null
           session_format: string | null
           start_time: string
           status: string
+          terms_accepted_at: string | null
+          terms_id: string | null
           therapist_profile_id: string
           updated_at: string | null
           verification_expires_at: string | null
@@ -78,10 +81,13 @@ export type Database = {
           meeting_url?: string | null
           reminder_1h_sent_at?: string | null
           reminder_24h_sent_at?: string | null
+          service_terms_snapshot?: string | null
           service_id?: string | null
           session_format?: string | null
           start_time: string
           status?: string
+          terms_accepted_at?: string | null
+          terms_id?: string | null
           therapist_profile_id: string
           updated_at?: string | null
           verification_expires_at?: string | null
@@ -106,10 +112,13 @@ export type Database = {
           meeting_url?: string | null
           reminder_1h_sent_at?: string | null
           reminder_24h_sent_at?: string | null
+          service_terms_snapshot?: string | null
           service_id?: string | null
           session_format?: string | null
           start_time?: string
           status?: string
+          terms_accepted_at?: string | null
+          terms_id?: string | null
           therapist_profile_id?: string
           updated_at?: string | null
           verification_expires_at?: string | null
@@ -218,6 +227,7 @@ export type Database = {
           id: string
           opened_at: string | null
           sent_at: string | null
+          service_id: string | null
           token: string
         }
         Insert: {
@@ -228,6 +238,7 @@ export type Database = {
           id?: string
           opened_at?: string | null
           sent_at?: string | null
+          service_id?: string | null
           token: string
         }
         Update: {
@@ -238,6 +249,7 @@ export type Database = {
           id?: string
           opened_at?: string | null
           sent_at?: string | null
+          service_id?: string | null
           token?: string
         }
         Relationships: [
@@ -246,6 +258,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_invitations_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "therapist_services"
             referencedColumns: ["id"]
           },
         ]
@@ -999,6 +1018,7 @@ export type Database = {
           address_visibility: string | null
           availability_notes: string | null
           banner_url: string | null
+          mobile_banner_url: string | null
           bio: string | null
           booking_url: string | null
           city: string | null
@@ -1014,6 +1034,7 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           meta_description: string | null
+          og_image_url: string | null
           offers_free_consultation: boolean | null
           phone: string | null
           postal_code: string | null
@@ -1037,6 +1058,7 @@ export type Database = {
           address_visibility?: string | null
           availability_notes?: string | null
           banner_url?: string | null
+          mobile_banner_url?: string | null
           bio?: string | null
           booking_url?: string | null
           city?: string | null
@@ -1052,6 +1074,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           meta_description?: string | null
+          og_image_url?: string | null
           offers_free_consultation?: boolean | null
           phone?: string | null
           postal_code?: string | null
@@ -1075,6 +1098,7 @@ export type Database = {
           address_visibility?: string | null
           availability_notes?: string | null
           banner_url?: string | null
+          mobile_banner_url?: string | null
           bio?: string | null
           booking_url?: string | null
           city?: string | null
@@ -1090,6 +1114,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           meta_description?: string | null
+          og_image_url?: string | null
           offers_free_consultation?: boolean | null
           phone?: string | null
           postal_code?: string | null
@@ -1131,6 +1156,7 @@ export type Database = {
           is_active: boolean | null
           is_featured: boolean | null
           name: string
+          onboarding_requirements: Json | null
           outcome_focus: string | null
           price: number | null
           price_display_mode: Database["public"]["Enums"]["price_display_mode"]
@@ -1147,6 +1173,7 @@ export type Database = {
           show_price: boolean | null
           show_session_details: boolean | null
           sort_priority: number | null
+          terms_content: string | null
           therapist_profile_id: string
           updated_at: string | null
         }
@@ -1163,6 +1190,7 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           name: string
+          onboarding_requirements?: Json | null
           outcome_focus?: string | null
           price?: number | null
           price_display_mode?: Database["public"]["Enums"]["price_display_mode"]
@@ -1179,6 +1207,7 @@ export type Database = {
           show_price?: boolean | null
           show_session_details?: boolean | null
           sort_priority?: number | null
+          terms_content?: string | null
           therapist_profile_id: string
           updated_at?: string | null
         }
@@ -1195,6 +1224,7 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           name?: string
+          onboarding_requirements?: Json | null
           outcome_focus?: string | null
           price?: number | null
           price_display_mode?: Database["public"]["Enums"]["price_display_mode"]
@@ -1211,6 +1241,7 @@ export type Database = {
           show_price?: boolean | null
           show_session_details?: boolean | null
           sort_priority?: number | null
+          terms_content?: string | null
           therapist_profile_id?: string
           updated_at?: string | null
         }
@@ -1691,3 +1722,22 @@ export type ClientStatus = "invited" | "onboarding" | "active" | "archived"
 export type ClientSessionStatus = "scheduled" | "completed" | "cancelled" | "no_show"
 export type ClientSessionFormat = "online" | "in-person" | "phone"
 export type ClientNoteType = "session_note" | "general_note" | "progress_note"
+
+// Onboarding requirements type for services
+export type OnboardingFieldRequirement = "required" | "optional" | "hidden"
+
+export interface OnboardingRequirements {
+  phone?: OnboardingFieldRequirement
+  address?: OnboardingFieldRequirement
+  emergency_contact?: OnboardingFieldRequirement
+  health_info?: OnboardingFieldRequirement
+  gp_info?: OnboardingFieldRequirement
+}
+
+export const DEFAULT_ONBOARDING_REQUIREMENTS: OnboardingRequirements = {
+  phone: "required",
+  address: "required",
+  emergency_contact: "required",
+  health_info: "optional",
+  gp_info: "optional",
+}

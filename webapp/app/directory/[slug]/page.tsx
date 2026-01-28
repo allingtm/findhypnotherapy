@@ -41,6 +41,8 @@ export async function generateMetadata({ params }: TherapistProfilePageProps): P
   const title = `${userName} - ${profile.professional_title || 'Hypnotherapist'} | Find Hypnotherapy`
   const description = profile.meta_description || profile.bio?.slice(0, 160) || `View ${userName}'s hypnotherapy profile`
 
+  const ogImage = profile.og_image_url || profile.banner_url || null
+
   return {
     title,
     description,
@@ -48,6 +50,21 @@ export async function generateMetadata({ params }: TherapistProfilePageProps): P
       title: `${userName} - ${profile.professional_title || 'Hypnotherapist'}`,
       description,
       type: 'profile',
+      ...(ogImage && {
+        images: [
+          {
+            url: ogImage,
+            width: profile.og_image_url ? 1200 : undefined,
+            height: profile.og_image_url ? 630 : undefined,
+          },
+        ],
+      }),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${userName} - ${profile.professional_title || 'Hypnotherapist'}`,
+      description,
+      ...(ogImage && { images: [ogImage] }),
     },
   }
 }
@@ -155,15 +172,36 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
       <Navbar />
 
       <div className="flex-1 bg-gray-50 dark:bg-neutral-950">
-        {/* Profile Banner */}
-        {profile.banner_url ? (
+        {/* Profile Banner - Responsive */}
+        {(profile.banner_url || profile.mobile_banner_url) ? (
           <div className="relative w-full h-48 md:h-64 lg:h-72 overflow-hidden">
-            <Image
-              src={profile.banner_url}
-              alt={`${userData.name}'s banner`}
-              fill
-              className="object-cover"
-            />
+            {/* Mobile Banner - shown on small screens if available */}
+            {profile.mobile_banner_url && (
+              <Image
+                src={profile.mobile_banner_url}
+                alt={`${userData.name}'s banner`}
+                fill
+                className="object-cover md:hidden"
+              />
+            )}
+            {/* Desktop Banner - shown on medium+ screens */}
+            {profile.banner_url && (
+              <Image
+                src={profile.banner_url}
+                alt={`${userData.name}'s banner`}
+                fill
+                className={`object-cover ${profile.mobile_banner_url ? 'hidden md:block' : ''}`}
+              />
+            )}
+            {/* Fallback: show desktop banner on mobile if no mobile banner */}
+            {!profile.mobile_banner_url && profile.banner_url && (
+              <Image
+                src={profile.banner_url}
+                alt={`${userData.name}'s banner`}
+                fill
+                className="object-cover md:hidden"
+              />
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-white/60 dark:from-neutral-900/60 to-transparent" />
           </div>
         ) : (
@@ -172,7 +210,7 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
 
         {/* Profile Header */}
         <div className="bg-white dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-800">
-          <div className={`container mx-auto px-4 py-8 ${profile.banner_url ? '-mt-16 relative z-10' : ''}`}>
+          <div className={`container mx-auto px-4 py-8 ${(profile.banner_url || profile.mobile_banner_url) ? '-mt-16 relative z-10' : ''}`}>
           <div className="flex flex-col md:flex-row gap-6">
             {/* Photo */}
             <div className="flex-shrink-0">

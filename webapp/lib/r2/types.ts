@@ -6,9 +6,11 @@
 export type StorageFolder =
   | 'profile-photos'
   | 'profile-banners'
+  | 'mobile-banners'
   | 'service-images'
   | 'therapist-videos'
   | 'video-thumbnails'
+  | 'og-images'
 
 // Options for file upload
 export interface UploadOptions {

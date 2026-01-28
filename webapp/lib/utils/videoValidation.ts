@@ -9,7 +9,7 @@ export const VIDEO_CONSTRAINTS = {
 
 export const THUMBNAIL_CONSTRAINTS = {
   MAX_FILE_SIZE: 2 * 1024 * 1024, // 2MB
-  ALLOWED_TYPES: ['image/jpeg', 'image/webp', 'image/png'] as const,
+  ALLOWED_TYPES: ['image/jpeg', 'image/png'] as const,
 }
 
 export interface ValidationResult {
@@ -103,7 +103,7 @@ export function generateVideoFilename(userId: string, extension: string = 'mp4')
 
 export function generateThumbnailFilename(userId: string, videoId: string): string {
   const timestamp = Date.now()
-  return `${userId}/${videoId}-thumb-${timestamp}.webp`
+  return `${userId}/${videoId}-thumb-${timestamp}.jpg`
 }
 
 export function getVideoExtension(mimeType: string): string {

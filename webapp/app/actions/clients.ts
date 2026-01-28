@@ -65,7 +65,7 @@ export async function sendClientInvitationAction(
     };
   }
 
-  const { email, firstName, lastName, personalMessage } = validation.data;
+  const { email, firstName, lastName, personalMessage, serviceId } = validation.data;
 
   try {
     const supabase = await createClient();
@@ -137,6 +137,7 @@ export async function sendClientInvitationAction(
           token,
           expires_at: expiresAt,
           sent_at: new Date().toISOString(),
+          service_id: serviceId || null,
         });
 
         // Send email
@@ -188,6 +189,7 @@ export async function sendClientInvitationAction(
       token,
       expires_at: expiresAt,
       sent_at: new Date().toISOString(),
+      service_id: serviceId || null,
     });
 
     if (invitationError) {
@@ -339,6 +341,15 @@ export async function getInvitationByTokenAction(
             users!inner(name, email),
             therapist_terms!inner(id, title, content, is_active)
           )
+        ),
+        therapist_services(
+          id,
+          name,
+          description,
+          price,
+          duration_minutes,
+          terms_content,
+          onboarding_requirements
         )
       `)
       .eq("token", token)
@@ -379,6 +390,22 @@ export async function getInvitationByTokenAction(
         .eq("id", invitation.id);
     }
 
+    // Get service info if present
+    const service = invitation.therapist_services as {
+      id: string;
+      name: string;
+      description: string | null;
+      price: number | null;
+      duration_minutes: number | null;
+      terms_content: string | null;
+      onboarding_requirements: Record<string, string> | null;
+    } | null;
+
+    // Use service-specific terms if available, otherwise use global terms
+    const termsToUse = service?.terms_content
+      ? { id: activeTerms.id, title: service.name, content: service.terms_content }
+      : { id: activeTerms.id, title: activeTerms.title, content: activeTerms.content };
+
     return {
       success: true,
       data: {
@@ -388,11 +415,17 @@ export async function getInvitationByTokenAction(
         firstName: invitation.clients.first_name,
         lastName: invitation.clients.last_name,
         therapistName: therapistProfile.users.name,
-        terms: {
-          id: activeTerms.id,
-          title: activeTerms.title,
-          content: activeTerms.content,
-        },
+        terms: termsToUse,
+        service: service
+          ? {
+              id: service.id,
+              name: service.name,
+              description: service.description,
+              price: service.price,
+              durationMinutes: service.duration_minutes,
+              onboardingRequirements: service.onboarding_requirements,
+            }
+          : null,
       },
     };
   } catch (error) {

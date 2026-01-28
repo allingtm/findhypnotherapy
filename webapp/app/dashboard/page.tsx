@@ -1,153 +1,134 @@
-import { redirect } from 'next/navigation'
-import { cache } from 'react'
-import { createClient } from '@/lib/supabase/server'
-import { getUserRoles } from '@/lib/auth/permissions'
-import { getUserSubscription } from '@/lib/auth/subscriptions'
-import Link from 'next/link'
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getUserRoles } from "@/lib/auth/permissions";
+import { DashboardHomeContent } from "@/components/dashboard/DashboardHomeContent";
+import {
+  getDashboardStats,
+  getDashboardTodaySchedule,
+  getDashboardActionItems,
+  getDashboardRecentActivity,
+} from "@/app/actions/dashboard";
+import Link from "next/link";
 
-// Cache the user profile query for performance
-const getUserProfile = cache(async (userId: string) => {
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', userId)
-    .single()
-
-  if (error) {
-    console.error('Error fetching profile:', error)
-    return null
-  }
-
-  return data
-})
+export const metadata = {
+  title: "Dashboard | Find Hypnotherapy",
+  description: "Your practice overview and management dashboard",
+};
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  // Redirect to login if not authenticated
   if (!user) {
-    redirect('/login')
+    redirect("/login");
   }
 
-  // Fetch user profile, roles, and subscription
-  const profile = await getUserProfile(user.id)
-  const userRoles = await getUserRoles(supabase)
-  const isAdmin = userRoles.includes('Admin')
-  const subscription = await getUserSubscription(supabase)
+  // Check user roles
+  const userRoles = await getUserRoles(supabase);
+  const isAdmin = userRoles.includes("Admin");
+
+  // Get user profile and therapist profile
+  const [userResult, profileResult] = await Promise.all([
+    supabase.from("users").select("name").eq("id", user.id).single(),
+    supabase
+      .from("therapist_profiles")
+      .select("id, slug")
+      .eq("user_id", user.id)
+      .single(),
+  ]);
+
+  const userName = userResult.data?.name || user.email?.split("@")[0] || "User";
+  const profileSlug = profileResult.data?.slug;
+
+  // If no therapist profile, show setup prompt
+  if (!profileResult.data) {
+    return (
+      <div className="w-full max-w-2xl mx-auto">
+        <div className="text-center py-12">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            Welcome to Find Hypnotherapy!
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Complete your therapist profile to start accepting bookings and
+            connect with clients.
+          </p>
+          <Link
+            href="/dashboard/profile"
+            className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          >
+            Set Up Your Profile
+          </Link>
+        </div>
+
+        {isAdmin && (
+          <div className="mt-8 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-purple-800 dark:text-purple-300">
+                <span className="font-semibold">Admin Access:</span> You have
+                administrator privileges.
+              </p>
+              <Link
+                href="/admin"
+                className="text-sm font-medium text-purple-600 dark:text-purple-400 hover:underline"
+              >
+                Admin Dashboard &rarr;
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Fetch all dashboard data in parallel
+  const [statsResult, scheduleResult, actionItemsResult, activitiesResult] =
+    await Promise.all([
+      getDashboardStats(),
+      getDashboardTodaySchedule(),
+      getDashboardActionItems(),
+      getDashboardRecentActivity(),
+    ]);
+
+  // Default stats if there's an error
+  const defaultStats = {
+    todaySessions: 0,
+    pendingBookings: 0,
+    unreadMessages: 0,
+    activeClients: 0,
+    invitedClients: 0,
+    sessionsThisWeek: 0,
+  };
 
   return (
     <div className="w-full">
-      <div className="flex justify-between items-start mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Welcome back!</p>
-        </div>
-        {isAdmin && (
-          <Link
-            href="/admin"
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
-          >
-            Admin Dashboard
-          </Link>
-        )}
-      </div>
-
-          <div className="border-t pt-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Your Profile</h2>
-
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Name</label>
-                <p className="text-lg text-gray-900 dark:text-gray-100">{profile?.name || 'Not set'}</p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Email</label>
-                <p className="text-lg text-gray-900 dark:text-gray-100">{user.email}</p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Account Created</label>
-                <p className="text-lg text-gray-900 dark:text-gray-100">
-                  {new Date(profile?.created_at || user.created_at).toLocaleDateString('en-GB', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
-                  })}
-                </p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-500 dark:text-gray-400">User ID</label>
-                <p className="text-sm text-gray-600 dark:text-gray-400 font-mono">{user.id}</p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Role</label>
-                <div className="flex gap-2 mt-1">
-                  {userRoles.map(role => (
-                    <span
-                      key={role}
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        role === 'Admin'
-                          ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300'
-                          : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
-                      }`}
-                    >
-                      {role}
-                    </span>
-                  ))}
-                  {userRoles.length === 0 && (
-                    <span className="text-sm text-gray-500 dark:text-gray-400">No roles assigned</span>
-                  )}
-                </div>
-              </div>
-            </div>
+      {/* Admin Banner */}
+      {isAdmin && (
+        <div className="mb-6 p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-purple-800 dark:text-purple-300">
+              <span className="font-semibold">Admin Access:</span> You have
+              administrator privileges.
+            </p>
+            <Link
+              href="/admin"
+              className="text-sm font-medium text-purple-600 dark:text-purple-400 hover:underline"
+            >
+              Admin Dashboard &rarr;
+            </Link>
           </div>
+        </div>
+      )}
 
-          {subscription && (
-            <div className="mt-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="font-medium text-green-900 dark:text-green-200">
-                    {subscription.status === 'trialing' ? '14-Day Free Trial Active' : 'Active Subscription'}
-                  </p>
-                  <p className="text-sm text-green-700 dark:text-green-400 mt-1">
-                    {subscription.plan_name} - Renews {subscription.current_period_end ? new Date(subscription.current_period_end).toLocaleDateString('en-GB', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric'
-                    }) : 'N/A'}
-                  </p>
-                  {subscription.status === 'trialing' && subscription.trial_end && (
-                    <p className="text-sm text-green-600 dark:text-green-400 mt-1">
-                      Trial ends {new Date(subscription.trial_end).toLocaleDateString('en-GB', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric'
-                      })}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {isAdmin && !subscription && (
-            <div className="mt-6 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
-              <p className="text-sm text-purple-800 dark:text-purple-300">
-                <span className="font-semibold">Admin Access:</span> You have access to all features as an administrator.
-              </p>
-            </div>
-          )}
-
-      <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-        <p className="text-sm text-blue-800 dark:text-blue-300">
-          <span className="font-semibold">Authentication Status:</span> Active Session
-        </p>
-      </div>
+      <DashboardHomeContent
+        userName={userName}
+        stats={statsResult.stats || defaultStats}
+        schedule={scheduleResult.schedule}
+        actionItems={actionItemsResult.items}
+        activities={activitiesResult.activities}
+        profileSlug={profileSlug}
+      />
     </div>
-  )
+  );
 }

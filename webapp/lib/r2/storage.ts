@@ -183,9 +183,11 @@ export function parsePath(path: string): { folder: StorageFolder; filename: stri
   const validFolders: StorageFolder[] = [
     'profile-photos',
     'profile-banners',
+    'mobile-banners',
     'service-images',
     'therapist-videos',
     'video-thumbnails',
+    'og-images',
   ]
 
   for (const folder of validFolders) {

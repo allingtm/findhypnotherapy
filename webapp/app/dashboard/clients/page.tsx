@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { ClientList } from "@/components/clients/ClientList";
+import { ClientsPageContent } from "@/components/clients/ClientsPageContent";
+import { getConversationsAction } from "@/app/actions/messages";
+import { getBookingsForMember } from "@/app/actions/bookings";
 
 export const metadata = {
   title: "Clients | Find Hypnotherapy",
-  description: "Manage your clients and their sessions",
+  description: "Manage your clients, inquiries, and booking requests",
 };
 
 export default async function ClientsPage() {
@@ -27,8 +29,32 @@ export default async function ClientsPage() {
     .single();
 
   if (!profile) {
-    redirect("/dashboard/profile/therapist");
+    redirect("/dashboard/practice?tab=profile");
   }
 
-  return <ClientList />;
+  // Fetch conversations (inquiries) and pending bookings in parallel
+  const [conversationsResult, bookingsResult] = await Promise.all([
+    getConversationsAction(),
+    getBookingsForMember("pending"),
+  ]);
+
+  const conversations = conversationsResult.conversations || [];
+  const pendingBookings = (bookingsResult.bookings || []).filter(
+    (b: { is_verified: boolean }) => b.is_verified
+  );
+
+  // Count conversations that need attention (unread messages from visitors)
+  const unreadCount = conversations.filter(
+    (c: { unreadCount: number; needsAttention: boolean }) =>
+      c.unreadCount > 0 || c.needsAttention
+  ).length;
+
+  return (
+    <ClientsPageContent
+      conversations={conversations}
+      pendingBookings={pendingBookings}
+      unreadCount={unreadCount}
+      pendingCount={pendingBookings.length}
+    />
+  );
 }

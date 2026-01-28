@@ -38,13 +38,13 @@ export function PhotoUploadModal({
       const croppedBlob = await getCroppedImage(
         initialImage,
         croppedAreaPixels,
-        'image/webp',
+        'image/jpeg',
         0.9
       )
 
       // Convert blob to File
-      const file = new File([croppedBlob], 'profile-photo.webp', {
-        type: 'image/webp',
+      const file = new File([croppedBlob], 'profile-photo.jpg', {
+        type: 'image/jpeg',
       })
 
       onUpload(file)

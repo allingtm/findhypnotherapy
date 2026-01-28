@@ -1,50 +1,56 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { TermsEditor } from "@/components/settings/TermsEditor";
+import { SettingsPageContent } from "@/components/settings/SettingsPageContent";
+import { getOrCreateBookingSettings } from "@/app/actions/availability";
+import { getUserSubscription } from "@/lib/auth/subscriptions";
 
 export const metadata = {
   title: "Settings | Find Hypnotherapy",
-  description: "Manage your practice settings and terms & conditions",
+  description: "Manage your account, terms, and billing settings",
 };
 
 export default async function SettingsPage() {
   const supabase = await createClient();
-
   const {
     data: { user },
-    error: authError,
   } = await supabase.auth.getUser();
 
-  if (authError || !user) {
+  if (!user) {
     redirect("/login");
   }
 
-  // Check if user has a therapist profile
-  const { data: profile } = await supabase
-    .from("therapist_profiles")
-    .select("id, display_name")
-    .eq("user_id", user.id)
-    .single();
+  // Fetch user data and settings in parallel
+  const [userData, settingsResult, subscription] = await Promise.all([
+    supabase.from("users").select("name, photo_url").eq("id", user.id).single(),
+    getOrCreateBookingSettings(),
+    getUserSubscription(supabase),
+  ]);
 
-  if (!profile) {
-    redirect("/dashboard/profile/therapist");
+  if (settingsResult.error || !settingsResult.settings) {
+    return (
+      <div className="w-full">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8">
+          Settings
+        </h1>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <p className="text-red-800 dark:text-red-200">
+            Unable to load your settings. Please try again later.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Settings
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Manage your practice settings and client onboarding requirements
-        </p>
-      </div>
-
-      {/* Terms & Conditions Section */}
-      <section className="mb-12">
-        <TermsEditor />
-      </section>
-    </div>
+    <SettingsPageContent
+      user={{
+        id: user.id,
+        email: user.email || "",
+        name: userData.data?.name || "",
+        photo_url: userData.data?.photo_url,
+      }}
+      bookingSettings={settingsResult.settings}
+      subscription={subscription}
+    />
   );
 }

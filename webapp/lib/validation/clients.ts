@@ -27,6 +27,11 @@ export const clientInvitationSchema = z.object({
     .max(500, "Personal message must be 500 characters or less")
     .trim()
     .optional(),
+  serviceId: z
+    .string()
+    .uuid("Invalid service ID")
+    .optional()
+    .nullable(),
 });
 
 export type ClientInvitationData = z.infer<typeof clientInvitationSchema>;

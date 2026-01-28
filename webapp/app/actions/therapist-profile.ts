@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { validateImageFile, getFileExtension } from '@/lib/utils/fileValidation'
-import { generateBannerFilename } from '@/lib/utils/imageCrop'
+import { generateBannerFilename, generateMobileBannerFilename, generateOgImageFilename } from '@/lib/utils/imageCrop'
 import { uploadFile, deleteFile, getPublicUrl, extractR2Path, parsePath } from '@/lib/r2/storage'
 
 // Response type for form actions
@@ -232,7 +232,7 @@ export async function updateSpecializationsAction(
 
     return { success: true }
   } catch (err) {
-    console.error('Specializations update error:', err)
+    console.error('Specialisations update error:', err)
     return { success: false, error: 'An unexpected error occurred' }
   }
 }
@@ -539,5 +539,326 @@ export async function deleteBannerAction(
       success: false,
       error: 'An unexpected error occurred',
     }
+  }
+}
+
+// Upload mobile banner action
+export async function uploadMobileBannerAction(
+  prevState: any,
+  formData: FormData
+): Promise<BannerUploadResponse> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return {
+        success: false,
+        error: 'Not authenticated',
+      }
+    }
+
+    const file = formData.get('mobile_banner') as File
+
+    if (!file || file.size === 0) {
+      return {
+        success: false,
+        error: 'No file provided',
+      }
+    }
+
+    // Validate file
+    const validation = validateImageFile(file)
+    if (!validation.valid) {
+      return {
+        success: false,
+        error: validation.error,
+      }
+    }
+
+    // Generate unique filename
+    const fileExtension = getFileExtension(file.type)
+    const filename = generateMobileBannerFilename(user.id, fileExtension)
+
+    // Get current mobile_banner_url to delete later
+    const { data: currentProfile } = await supabase
+      .from('therapist_profiles')
+      .select('mobile_banner_url')
+      .eq('user_id', user.id)
+      .single()
+
+    // Convert File to Buffer for R2 upload
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+
+    // Upload to R2 Storage
+    const uploadResult = await uploadFile('mobile-banners', filename, buffer, {
+      contentType: file.type,
+      cacheControl: 'max-age=3600',
+    })
+
+    if (!uploadResult.success) {
+      console.error('Mobile banner upload error:', uploadResult.error)
+      return {
+        success: false,
+        error: 'Failed to upload mobile banner',
+      }
+    }
+
+    // Get public URL
+    const publicUrl = getPublicUrl('mobile-banners', filename)
+
+    // Update therapist profile with new mobile banner URL
+    const { error: updateError } = await supabase
+      .from('therapist_profiles')
+      .update({ mobile_banner_url: publicUrl })
+      .eq('user_id', user.id)
+
+    if (updateError) {
+      // Rollback: delete uploaded file
+      await deleteFile('mobile-banners', filename)
+
+      return {
+        success: false,
+        error: 'Failed to update profile',
+      }
+    }
+
+    // Delete old mobile banner if exists
+    if (currentProfile?.mobile_banner_url) {
+      try {
+        const oldPath = extractR2Path(currentProfile.mobile_banner_url)
+        if (oldPath) {
+          const parsed = parsePath(oldPath)
+          if (parsed) {
+            await deleteFile(parsed.folder, parsed.filename)
+          }
+        }
+      } catch (err) {
+        // Non-critical error, log but don't fail
+        console.warn('Failed to delete old mobile banner:', err)
+      }
+    }
+
+    revalidatePath('/dashboard/practice')
+    revalidatePath('/directory')
+
+    return {
+      success: true,
+      bannerUrl: publicUrl,
+    }
+  } catch (err) {
+    console.error('Mobile banner upload error:', err)
+    return {
+      success: false,
+      error: 'An unexpected error occurred',
+    }
+  }
+}
+
+// Delete mobile banner action
+export async function deleteMobileBannerAction(
+  prevState: any,
+  formData: FormData
+): Promise<ActionResponse> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return {
+        success: false,
+        error: 'Not authenticated',
+      }
+    }
+
+    // Get current mobile banner URL
+    const { data: profile } = await supabase
+      .from('therapist_profiles')
+      .select('mobile_banner_url')
+      .eq('user_id', user.id)
+      .single()
+
+    if (!profile?.mobile_banner_url) {
+      return {
+        success: false,
+        error: 'No mobile banner to delete',
+      }
+    }
+
+    // Delete from R2 storage
+    try {
+      const fullPath = extractR2Path(profile.mobile_banner_url)
+      if (fullPath) {
+        const parsed = parsePath(fullPath)
+        if (parsed) {
+          await deleteFile(parsed.folder, parsed.filename)
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to delete mobile banner file:', err)
+    }
+
+    // Update profile to remove mobile banner URL
+    const { error: updateError } = await supabase
+      .from('therapist_profiles')
+      .update({ mobile_banner_url: null })
+      .eq('user_id', user.id)
+
+    if (updateError) {
+      return {
+        success: false,
+        error: 'Failed to update profile',
+      }
+    }
+
+    revalidatePath('/dashboard/practice')
+    revalidatePath('/directory')
+
+    return { success: true }
+  } catch (err) {
+    console.error('Mobile banner delete error:', err)
+    return {
+      success: false,
+      error: 'An unexpected error occurred',
+    }
+  }
+}
+
+// Upload OG (social sharing) image action
+export async function uploadOgImageAction(
+  prevState: any,
+  formData: FormData
+): Promise<BannerUploadResponse> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'Not authenticated' }
+    }
+
+    const file = formData.get('og_image') as File
+
+    if (!file || file.size === 0) {
+      return { success: false, error: 'No file provided' }
+    }
+
+    const validation = validateImageFile(file)
+    if (!validation.valid) {
+      return { success: false, error: validation.error }
+    }
+
+    const fileExtension = getFileExtension(file.type)
+    const filename = generateOgImageFilename(user.id, fileExtension)
+
+    // Get current og_image_url to delete later
+    const { data: currentProfile } = await supabase
+      .from('therapist_profiles')
+      .select('og_image_url')
+      .eq('user_id', user.id)
+      .single()
+
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+
+    const uploadResult = await uploadFile('og-images', filename, buffer, {
+      contentType: file.type,
+      cacheControl: 'max-age=3600',
+    })
+
+    if (!uploadResult.success) {
+      console.error('OG image upload error:', uploadResult.error)
+      return { success: false, error: 'Failed to upload image' }
+    }
+
+    const publicUrl = getPublicUrl('og-images', filename)
+
+    const { error: updateError } = await supabase
+      .from('therapist_profiles')
+      .update({ og_image_url: publicUrl })
+      .eq('user_id', user.id)
+
+    if (updateError) {
+      await deleteFile('og-images', filename)
+      return { success: false, error: 'Failed to update profile' }
+    }
+
+    // Delete old OG image if exists
+    if (currentProfile?.og_image_url) {
+      try {
+        const oldPath = extractR2Path(currentProfile.og_image_url)
+        if (oldPath) {
+          const parsed = parsePath(oldPath)
+          if (parsed) {
+            await deleteFile(parsed.folder, parsed.filename)
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to delete old OG image:', err)
+      }
+    }
+
+    revalidatePath('/dashboard/profile/therapist')
+    revalidatePath('/directory')
+
+    return { success: true, bannerUrl: publicUrl }
+  } catch (err) {
+    console.error('OG image upload error:', err)
+    return { success: false, error: 'An unexpected error occurred' }
+  }
+}
+
+// Delete OG (social sharing) image action
+export async function deleteOgImageAction(
+  prevState: any,
+  formData: FormData
+): Promise<ActionResponse> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'Not authenticated' }
+    }
+
+    const { data: profile } = await supabase
+      .from('therapist_profiles')
+      .select('og_image_url')
+      .eq('user_id', user.id)
+      .single()
+
+    if (!profile?.og_image_url) {
+      return { success: false, error: 'No image to delete' }
+    }
+
+    try {
+      const fullPath = extractR2Path(profile.og_image_url)
+      if (fullPath) {
+        const parsed = parsePath(fullPath)
+        if (parsed) {
+          await deleteFile(parsed.folder, parsed.filename)
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to delete OG image file:', err)
+    }
+
+    const { error: updateError } = await supabase
+      .from('therapist_profiles')
+      .update({ og_image_url: null })
+      .eq('user_id', user.id)
+
+    if (updateError) {
+      return { success: false, error: 'Failed to update profile' }
+    }
+
+    revalidatePath('/dashboard/profile/therapist')
+    revalidatePath('/directory')
+
+    return { success: true }
+  } catch (err) {
+    console.error('OG image delete error:', err)
+    return { success: false, error: 'An unexpected error occurred' }
   }
 }

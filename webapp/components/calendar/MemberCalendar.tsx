@@ -1,30 +1,44 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
-  IconChevronLeft,
-  IconChevronRight,
-  IconCalendarEvent,
-  IconUser,
+  ScheduleComponent,
+  Day,
+  Week,
+  WorkWeek,
+  Month,
+  Inject,
+  ViewsDirective,
+  ViewDirective,
+} from "@syncfusion/ej2-react-schedule";
+import type {
+  PopupOpenEventArgs,
+  ActionEventArgs,
+  EventRenderedArgs,
+  EventClickArgs,
+} from "@syncfusion/ej2-react-schedule";
+import {
   IconVideo,
   IconPhone,
+  IconUser,
   IconClock,
+  IconX,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { getSessionsForCalendarAction } from "@/app/actions/client-sessions";
 
 interface CalendarEvent {
-  id: string;
-  type: "booking" | "session";
-  title: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  status: string;
-  format?: string | null;
-  clientName?: string;
-  clientSlug?: string;
-  visitorName?: string;
+  Id: string;
+  Subject: string;
+  StartTime: Date;
+  EndTime: Date;
+  IsAllDay: boolean;
+  Type: "booking" | "session";
+  Status: string;
+  Format?: string | null;
+  ClientName?: string;
+  ClientSlug?: string;
+  VisitorName?: string;
 }
 
 interface MemberCalendarProps {
@@ -40,283 +54,281 @@ interface MemberCalendarProps {
   }>;
 }
 
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
-];
+const EVENT_COLORS = {
+  session: { bg: "#22c55e", border: "#16a34a" },
+  confirmed: { bg: "#3b82f6", border: "#2563eb" },
+  pending: { bg: "#f59e0b", border: "#d97706" },
+};
 
 export function MemberCalendar({ initialBookings = [] }: MemberCalendarProps) {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const scheduleRef = useRef<ScheduleComponent>(null);
   const [sessions, setSessions] = useState<CalendarEvent[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [currentDate, setCurrentDate] = useState(new Date());
 
-  // Convert bookings to events
+  // Convert bookings to Syncfusion events
   const bookingEvents: CalendarEvent[] = useMemo(() => {
-    return initialBookings.map((b) => ({
-      id: b.id,
-      type: "booking" as const,
-      title: b.service_title || "Booking",
-      date: b.booking_date,
-      startTime: b.start_time,
-      endTime: b.end_time,
-      status: b.status,
-      format: b.session_format,
-      visitorName: b.visitor_name,
-    }));
+    return initialBookings.map((b) => {
+      const [year, month, day] = b.booking_date.split("-").map(Number);
+      const [startH, startM] = b.start_time.split(":").map(Number);
+      const [endH, endM] = b.end_time.split(":").map(Number);
+
+      return {
+        Id: b.id,
+        Subject: b.service_title || "Booking",
+        StartTime: new Date(year, month - 1, day, startH, startM),
+        EndTime: new Date(year, month - 1, day, endH, endM),
+        IsAllDay: false,
+        Type: "booking" as const,
+        Status: b.status,
+        Format: b.session_format,
+        VisitorName: b.visitor_name,
+      };
+    });
   }, [initialBookings]);
 
-  // Load sessions for current month
+  // Load sessions for visible date range
   useEffect(() => {
     async function loadSessions() {
-      setIsLoading(true);
       try {
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
-        const startDate = new Date(year, month, 1).toISOString().split("T")[0];
-        const endDate = new Date(year, month + 1, 0).toISOString().split("T")[0];
+        // Load 3 months of data for smooth navigation
+        const startDate = new Date(year, month - 1, 1).toISOString().split("T")[0];
+        const endDate = new Date(year, month + 2, 0).toISOString().split("T")[0];
 
         const result = await getSessionsForCalendarAction(startDate, endDate);
         if (result.success && result.data) {
-          const sessionEvents: CalendarEvent[] = result.data.map((s: Record<string, unknown>) => {
-            const client = s.clients as { first_name: string | null; last_name: string | null; slug: string } | null;
-            return {
-              id: s.id as string,
-              type: "session" as const,
-              title: s.title as string,
-              date: s.session_date as string,
-              startTime: s.start_time as string,
-              endTime: s.end_time as string,
-              status: s.status as string,
-              format: s.session_format as string | null,
-              clientName: client
-                ? `${client.first_name || ""} ${client.last_name || ""}`.trim()
-                : undefined,
-              clientSlug: client?.slug,
-            };
-          });
+          const sessionEvents: CalendarEvent[] = result.data.map(
+            (s: Record<string, unknown>) => {
+              const client = s.clients as {
+                first_name: string | null;
+                last_name: string | null;
+                slug: string;
+              } | null;
+
+              const sessionDate = s.session_date as string;
+              const [year, month, day] = sessionDate.split("-").map(Number);
+              const startTime = s.start_time as string;
+              const endTime = s.end_time as string;
+              const [startH, startM] = startTime.split(":").map(Number);
+              const [endH, endM] = endTime.split(":").map(Number);
+
+              return {
+                Id: s.id as string,
+                Subject: s.title as string,
+                StartTime: new Date(year, month - 1, day, startH, startM),
+                EndTime: new Date(year, month - 1, day, endH, endM),
+                IsAllDay: false,
+                Type: "session" as const,
+                Status: s.status as string,
+                Format: s.session_format as string | null,
+                ClientName: client
+                  ? `${client.first_name || ""} ${client.last_name || ""}`.trim()
+                  : undefined,
+                ClientSlug: client?.slug,
+              };
+            }
+          );
           setSessions(sessionEvents);
         }
       } catch (error) {
         console.error("Failed to load sessions:", error);
-      } finally {
-        setIsLoading(false);
       }
     }
     loadSessions();
   }, [currentDate]);
 
-  // Get all events for the current month
+  // Combine all events
   const allEvents = useMemo(() => {
     return [...bookingEvents, ...sessions];
   }, [bookingEvents, sessions]);
 
-  // Generate calendar grid
-  const calendarDays = useMemo(() => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const startDayOfWeek = firstDay.getDay();
-    const daysInMonth = lastDay.getDate();
+  const onPopupOpen = useCallback((args: PopupOpenEventArgs) => {
+    // Prevent default popups - we use our custom sidebar
+    args.cancel = true;
+  }, []);
 
-    const days: Array<{ date: Date | null; events: CalendarEvent[] }> = [];
-
-    // Add empty cells for days before the first day
-    for (let i = 0; i < startDayOfWeek; i++) {
-      days.push({ date: null, events: [] });
+  const onActionBegin = useCallback((args: ActionEventArgs) => {
+    // Block all CRUD operations - read-only calendar
+    if (
+      args.requestType === "eventCreate" ||
+      args.requestType === "eventChange" ||
+      args.requestType === "eventRemove"
+    ) {
+      args.cancel = true;
     }
+  }, []);
 
-    // Add days of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month, day);
-      const dateStr = date.toISOString().split("T")[0];
-      const dayEvents = allEvents.filter((e) => e.date === dateStr);
-      days.push({ date, events: dayEvents });
+  const onEventClick = useCallback((args: EventClickArgs) => {
+    const event = args.event as CalendarEvent;
+    setSelectedEvent(event);
+  }, []);
+
+  const onEventRendered = useCallback((args: EventRenderedArgs) => {
+    if (args.element && args.data) {
+      const event = args.data as CalendarEvent;
+      let colors = EVENT_COLORS.pending;
+
+      if (event.Type === "session") {
+        colors = EVENT_COLORS.session;
+      } else if (event.Status === "confirmed") {
+        colors = EVENT_COLORS.confirmed;
+      }
+
+      args.element.style.backgroundColor = colors.bg;
+      args.element.style.borderColor = colors.border;
     }
+  }, []);
 
-    return days;
-  }, [currentDate, allEvents]);
-
-  const goToPreviousMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
-    setSelectedDate(null);
-  };
-
-  const goToNextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
-    setSelectedDate(null);
-  };
-
-  const goToToday = () => {
-    setCurrentDate(new Date());
-    setSelectedDate(new Date().toISOString().split("T")[0]);
-  };
-
-  const selectedEvents = useMemo(() => {
-    if (!selectedDate) return [];
-    return allEvents.filter((e) => e.date === selectedDate);
-  }, [selectedDate, allEvents]);
-
-  const today = new Date().toISOString().split("T")[0];
+  const onNavigating = useCallback(
+    (args: { currentDate?: Date; action?: string }) => {
+      if (args.currentDate) {
+        setCurrentDate(args.currentDate);
+      }
+    },
+    []
+  );
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
-      {/* Calendar Grid */}
+      {/* Calendar */}
       <div className="flex-1">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
-          </h2>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={goToToday}
-              className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-neutral-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-neutral-600 transition-colors"
-            >
-              Today
-            </button>
-            <button
-              onClick={goToPreviousMonth}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
-            >
-              <IconChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            </button>
-            <button
-              onClick={goToNextMonth}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
-            >
-              <IconChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            </button>
+        {/* Legend */}
+        <div className="flex flex-wrap gap-4 text-sm mb-4">
+          <div className="flex items-center gap-1.5">
+            <span
+              className="inline-block w-3 h-3 rounded-sm"
+              style={{ backgroundColor: EVENT_COLORS.session.bg }}
+            />
+            <span className="text-gray-600 dark:text-gray-400">
+              Client Sessions
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span
+              className="inline-block w-3 h-3 rounded-sm"
+              style={{ backgroundColor: EVENT_COLORS.confirmed.bg }}
+            />
+            <span className="text-gray-600 dark:text-gray-400">
+              Confirmed Bookings
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span
+              className="inline-block w-3 h-3 rounded-sm"
+              style={{ backgroundColor: EVENT_COLORS.pending.bg }}
+            />
+            <span className="text-gray-600 dark:text-gray-400">
+              Pending Bookings
+            </span>
           </div>
         </div>
 
-        {/* Loading indicator */}
-        {isLoading && (
-          <div className="absolute top-4 right-4">
-            <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          </div>
-        )}
-
-        {/* Days header */}
-        <div className="grid grid-cols-7 gap-1 mb-2">
-          {DAYS.map((day) => (
-            <div
-              key={day}
-              className="text-center text-sm font-medium text-gray-500 dark:text-gray-400 py-2"
-            >
-              {day}
-            </div>
-          ))}
-        </div>
-
-        {/* Calendar grid */}
-        <div className="grid grid-cols-7 gap-1">
-          {calendarDays.map((day, index) => {
-            if (!day.date) {
-              return (
-                <div
-                  key={`empty-${index}`}
-                  className="h-24 bg-gray-50 dark:bg-neutral-900/50 rounded-lg"
-                />
-              );
-            }
-
-            const dateStr = day.date.toISOString().split("T")[0];
-            const isToday = dateStr === today;
-            const isSelected = dateStr === selectedDate;
-
-            return (
-              <button
-                key={dateStr}
-                onClick={() => setSelectedDate(dateStr)}
-                className={`h-24 p-2 rounded-lg text-left transition-colors ${
-                  isSelected
-                    ? "bg-blue-100 dark:bg-blue-900/30 ring-2 ring-blue-500"
-                    : isToday
-                    ? "bg-blue-50 dark:bg-blue-900/20"
-                    : "bg-white dark:bg-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-700"
-                } border border-gray-200 dark:border-neutral-700`}
-              >
-                <span
-                  className={`text-sm font-medium ${
-                    isToday
-                      ? "text-blue-600 dark:text-blue-400"
-                      : "text-gray-900 dark:text-white"
-                  }`}
-                >
-                  {day.date.getDate()}
-                </span>
-                <div className="mt-1 space-y-0.5 overflow-hidden">
-                  {day.events.slice(0, 2).map((event) => (
-                    <div
-                      key={event.id}
-                      className={`text-xs truncate px-1 py-0.5 rounded ${
-                        event.type === "session"
-                          ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
-                          : event.status === "confirmed"
-                          ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-                          : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
-                      }`}
-                    >
-                      {event.startTime.slice(0, 5)} {event.title}
-                    </div>
-                  ))}
-                  {day.events.length > 2 && (
-                    <div className="text-xs text-gray-500 dark:text-gray-400 px-1">
-                      +{day.events.length - 2} more
-                    </div>
-                  )}
-                </div>
-              </button>
-            );
-          })}
+        <div className="border border-gray-200 dark:border-neutral-700 rounded-lg overflow-hidden">
+          <ScheduleComponent
+            ref={scheduleRef}
+            height="650px"
+            selectedDate={currentDate}
+            currentView="Month"
+            startHour="06:00"
+            endHour="22:00"
+            readonly={true}
+            showTimeIndicator={true}
+            allowDragAndDrop={false}
+            allowResizing={false}
+            timeScale={{ enable: true, interval: 60, slotCount: 2 }}
+            eventSettings={{
+              dataSource: allEvents,
+              fields: {
+                id: "Id",
+                subject: { name: "Subject" },
+                startTime: { name: "StartTime" },
+                endTime: { name: "EndTime" },
+                isAllDay: { name: "IsAllDay" },
+              },
+            }}
+            popupOpen={onPopupOpen}
+            actionBegin={onActionBegin}
+            eventClick={onEventClick}
+            eventRendered={onEventRendered}
+            navigating={onNavigating}
+          >
+            <ViewsDirective>
+              <ViewDirective option="Day" />
+              <ViewDirective option="Week" />
+              <ViewDirective option="WorkWeek" />
+              <ViewDirective option="Month" />
+            </ViewsDirective>
+            <Inject services={[Day, Week, WorkWeek, Month]} />
+          </ScheduleComponent>
         </div>
       </div>
 
-      {/* Selected Day Detail */}
+      {/* Selected Event Detail Sidebar */}
       <div className="lg:w-80">
         <div className="bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 p-4 sticky top-4">
-          <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
-            {selectedDate
-              ? new Date(selectedDate + "T00:00:00").toLocaleDateString("en-GB", {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                })
-              : "Select a day"}
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900 dark:text-white">
+              {selectedEvent ? "Event Details" : "Select an event"}
+            </h3>
+            {selectedEvent && (
+              <button
+                onClick={() => setSelectedEvent(null)}
+                className="p-1 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded"
+              >
+                <IconX className="w-4 h-4 text-gray-500" />
+              </button>
+            )}
+          </div>
 
-          {selectedDate && selectedEvents.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-sm">
-              No appointments on this day
-            </p>
+          {selectedEvent ? (
+            <EventDetailCard event={selectedEvent} />
           ) : (
-            <div className="space-y-3">
-              {selectedEvents.map((event) => (
-                <EventCard key={event.id} event={event} />
-              ))}
-            </div>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">
+              Click on an event in the calendar to see its details
+            </p>
           )}
 
-          {/* Legend */}
+          {/* Quick Stats */}
           <div className="mt-6 pt-4 border-t border-gray-200 dark:border-neutral-700">
-            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Legend
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              This Month
             </h4>
-            <div className="space-y-1 text-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded bg-green-100 dark:bg-green-900/30" />
-                <span className="text-gray-600 dark:text-gray-400">Client Sessions</span>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3">
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  {
+                    sessions.filter((s) => {
+                      const eventMonth = s.StartTime.getMonth();
+                      const eventYear = s.StartTime.getFullYear();
+                      return (
+                        eventMonth === currentDate.getMonth() &&
+                        eventYear === currentDate.getFullYear()
+                      );
+                    }).length
+                  }
+                </div>
+                <div className="text-xs text-green-600 dark:text-green-400">
+                  Sessions
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded bg-blue-100 dark:bg-blue-900/30" />
-                <span className="text-gray-600 dark:text-gray-400">Confirmed Bookings</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded bg-amber-100 dark:bg-amber-900/30" />
-                <span className="text-gray-600 dark:text-gray-400">Pending Bookings</span>
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {
+                    bookingEvents.filter((b) => {
+                      const eventMonth = b.StartTime.getMonth();
+                      const eventYear = b.StartTime.getFullYear();
+                      return (
+                        eventMonth === currentDate.getMonth() &&
+                        eventYear === currentDate.getFullYear()
+                      );
+                    }).length
+                  }
+                </div>
+                <div className="text-xs text-blue-600 dark:text-blue-400">
+                  Bookings
+                </div>
               </div>
             </div>
           </div>
@@ -326,9 +338,9 @@ export function MemberCalendar({ initialBookings = [] }: MemberCalendarProps) {
   );
 }
 
-function EventCard({ event }: { event: CalendarEvent }) {
+function EventDetailCard({ event }: { event: CalendarEvent }) {
   const getFormatIcon = () => {
-    switch (event.format) {
+    switch (event.Format) {
       case "online":
         return <IconVideo className="w-4 h-4" />;
       case "phone":
@@ -338,51 +350,72 @@ function EventCard({ event }: { event: CalendarEvent }) {
     }
   };
 
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString("en-GB", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    });
+  };
+
+  const colors =
+    event.Type === "session"
+      ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+      : event.Status === "confirmed"
+        ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+        : "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800";
+
+  const badgeColors =
+    event.Type === "session"
+      ? "bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-200"
+      : event.Status === "confirmed"
+        ? "bg-blue-100 text-blue-700 dark:bg-blue-800 dark:text-blue-200"
+        : "bg-amber-100 text-amber-700 dark:bg-amber-800 dark:text-amber-200";
+
   return (
-    <div
-      className={`p-3 rounded-lg ${
-        event.type === "session"
-          ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
-          : event.status === "confirmed"
-          ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
-          : "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800"
-      }`}
-    >
-      <div className="flex items-start gap-2">
-        <div className="mt-0.5">{getFormatIcon()}</div>
+    <div className={`p-4 rounded-lg border ${colors}`}>
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 text-gray-600 dark:text-gray-400">
+          {getFormatIcon()}
+        </div>
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-gray-900 dark:text-white text-sm truncate">
-            {event.title}
+          <p className="font-medium text-gray-900 dark:text-white">
+            {event.Subject}
           </p>
-          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-1">
-            <IconClock className="w-3 h-3" />
-            {event.startTime} - {event.endTime}
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {formatDate(event.StartTime)}
+          </p>
+          <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <IconClock className="w-4 h-4" />
+            {formatTime(event.StartTime)} - {formatTime(event.EndTime)}
           </div>
-          {event.type === "session" && event.clientName && (
+
+          {event.Type === "session" && event.ClientName && (
             <Link
-              href={`/dashboard/clients/${event.clientSlug}`}
-              className="text-xs text-green-600 dark:text-green-400 hover:underline mt-1 block"
+              href={`/dashboard/clients/${event.ClientSlug}`}
+              className="text-sm text-green-600 dark:text-green-400 hover:underline mt-2 block"
             >
-              {event.clientName}
+              {event.ClientName}
             </Link>
           )}
-          {event.type === "booking" && event.visitorName && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {event.visitorName}
+
+          {event.Type === "booking" && event.VisitorName && (
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+              {event.VisitorName}
             </p>
           )}
+
+          <span className={`inline-block text-xs px-2 py-0.5 rounded-full mt-3 ${badgeColors}`}>
+            {event.Type === "session" ? "Session" : event.Status}
+          </span>
         </div>
-        <span
-          className={`text-xs px-2 py-0.5 rounded-full ${
-            event.type === "session"
-              ? "bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-200"
-              : event.status === "confirmed"
-              ? "bg-blue-100 text-blue-700 dark:bg-blue-800 dark:text-blue-200"
-              : "bg-amber-100 text-amber-700 dark:bg-amber-800 dark:text-amber-200"
-          }`}
-        >
-          {event.type === "session" ? "Session" : event.status}
-        </span>
       </div>
     </div>
   );

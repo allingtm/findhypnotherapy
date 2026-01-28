@@ -3,18 +3,12 @@
 import React, { useState, useEffect } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
 import {
-  IconBrandTabler,
-  IconUserBolt,
+  IconHome,
   IconArrowLeft,
   IconBriefcase,
-  IconCurrencyPound,
-  IconVideo,
-  IconMail,
-  IconCalendarEvent,
-  IconCalendarCheck,
   IconCalendar,
-  IconSettings,
   IconUsers,
+  IconSettings,
   IconSun,
   IconMoon,
   IconDeviceDesktop,
@@ -65,52 +59,10 @@ export function DashboardSidebar({ children, user }: DashboardSidebarProps) {
 
   const links = [
     {
-      label: "Dashboard",
+      label: "Home",
       href: "/dashboard",
       icon: (
-        <IconBrandTabler className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Therapist Profile",
-      href: "/dashboard/profile/therapist",
-      icon: (
-        <IconBriefcase className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Services",
-      href: "/dashboard/services",
-      icon: (
-        <IconCurrencyPound className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Availability",
-      href: "/dashboard/availability",
-      icon: (
-        <IconCalendarEvent className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Bookings",
-      href: "/dashboard/bookings",
-      icon: (
-        <IconCalendarCheck className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Calendar",
-      href: "/dashboard/calendar",
-      icon: (
-        <IconCalendar className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Messages",
-      href: "/dashboard/messages",
-      icon: (
-        <IconMail className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+        <IconHome className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
@@ -121,10 +73,17 @@ export function DashboardSidebar({ children, user }: DashboardSidebarProps) {
       ),
     },
     {
-      label: "Content",
-      href: "/dashboard/content",
+      label: "Schedule",
+      href: "/dashboard/schedule",
       icon: (
-        <IconVideo className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+        <IconCalendar className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: "Practice",
+      href: "/dashboard/practice",
+      icon: (
+        <IconBriefcase className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
@@ -132,13 +91,6 @@ export function DashboardSidebar({ children, user }: DashboardSidebarProps) {
       href: "/dashboard/settings",
       icon: (
         <IconSettings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Account",
-      href: "/dashboard/profile",
-      icon: (
-        <IconUserBolt className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
   ];
@@ -155,16 +107,23 @@ export function DashboardSidebar({ children, user }: DashboardSidebarProps) {
           <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
             {open ? <Logo onClick={handleLinkClick} /> : <LogoIcon onClick={handleLinkClick} />}
             <div className="mt-8 flex flex-col gap-2">
-              {links.map((link, idx) => (
-                <SidebarLink
-                  key={idx}
-                  link={link}
-                  className={cn(
-                    pathname === link.href && "bg-neutral-200 dark:bg-neutral-700 rounded-md"
-                  )}
-                  onClick={handleLinkClick}
-                />
-              ))}
+              {links.map((link, idx) => {
+                // Check if current path matches this link (exact for Home, startsWith for others)
+                const isActive = link.href === "/dashboard"
+                  ? pathname === "/dashboard"
+                  : pathname.startsWith(link.href);
+
+                return (
+                  <SidebarLink
+                    key={idx}
+                    link={link}
+                    className={cn(
+                      isActive && "bg-neutral-200 dark:bg-neutral-700 rounded-md"
+                    )}
+                    onClick={handleLinkClick}
+                  />
+                );
+              })}
 
               {/* Theme Selector */}
               <div className="py-2">
@@ -224,7 +183,7 @@ export function DashboardSidebar({ children, user }: DashboardSidebarProps) {
             <SidebarLink
               link={{
                 label: user.name || user.email || "User",
-                href: "/dashboard/profile",
+                href: "/dashboard/settings?tab=account",
                 icon: (
                   <div className="h-7 w-7 flex-shrink-0 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center">
                     <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-200">
@@ -254,8 +213,8 @@ export function DashboardSidebar({ children, user }: DashboardSidebarProps) {
           </div>
         </SidebarBody>
       </Sidebar>
-      <div className="flex flex-1 min-h-0">
-        <div className="p-2 md:p-10 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 flex flex-col gap-2 flex-1 w-full min-h-0 overflow-y-auto">
+      <div className="flex flex-1 min-h-0 min-w-0">
+        <div className="p-2 md:p-10 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 flex flex-col gap-2 flex-1 w-full min-h-0 min-w-0 overflow-y-auto overflow-x-hidden">
           {children}
         </div>
       </div>

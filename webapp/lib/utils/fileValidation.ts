@@ -5,8 +5,7 @@ export const MAX_FILE_SIZE = 5 * 1024 * 1024
 export const ALLOWED_FILE_TYPES = [
   'image/jpeg',
   'image/jpg',
-  'image/png',
-  'image/webp'
+  'image/png'
 ]
 
 export type FileValidationResult = {
@@ -27,7 +26,7 @@ export function validateImageFile(file: File): FileValidationResult {
   if (!ALLOWED_FILE_TYPES.includes(file.type)) {
     return {
       valid: false,
-      error: 'File must be a JPEG, PNG, or WebP image'
+      error: 'File must be a JPEG or PNG image'
     }
   }
 
@@ -38,8 +37,7 @@ export function getFileExtension(mimeType: string): string {
   const extensions: Record<string, string> = {
     'image/jpeg': 'jpg',
     'image/jpg': 'jpg',
-    'image/png': 'png',
-    'image/webp': 'webp'
+    'image/png': 'png'
   }
   return extensions[mimeType] || 'jpg'
 }

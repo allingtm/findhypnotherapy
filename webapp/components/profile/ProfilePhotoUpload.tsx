@@ -94,7 +94,7 @@ export function ProfilePhotoUpload({
 
         <div className="space-y-3">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Upload a professional photo. JPG, PNG or WebP. Max 5MB.
+            Upload a professional photo. JPG or PNG. Max 5MB.
           </p>
 
           <div className="flex gap-2">
@@ -118,7 +118,7 @@ export function ProfilePhotoUpload({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/jpg,image/png,image/webp"
+            accept="image/jpeg,image/jpg,image/png"
             onChange={handleFileSelect}
             className="hidden"
           />
