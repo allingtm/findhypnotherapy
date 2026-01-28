@@ -274,19 +274,13 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                 </Link>
               </div>
 
-              {/* Action buttons */}
-              <div className="mt-6 flex flex-col sm:flex-row gap-3">
+              {/* Action button */}
+              <div className="mt-6">
                 <Link
-                  href={`/book/${slug}`}
-                  className="flex-1 inline-flex items-center justify-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                  href={`/book/${slug}?serviceId=${serviceId}`}
+                  className="w-full inline-flex items-center justify-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
                 >
-                  Book Now
-                </Link>
-                <Link
-                  href={`/directory/${slug}#contact`}
-                  className="flex-1 inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-neutral-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-neutral-800 font-medium rounded-lg transition-colors"
-                >
-                  Contact {therapistName.split(' ')[0]}
+                  Make an enquiry
                 </Link>
               </div>
             </div>

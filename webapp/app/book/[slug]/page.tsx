@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getTherapistBySlug } from "@/app/actions/bookings";
+import { getTherapistBySlug, getServicesForBooking } from "@/app/actions/bookings";
 import { getActiveTermsForBooking } from "@/app/actions/therapist-terms";
 import { BookingPageContent } from "./BookingPageContent";
 import { Navbar } from "@/components/ui/Navbar";
@@ -8,6 +8,7 @@ import { Footer } from "@/components/ui/Footer";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ serviceId?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -24,13 +25,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const therapistName = therapistUser?.name || "Therapist";
 
   return {
-    title: `Book with ${therapistName} | Find Hypnotherapy`,
-    description: `Book a free consultation with ${therapistName} on Find Hypnotherapy.`,
+    title: `Schedule a call with ${therapistName} | Find Hypnotherapy`,
+    description: `Schedule a free consultation call with ${therapistName} on Find Hypnotherapy.`,
   };
 }
 
-export default async function BookingPage({ params }: PageProps) {
+export default async function BookingPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
+  const { serviceId: requestedServiceId } = await searchParams;
   const { profile, error } = await getTherapistBySlug(slug);
 
   if (error || !profile) {
@@ -52,8 +54,16 @@ export default async function BookingPage({ params }: PageProps) {
     accepts_online_booking: boolean | null;
   } | null;
 
-  // Fetch therapist's active terms
-  const { data: therapistTerms } = await getActiveTermsForBooking(profile.id);
+  // Fetch therapist's active terms and services in parallel
+  const [{ data: therapistTerms }, { services }] = await Promise.all([
+    getActiveTermsForBooking(profile.id),
+    getServicesForBooking(profile.id),
+  ]);
+
+  // Validate the requested serviceId - only use it if it's in the services list
+  const validServiceId = requestedServiceId && services.some((s) => s.id === requestedServiceId)
+    ? requestedServiceId
+    : null;
 
   return (
     <>
@@ -70,7 +80,7 @@ export default async function BookingPage({ params }: PageProps) {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  Book with {therapistName}
+                  Schedule a call with {therapistName}
                 </h1>
                 {professionalTitle && (
                   <p className="text-gray-600 dark:text-gray-400">{professionalTitle}</p>
@@ -79,26 +89,14 @@ export default async function BookingPage({ params }: PageProps) {
             </div>
           </div>
 
-          {/* Booking Details */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-4 mb-6">
-            <h2 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-              Free Consultation
-            </h2>
-            <p className="text-sm text-blue-800 dark:text-blue-200">
-              Duration: {settings?.slot_duration_minutes || 30} minutes
-            </p>
-            <p className="text-sm text-blue-700 dark:text-blue-300 mt-2">
-              Select a date and time that works for you. After booking, you&apos;ll
-              receive an email to confirm your appointment.
-            </p>
-          </div>
-
           {/* Booking Content */}
           <BookingPageContent
             therapistProfileId={profile.id}
             therapistName={therapistName}
             maxDaysAhead={settings?.max_booking_days_ahead || 30}
             therapistTerms={therapistTerms || null}
+            services={services}
+            initialServiceId={validServiceId}
           />
         </div>
       </main>

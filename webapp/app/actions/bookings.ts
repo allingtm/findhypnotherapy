@@ -99,6 +99,25 @@ export async function getTherapistBySlug(slug: string) {
   return { profile, error: null };
 }
 
+// Get active services for booking page (simplified for service selector)
+export async function getServicesForBooking(therapistProfileId: string) {
+  const adminClient = createAdminClient();
+
+  const { data: services, error } = await adminClient
+    .from("therapist_services")
+    .select("id, name, service_type")
+    .eq("therapist_profile_id", therapistProfileId)
+    .eq("is_active", true)
+    .order("is_featured", { ascending: false })
+    .order("display_order");
+
+  if (error) {
+    return { services: [], error: "Failed to fetch services" };
+  }
+
+  return { services: services || [], error: null };
+}
+
 // Get available time slots for a specific date
 export async function getAvailableSlots(
   therapistProfileId: string,

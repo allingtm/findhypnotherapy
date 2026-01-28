@@ -26,6 +26,7 @@ interface BookingFormProps {
   therapistName: string;
   therapistTerms: TherapistTerms | null;
   onSuccess?: () => void;
+  serviceId?: string | null;
 }
 
 export function BookingForm({
@@ -35,6 +36,7 @@ export function BookingForm({
   therapistName,
   therapistTerms,
   onSuccess,
+  serviceId,
 }: BookingFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,6 +68,11 @@ export function BookingForm({
     formData.set("bookingDate", selectedDate);
     formData.set("startTime", selectedSlot.start_time);
     formData.set("endTime", selectedSlot.end_time);
+
+    // Include service ID if selected
+    if (serviceId) {
+      formData.set("serviceId", serviceId);
+    }
 
     // Include terms acceptance data
     if (termsAccepted && acceptedTermsId) {

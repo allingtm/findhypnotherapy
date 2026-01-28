@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { BookingCalendar } from "@/components/booking/BookingCalendar";
 import { TimeSlotGrid } from "@/components/booking/TimeSlotGrid";
 import { BookingForm } from "@/components/booking/BookingForm";
+import { ServiceSelector, type ServiceOption } from "@/components/booking/ServiceSelector";
 import { getAvailableDates, getAvailableSlots } from "@/app/actions/bookings";
 
 interface TimeSlot {
@@ -23,6 +24,8 @@ interface BookingPageContentProps {
   therapistName: string;
   maxDaysAhead: number;
   therapistTerms: TherapistTerms | null;
+  services: ServiceOption[];
+  initialServiceId: string | null;
 }
 
 export function BookingPageContent({
@@ -30,6 +33,8 @@ export function BookingPageContent({
   therapistName,
   maxDaysAhead,
   therapistTerms,
+  services,
+  initialServiceId,
 }: BookingPageContentProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [availableDates, setAvailableDates] = useState<string[]>([]);
@@ -38,6 +43,7 @@ export function BookingPageContent({
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [loadingDates, setLoadingDates] = useState(true);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(initialServiceId);
 
   // Load available dates for current month
   const loadAvailableDates = useCallback(async () => {
@@ -109,37 +115,47 @@ export function BookingPageContent({
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      {/* Left Column: Calendar and Time Slots */}
-      <div className="space-y-6">
-        <BookingCalendar
-          availableDates={availableDates}
-          selectedDate={selectedDate}
-          onSelectDate={handleDateSelect}
-          currentMonth={currentMonth}
-          onMonthChange={handleMonthChange}
-          loading={loadingDates}
-        />
+    <div className="space-y-6">
+      {/* Service Selection */}
+      <ServiceSelector
+        services={services}
+        selectedServiceId={selectedServiceId}
+        onServiceSelect={setSelectedServiceId}
+      />
 
-        <TimeSlotGrid
-          slots={timeSlots}
-          selectedSlot={selectedSlot}
-          onSelectSlot={handleSlotSelect}
-          loading={loadingSlots}
-          selectedDate={selectedDate}
-        />
-      </div>
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Left Column: Calendar and Time Slots */}
+        <div className="space-y-6">
+          <BookingCalendar
+            availableDates={availableDates}
+            selectedDate={selectedDate}
+            onSelectDate={handleDateSelect}
+            currentMonth={currentMonth}
+            onMonthChange={handleMonthChange}
+            loading={loadingDates}
+          />
 
-      {/* Right Column: Booking Form */}
-      <div>
-        <BookingForm
-          therapistProfileId={therapistProfileId}
-          selectedDate={selectedDate}
-          selectedSlot={selectedSlot}
-          therapistName={therapistName}
-          therapistTerms={therapistTerms}
-          onSuccess={handleBookingSuccess}
-        />
+          <TimeSlotGrid
+            slots={timeSlots}
+            selectedSlot={selectedSlot}
+            onSelectSlot={handleSlotSelect}
+            loading={loadingSlots}
+            selectedDate={selectedDate}
+          />
+        </div>
+
+        {/* Right Column: Booking Form */}
+        <div>
+          <BookingForm
+            therapistProfileId={therapistProfileId}
+            selectedDate={selectedDate}
+            selectedSlot={selectedSlot}
+            therapistName={therapistName}
+            therapistTerms={therapistTerms}
+            onSuccess={handleBookingSuccess}
+            serviceId={selectedServiceId}
+          />
+        </div>
       </div>
     </div>
   );
