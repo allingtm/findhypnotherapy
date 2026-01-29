@@ -18,7 +18,7 @@ const ERROR_MESSAGES: Record<string, { title: string; message: string }> = {
   },
   "expired": {
     title: "Link Expired",
-    message: "This verification link has expired. Please submit a new booking request.",
+    message: "This verification link has expired. Please submit a new intro call request.",
   },
   "verification-failed": {
     title: "Verification Failed",

@@ -197,12 +197,12 @@ export function BookingsPageContent({
           </h3>
           <p className="text-gray-500 dark:text-gray-400">
             {activeFilter === "pending"
-              ? "You have no pending booking requests."
+              ? "You have no pending intro call requests."
               : activeFilter === "upcoming"
                 ? "You have no upcoming appointments."
                 : activeFilter === "past"
                   ? "You have no past appointments."
-                  : "You haven't received any booking requests yet."}
+                  : "You haven't received any intro call requests yet."}
           </p>
           {activeFilter !== "all" && (
             <button

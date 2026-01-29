@@ -220,7 +220,7 @@ export function MemberCalendar({ initialBookings = [] }: MemberCalendarProps) {
               style={{ backgroundColor: EVENT_COLORS.pending.bg }}
             />
             <span className="text-gray-600 dark:text-gray-400">
-              Pending Bookings
+              Pending Intro Calls
             </span>
           </div>
         </div>

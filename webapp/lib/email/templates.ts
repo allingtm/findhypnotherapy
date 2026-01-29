@@ -261,12 +261,12 @@ export function getNewBookingNotificationEmail(props: NewBookingNotificationEmai
   const dashboardUrl = `${BASE_URL}/dashboard/bookings`;
 
   const content = `
-    <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">New booking request</h2>
+    <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">New intro call request</h2>
     <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
       Hi ${props.recipientName},
     </p>
     <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-      <strong>${props.visitorName}</strong> (${props.visitorEmail}) has requested a booking:
+      <strong>${props.visitorName}</strong> (${props.visitorEmail}) has requested an intro call:
     </p>
     <div style="background-color: #f8f8f8; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
       <p style="color: #333333; font-size: 14px; line-height: 1.5; margin: 0;">

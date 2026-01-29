@@ -347,7 +347,7 @@ export async function getDashboardActionItems(): Promise<{
       items.push({
         id: `booking-${booking.id}`,
         type: "pending_booking",
-        title: "Pending Booking",
+        title: "Pending Intro Call",
         description: `${booking.visitor_name} - ${formatDateShort(booking.booking_date)} at ${formatTime(booking.start_time)}`,
         actionLabel: "Review",
         actionHref: "/dashboard/bookings",
@@ -498,7 +498,7 @@ export async function getDashboardRecentActivity(): Promise<{
         activities.push({
           id: `created-${booking.id}`,
           type: "booking_created",
-          title: "New Booking Request",
+          title: "New Intro Call Request",
           description: `From ${booking.visitor_name}`,
           timestamp: booking.created_at || new Date().toISOString(),
           linkHref: "/dashboard/bookings",

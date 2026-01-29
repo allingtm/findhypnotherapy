@@ -14,6 +14,8 @@ import {
   IconArchive,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/Button";
+import { SectionHeader } from "@/components/dashboard/SectionHeader";
+import { CLIENTS_HELP } from "./clientsHelpContent";
 
 type ClientStatus = "all" | "invited" | "active" | "archived";
 
@@ -106,9 +108,12 @@ export function ClientList() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Clients
-          </h1>
+          <SectionHeader
+            title="All Clients"
+            helpTitle={CLIENTS_HELP.allClients.title}
+            helpContent={CLIENTS_HELP.allClients.content}
+            icon={<IconUsers className="w-5 h-5" />}
+          />
           <p className="text-gray-600 dark:text-gray-400 mt-1">
             Manage your client relationships and sessions
           </p>

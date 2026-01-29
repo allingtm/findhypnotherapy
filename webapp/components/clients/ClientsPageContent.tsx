@@ -11,6 +11,8 @@ import {
   IconCalendarCheck,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
+import { SectionHeader } from "@/components/dashboard/SectionHeader";
+import { CLIENTS_HELP } from "./clientsHelpContent";
 
 interface Conversation {
   id: string;
@@ -65,8 +67,8 @@ type TabKey = "all" | "inquiries" | "requests";
 
 const tabs: { key: TabKey; label: string; icon: typeof IconUsers }[] = [
   { key: "all", label: "All Clients", icon: IconUsers },
-  { key: "inquiries", label: "Inquiries", icon: IconMessageCircle },
-  { key: "requests", label: "Booking Requests", icon: IconCalendarCheck },
+  { key: "inquiries", label: "Enquiries", icon: IconMessageCircle },
+  { key: "requests", label: "Intro Calls", icon: IconCalendarCheck },
 ];
 
 export function ClientsPageContent({
@@ -164,6 +166,14 @@ export function ClientsPageContent({
 
         {activeTab === "inquiries" && (
           <div className="bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 overflow-hidden">
+            <div className="p-4 border-b border-gray-200 dark:border-neutral-700">
+              <SectionHeader
+                title="Enquiries"
+                helpTitle={CLIENTS_HELP.enquiries.title}
+                helpContent={CLIENTS_HELP.enquiries.content}
+                icon={<IconMessageCircle className="w-5 h-5" />}
+              />
+            </div>
             <ConversationList conversations={conversations} />
           </div>
         )}

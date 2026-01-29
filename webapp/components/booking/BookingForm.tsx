@@ -129,10 +129,10 @@ export function BookingForm({
             </svg>
           </div>
           <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-            Booking Submitted!
+            Intro Call Requested!
           </h3>
           <p className="text-gray-600 dark:text-gray-400">
-            Your booking request has been sent to {therapistName}. Redirecting you now...
+            Your intro call request has been sent to {therapistName}. Redirecting you now...
           </p>
         </div>
       </div>

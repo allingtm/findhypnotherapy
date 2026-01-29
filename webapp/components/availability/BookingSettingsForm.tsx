@@ -208,7 +208,7 @@ export function BookingSettingsForm({ settings }: BookingSettingsFormProps) {
               Require Approval
             </span>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Review and manually approve each booking request before confirmation
+              Review and manually approve each intro call request before confirmation
             </p>
           </div>
         </label>

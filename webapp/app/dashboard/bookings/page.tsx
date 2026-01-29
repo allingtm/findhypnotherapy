@@ -4,8 +4,8 @@ import { getBookingsForMember } from "@/app/actions/bookings";
 import { BookingsPageContent } from "./BookingsPageContent";
 
 export const metadata = {
-  title: "Bookings | Find Hypnotherapy",
-  description: "Manage your booking requests",
+  title: "Intro Calls | Find Hypnotherapy",
+  description: "Manage your intro call requests",
 };
 
 export default async function BookingsPage() {

@@ -22,7 +22,10 @@ import {
   IconInbox,
   IconEye,
   IconAlertCircle,
+  IconCalendarCheck,
 } from "@tabler/icons-react";
+import { SectionHeader } from "@/components/dashboard/SectionHeader";
+import { CLIENTS_HELP } from "./clientsHelpContent";
 
 type EmailDeliveryStatus = "sent" | "delivered" | "opened" | "failed";
 
@@ -147,7 +150,7 @@ export function BookingRequestsList({ bookings }: BookingRequestsListProps) {
   };
 
   const handleCancel = async (bookingId: string) => {
-    if (!confirm("Are you sure you want to cancel this booking request?")) {
+    if (!confirm("Are you sure you want to cancel this intro call request?")) {
       return;
     }
     setLoadingId(bookingId);
@@ -166,27 +169,44 @@ export function BookingRequestsList({ bookings }: BookingRequestsListProps) {
 
   if (localBookings.length === 0) {
     return (
-      <div className="text-center py-12 px-4">
-        <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-neutral-800 rounded-full flex items-center justify-center">
-          <IconInbox className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+      <div className="bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 p-4">
+        <SectionHeader
+          title="Intro Calls"
+          helpTitle={CLIENTS_HELP.bookingRequests.title}
+          helpContent={CLIENTS_HELP.bookingRequests.content}
+          icon={<IconCalendarCheck className="w-5 h-5" />}
+          className="mb-4"
+        />
+        <div className="text-center py-8">
+          <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-neutral-800 rounded-full flex items-center justify-center">
+            <IconInbox className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            No pending intro call requests
+          </h3>
+          <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+            When visitors request intro calls through your profile, they will
+            appear here for your approval.
+          </p>
         </div>
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-          No pending booking requests
-        </h3>
-        <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-          When visitors request appointments through your profile, they will
-          appear here for your approval.
-        </p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-        {localBookings.length} booking request{localBookings.length !== 1 ? "s" : ""}{" "}
-        awaiting your confirmation
-      </p>
+      <div className="bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 p-4">
+        <SectionHeader
+          title="Intro Calls"
+          helpTitle={CLIENTS_HELP.bookingRequests.title}
+          helpContent={CLIENTS_HELP.bookingRequests.content}
+          icon={<IconCalendarCheck className="w-5 h-5" />}
+        />
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+          {localBookings.length} intro call request{localBookings.length !== 1 ? "s" : ""}{" "}
+          awaiting your confirmation
+        </p>
+      </div>
 
       {localBookings.map((booking) => (
         <div

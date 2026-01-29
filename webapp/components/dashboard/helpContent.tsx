@@ -14,7 +14,7 @@ export const DASHBOARD_HELP = {
             confirmed bookings scheduled for today
           </li>
           <li>
-            <strong>Pending Bookings</strong> - Booking requests awaiting your
+            <strong>Pending Intro Calls</strong> - Intro call requests awaiting your
             confirmation
           </li>
           <li>
@@ -169,7 +169,7 @@ export const DASHBOARD_HELP = {
         </p>
         <ul className="list-disc list-inside space-y-2">
           <li>
-            <strong>Pending Bookings</strong> - New booking requests to review
+            <strong>Pending Intro Calls</strong> - New intro call requests to review
             and confirm
           </li>
           <li>
@@ -177,7 +177,7 @@ export const DASHBOARD_HELP = {
             awaiting your reply
           </li>
           <li>
-            <strong>Awaiting Verification</strong> - Bookings where clients
+            <strong>Awaiting Verification</strong> - Intro calls where visitors
             haven&apos;t verified their email yet
           </li>
         </ul>
@@ -221,9 +221,9 @@ export const DASHBOARD_HELP = {
           A timeline of recent activity in your practice over the last 7 days:
         </p>
         <ul className="list-disc list-inside space-y-2">
-          <li>New booking requests received</li>
-          <li>Bookings you&apos;ve confirmed</li>
-          <li>Booking cancellations</li>
+          <li>New intro call requests received</li>
+          <li>Intro calls you&apos;ve confirmed</li>
+          <li>Cancellations</li>
           <li>New messages from potential clients</li>
           <li>Clients who completed onboarding</li>
         </ul>

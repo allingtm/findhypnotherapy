@@ -93,7 +93,7 @@ export function DashboardHomeContent({
           linkText="View schedule"
         />
         <StatCard
-          title="Pending Bookings"
+          title="Pending Intro Calls"
           value={stats.pendingBookings}
           icon={<IconCalendarCheck className="w-5 h-5 sm:w-6 sm:h-6" />}
           variant={stats.pendingBookings > 0 ? "warning" : "default"}

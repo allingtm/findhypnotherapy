@@ -6,7 +6,7 @@ import { getBookingsForMember } from "@/app/actions/bookings";
 
 export const metadata = {
   title: "Clients | Find Hypnotherapy",
-  description: "Manage your clients, inquiries, and booking requests",
+  description: "Manage your clients, enquiries, and intro calls",
 };
 
 export default async function ClientsPage() {
