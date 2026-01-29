@@ -7,8 +7,9 @@ import { ClientDetailTabs } from "@/components/clients/ClientDetailTabs";
 import { ClientInfoCard } from "@/components/clients/ClientInfoCard";
 import { ClientSessionsList } from "@/components/clients/ClientSessionsList";
 import { ClientNotesList } from "@/components/clients/ClientNotesList";
+import { ClientMessages } from "@/components/clients/ClientMessages";
 import { getClientBySlugAction } from "@/app/actions/clients";
-import { IconCalendarEvent, IconMail, IconNotes, IconUser } from "@tabler/icons-react";
+import { IconCalendarEvent, IconNotes, IconUser } from "@tabler/icons-react";
 
 interface ClientDetailContentProps {
   client: Record<string, unknown>;
@@ -124,18 +125,11 @@ export function ClientDetailContent({
         )}
 
         {activeTab === "messages" && (
-          <div className="bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 p-6">
-            <div className="text-center py-12">
-              <IconMail className="w-12 h-12 mx-auto text-gray-400 dark:text-gray-500 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                Messages Coming Soon
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-                Client messaging will be integrated with the existing conversations
-                system in a future update.
-              </p>
-            </div>
-          </div>
+          <ClientMessages
+            clientId={clientData.id}
+            clientName={`${clientData.first_name || ""} ${clientData.last_name || ""}`.trim() || "Client"}
+            clientEmail={clientData.email}
+          />
         )}
 
         {activeTab === "notes" && (

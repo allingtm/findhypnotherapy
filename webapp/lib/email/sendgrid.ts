@@ -22,12 +22,18 @@ export interface EmailOptions {
   html: string;
   text?: string;
   attachments?: EmailAttachment[];
+  messageId?: string; // Internal message ID for tracking via webhooks
 }
 
-export async function sendEmail(options: EmailOptions): Promise<boolean> {
+export interface EmailResult {
+  success: boolean;
+  sgMessageId?: string; // SendGrid's message ID for tracking
+}
+
+export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
   if (!process.env.SENDGRID_API_KEY) {
     console.error("Cannot send email: SENDGRID_API_KEY is not set");
-    return false;
+    return { success: false };
   }
 
   try {
@@ -40,6 +46,12 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
       subject: options.subject,
       html: options.html,
       text: options.text || stripHtml(options.html),
+      // Include message ID as custom arg for webhook tracking
+      ...(options.messageId && {
+        customArgs: {
+          message_id: options.messageId,
+        },
+      }),
     };
 
     // Add attachments if provided
@@ -52,11 +64,16 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
       }));
     }
 
-    await sgMail.send(mailData);
-    return true;
+    const [response] = await sgMail.send(mailData);
+    const sgMessageId = response?.headers?.["x-message-id"];
+
+    return {
+      success: true,
+      sgMessageId: sgMessageId || undefined,
+    };
   } catch (error) {
     console.error("Failed to send email:", error);
-    return false;
+    return { success: false };
   }
 }
 

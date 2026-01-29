@@ -567,7 +567,16 @@ export async function submitBookingAction(
           subject: emailContent.subject,
           html: emailContent.html,
         });
-        if (!emailSent) {
+
+        // Store SendGrid message ID for tracking
+        if (emailSent.success && emailSent.sgMessageId) {
+          await adminClient
+            .from("bookings")
+            .update({ notification_email_sg_id: emailSent.sgMessageId })
+            .eq("id", booking.id);
+        }
+
+        if (!emailSent.success) {
           console.warn("Failed to send booking notification to therapist:", therapistEmail);
         }
       }
@@ -591,7 +600,16 @@ export async function submitBookingAction(
         subject: emailContent.subject,
         html: emailContent.html,
       });
-      if (!emailSent) {
+
+      // Store SendGrid message ID for tracking
+      if (emailSent.success && emailSent.sgMessageId) {
+        await adminClient
+          .from("bookings")
+          .update({ verification_email_sg_id: emailSent.sgMessageId })
+          .eq("id", booking.id);
+      }
+
+      if (!emailSent.success) {
         console.warn("Failed to send verification email to visitor:", data.visitorEmail);
       }
 
@@ -701,7 +719,16 @@ export async function verifyBookingAction(
         subject: emailContent.subject,
         html: emailContent.html,
       });
-      if (!emailSent) {
+
+      // Store SendGrid message ID for tracking
+      if (emailSent.success && emailSent.sgMessageId) {
+        await adminClient
+          .from("bookings")
+          .update({ notification_email_sg_id: emailSent.sgMessageId })
+          .eq("id", booking.id);
+      }
+
+      if (!emailSent.success) {
         console.warn("Failed to send booking notification to therapist:", therapistEmail);
       }
     }
@@ -885,7 +912,16 @@ export async function confirmBookingAction(
       subject: emailContent.subject,
       html: emailContent.html,
     });
-    if (!emailSent) {
+
+    // Store SendGrid message ID for tracking
+    if (emailSent.success && emailSent.sgMessageId) {
+      await supabase
+        .from("bookings")
+        .update({ confirmation_email_sg_id: emailSent.sgMessageId })
+        .eq("id", bookingId);
+    }
+
+    if (!emailSent.success) {
       console.warn("Failed to send confirmation email to visitor:", booking.visitor_email);
     }
 
@@ -972,7 +1008,7 @@ export async function cancelBookingAction(
       subject: emailContent.subject,
       html: emailContent.html,
     });
-    if (!emailSent) {
+    if (!emailSent.success) {
       console.warn("Failed to send cancellation email to visitor:", booking.visitor_email);
     }
 
@@ -984,9 +1020,29 @@ export async function cancelBookingAction(
   }
 }
 
+// Helper to compute email delivery status from events
+function computeBookingEmailStatus(
+  events: { event_type: string }[] | null
+): "sent" | "delivered" | "opened" | "failed" | undefined {
+  if (!events || events.length === 0) return "sent";
+
+  const eventTypes = events.map((e) => e.event_type);
+
+  if (eventTypes.includes("bounce") || eventTypes.includes("dropped")) {
+    return "failed";
+  }
+  if (eventTypes.includes("open")) {
+    return "opened";
+  }
+  if (eventTypes.includes("delivered")) {
+    return "delivered";
+  }
+  return "sent";
+}
+
 // Get bookings for the current member
 export async function getBookingsForMember(
-  filter: "pending" | "upcoming" | "past" | "all" = "all"
+  filter: "pending" | "pending_all" | "upcoming" | "past" | "all" = "all"
 ) {
   try {
     const supabase = await createClient();
@@ -998,7 +1054,11 @@ export async function getBookingsForMember(
 
     let query = supabase
       .from("bookings")
-      .select("*")
+      .select(`
+        *,
+        service:therapist_services(name),
+        email_events(event_type, sg_message_id)
+      `)
       .eq("therapist_profile_id", profileId)
       .order("booking_date", { ascending: true })
       .order("start_time", { ascending: true });
@@ -1007,10 +1067,15 @@ export async function getBookingsForMember(
 
     switch (filter) {
       case "pending":
+        // Only verified pending bookings (ready for therapist action)
         query = query
           .eq("status", "pending")
           .eq("is_verified", true)
           .gte("booking_date", today);
+        break;
+      case "pending_all":
+        // All pending bookings including unverified (for booking requests list)
+        query = query.eq("status", "pending").gte("booking_date", today);
         break;
       case "upcoming":
         query = query
@@ -1033,7 +1098,50 @@ export async function getBookingsForMember(
       return { bookings: [], error: "Failed to fetch bookings" };
     }
 
-    return { bookings: bookings || [], error: null };
+    // Process bookings to add email delivery status
+    const bookingsWithStatus = (bookings || []).map((booking) => {
+      const events = booking.email_events || [];
+
+      // Get events for verification email
+      const verificationEvents = booking.verification_email_sg_id
+        ? events.filter(
+            (e: { sg_message_id: string }) =>
+              e.sg_message_id === booking.verification_email_sg_id
+          )
+        : [];
+
+      // Get events for notification email
+      const notificationEvents = booking.notification_email_sg_id
+        ? events.filter(
+            (e: { sg_message_id: string }) =>
+              e.sg_message_id === booking.notification_email_sg_id
+          )
+        : [];
+
+      // Get events for confirmation email
+      const confirmationEvents = booking.confirmation_email_sg_id
+        ? events.filter(
+            (e: { sg_message_id: string }) =>
+              e.sg_message_id === booking.confirmation_email_sg_id
+          )
+        : [];
+
+      return {
+        ...booking,
+        verificationEmailStatus: booking.verification_email_sg_id
+          ? computeBookingEmailStatus(verificationEvents)
+          : undefined,
+        notificationEmailStatus: booking.notification_email_sg_id
+          ? computeBookingEmailStatus(notificationEvents)
+          : undefined,
+        confirmationEmailStatus: booking.confirmation_email_sg_id
+          ? computeBookingEmailStatus(confirmationEvents)
+          : undefined,
+        email_events: undefined, // Remove raw events from response
+      };
+    });
+
+    return { bookings: bookingsWithStatus, error: null };
   } catch (error) {
     console.error("Get bookings error:", error);
     return { bookings: [], error: "An unexpected error occurred" };

@@ -186,7 +186,7 @@ export async function submitContactFormAction(
           subject: emailContent.subject,
           html: emailContent.html,
         });
-        if (!emailSent) {
+        if (!emailSent.success) {
           console.warn("Failed to send new message notification to member:", memberEmail);
         }
       }
@@ -220,7 +220,7 @@ export async function submitContactFormAction(
         subject: emailContent.subject,
         html: emailContent.html,
       });
-      if (!emailSent) {
+      if (!emailSent.success) {
         console.warn("Failed to send verification email to visitor:", visitorEmail);
       }
 
@@ -290,14 +290,18 @@ export async function memberReplyAction(
       };
     }
 
-    // Insert the reply
-    const { error: messageError } = await supabase.from("messages").insert({
-      conversation_id: conversationId,
-      sender_type: "member",
-      content: message,
-    });
+    // Insert the reply and get the message ID for tracking
+    const { data: newMessage, error: messageError } = await supabase
+      .from("messages")
+      .insert({
+        conversation_id: conversationId,
+        sender_type: "member",
+        content: message,
+      })
+      .select("id")
+      .single();
 
-    if (messageError) {
+    if (messageError || !newMessage) {
       console.error("Failed to insert message:", messageError);
       return {
         success: false,
@@ -323,7 +327,7 @@ export async function memberReplyAction(
 
     const memberName = userData?.name || "A therapist";
 
-    // Send email to visitor
+    // Send email to visitor with message ID for tracking
     const emailContent = getReplyEmail({
       recipientName: conversation.visitor_name,
       memberName,
@@ -335,8 +339,18 @@ export async function memberReplyAction(
       to: conversation.visitor_email,
       subject: emailContent.subject,
       html: emailContent.html,
+      messageId: newMessage.id, // For webhook tracking
     });
-    if (!emailSent) {
+
+    // Store SendGrid message ID for delivery tracking
+    if (emailSent.success && emailSent.sgMessageId) {
+      await supabase
+        .from("messages")
+        .update({ sg_message_id: emailSent.sgMessageId })
+        .eq("id", newMessage.id);
+    }
+
+    if (!emailSent.success) {
       console.warn("Failed to send reply notification to visitor:", conversation.visitor_email);
     }
 
@@ -456,7 +470,7 @@ export async function visitorReplyAction(
         subject: emailContent.subject,
         html: emailContent.html,
       });
-      if (!emailSent) {
+      if (!emailSent.success) {
         console.warn("Failed to send reply notification to member:", memberEmail);
       }
     }
@@ -629,7 +643,10 @@ export async function getConversationsAction() {
           content,
           sender_type,
           is_read,
-          created_at
+          created_at,
+          email_events (
+            event_type
+          )
         )
       `
       )
@@ -663,6 +680,14 @@ export async function getConversationsAction() {
       ).length;
       const needsAttention = lastMessage?.sender_type === "visitor";
 
+      // Compute delivery status for last message if it's from a member
+      const lastMessageDeliveryStatus =
+        lastMessage?.sender_type === "member"
+          ? computeDeliveryStatus(
+              (lastMessage as { email_events?: Array<{ event_type: string }> }).email_events
+            )
+          : undefined;
+
       return {
         ...conv,
         unreadCount,
@@ -673,6 +698,7 @@ export async function getConversationsAction() {
               createdAt: lastMessage.created_at,
             }
           : null,
+        lastMessageDeliveryStatus,
         totalMessages,
         messagesLast30Days,
         needsAttention,
@@ -715,7 +741,12 @@ export async function getConversationAction(conversationId: string) {
           content,
           sender_type,
           is_read,
-          created_at
+          sg_message_id,
+          created_at,
+          email_events (
+            event_type,
+            timestamp
+          )
         )
       `
       )
@@ -733,10 +764,29 @@ export async function getConversationAction(conversationId: string) {
       .eq("conversation_id", conversationId)
       .eq("sender_type", "visitor");
 
-    // Sort messages by created_at ascending
-    const sortedMessages = (conversation.messages || []).sort(
-      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-    );
+    // Sort messages by created_at ascending and compute delivery status
+    const sortedMessages = (conversation.messages || [])
+      .sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      )
+      .map((msg) => {
+        // Compute delivery status from email events
+        const events = (msg as { email_events?: Array<{ event_type: string }> }).email_events || [];
+        let deliveryStatus: "sent" | "delivered" | "opened" | "failed" = "sent";
+
+        if (events.some((e) => e.event_type === "open")) {
+          deliveryStatus = "opened";
+        } else if (events.some((e) => e.event_type === "delivered")) {
+          deliveryStatus = "delivered";
+        } else if (events.some((e) => e.event_type === "bounce" || e.event_type === "dropped")) {
+          deliveryStatus = "failed";
+        }
+
+        return {
+          ...msg,
+          deliveryStatus,
+        };
+      });
 
     return {
       success: true,
@@ -827,6 +877,227 @@ export async function getOrCreateConversationFromBooking(
     return { success: true, conversationId: newConversation.id };
   } catch (error) {
     console.error("Get or create conversation error:", error);
+    return { success: false, error: "An unexpected error occurred" };
+  }
+}
+
+// Helper to compute delivery status from email events
+function computeDeliveryStatus(
+  events: Array<{ event_type: string }> | undefined
+): "sent" | "delivered" | "opened" | "failed" {
+  if (!events || events.length === 0) return "sent";
+  if (events.some((e) => e.event_type === "open")) return "opened";
+  if (events.some((e) => e.event_type === "delivered")) return "delivered";
+  if (events.some((e) => e.event_type === "bounce" || e.event_type === "dropped")) return "failed";
+  return "sent";
+}
+
+// Get or create conversation for a client (for client detail page)
+export async function getOrCreateClientConversationAction(clientId: string): Promise<{
+  success: boolean;
+  conversation?: {
+    id: string;
+    visitor_name: string;
+    visitor_email: string;
+    is_blocked: boolean;
+    messages: Array<{
+      id: string;
+      content: string;
+      sender_type: string;
+      is_read: boolean;
+      created_at: string;
+      deliveryStatus?: "sent" | "delivered" | "opened" | "failed";
+    }>;
+  };
+  error?: string;
+}> {
+  try {
+    const supabase = await createClient();
+    const adminClient = createAdminClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    // Get therapist profile
+    const { data: therapistProfile } = await supabase
+      .from("therapist_profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!therapistProfile) {
+      return { success: false, error: "Therapist profile not found" };
+    }
+
+    // Verify client belongs to this therapist
+    const { data: client, error: clientError } = await adminClient
+      .from("clients")
+      .select("id, email, first_name, last_name")
+      .eq("id", clientId)
+      .eq("therapist_profile_id", therapistProfile.id)
+      .single();
+
+    if (clientError || !client) {
+      return { success: false, error: "Client not found" };
+    }
+
+    if (!client.email) {
+      return { success: false, error: "Client has no email address" };
+    }
+
+    const clientName = `${client.first_name || ""} ${client.last_name || ""}`.trim() || "Client";
+
+    // Check for existing conversation linked to this client
+    const { data: existingConversation } = await adminClient
+      .from("conversations")
+      .select(`
+        id,
+        visitor_name,
+        visitor_email,
+        is_blocked,
+        messages (
+          id,
+          content,
+          sender_type,
+          is_read,
+          created_at,
+          email_events (
+            event_type
+          )
+        )
+      `)
+      .eq("member_id", user.id)
+      .eq("client_id", clientId)
+      .eq("is_blocked", false)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (existingConversation) {
+      // Mark visitor messages as read
+      await supabase
+        .from("messages")
+        .update({ is_read: true })
+        .eq("conversation_id", existingConversation.id)
+        .eq("sender_type", "visitor");
+
+      // Sort messages by created_at ascending and add delivery status
+      const sortedMessages = (existingConversation.messages || [])
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        .map((msg) => ({
+          ...msg,
+          deliveryStatus: computeDeliveryStatus(
+            (msg as { email_events?: Array<{ event_type: string }> }).email_events
+          ),
+        }));
+
+      return {
+        success: true,
+        conversation: {
+          ...existingConversation,
+          messages: sortedMessages,
+        },
+      };
+    }
+
+    // No existing conversation - check if there's an unlinked conversation with same email
+    const { data: emailConversation } = await adminClient
+      .from("conversations")
+      .select(`
+        id,
+        visitor_name,
+        visitor_email,
+        is_blocked,
+        messages (
+          id,
+          content,
+          sender_type,
+          is_read,
+          created_at,
+          email_events (
+            event_type
+          )
+        )
+      `)
+      .eq("member_id", user.id)
+      .eq("visitor_email", client.email)
+      .is("client_id", null)
+      .eq("is_blocked", false)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (emailConversation) {
+      // Link existing conversation to this client
+      await adminClient
+        .from("conversations")
+        .update({ client_id: clientId })
+        .eq("id", emailConversation.id);
+
+      // Mark visitor messages as read
+      await supabase
+        .from("messages")
+        .update({ is_read: true })
+        .eq("conversation_id", emailConversation.id)
+        .eq("sender_type", "visitor");
+
+      // Sort messages by created_at ascending and add delivery status
+      const sortedMessages = (emailConversation.messages || [])
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        .map((msg) => ({
+          ...msg,
+          deliveryStatus: computeDeliveryStatus(
+            (msg as { email_events?: Array<{ event_type: string }> }).email_events
+          ),
+        }));
+
+      return {
+        success: true,
+        conversation: {
+          ...emailConversation,
+          messages: sortedMessages,
+        },
+      };
+    }
+
+    // Create new conversation for this client
+    const visitorToken = generateToken();
+    const { data: newConversation, error: createError } = await adminClient
+      .from("conversations")
+      .insert({
+        member_id: user.id,
+        visitor_email: client.email,
+        visitor_name: clientName,
+        visitor_token: visitorToken,
+        is_verified: true, // Clients are pre-verified
+        client_id: clientId,
+      })
+      .select(`
+        id,
+        visitor_name,
+        visitor_email,
+        is_blocked
+      `)
+      .single();
+
+    if (createError || !newConversation) {
+      console.error("Failed to create conversation:", createError);
+      return { success: false, error: "Failed to create conversation" };
+    }
+
+    return {
+      success: true,
+      conversation: {
+        ...newConversation,
+        messages: [],
+      },
+    };
+  } catch (error) {
+    console.error("Get or create client conversation error:", error);
     return { success: false, error: "An unexpected error occurred" };
   }
 }

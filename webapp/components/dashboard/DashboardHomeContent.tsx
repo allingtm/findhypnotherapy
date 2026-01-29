@@ -10,15 +10,25 @@ import {
   IconCalendarCheck,
   IconMessage,
   IconUsers,
-  IconUserPlus,
-  IconCalendar,
 } from "@tabler/icons-react";
 import type {
   DashboardStats,
   ScheduleItem,
   ActionItem,
   ActivityItem,
+  SessionTrendData,
+  ClientStatusData,
+  ServicePopularityData,
+  SessionFormatData,
 } from "@/app/actions/dashboard";
+import {
+  SessionsChart,
+  ClientStatusChart,
+  ServicePopularityChart,
+  SessionFormatChart,
+} from "./charts";
+import { SectionHeader } from "./SectionHeader";
+import { DASHBOARD_HELP } from "./helpContent";
 
 interface DashboardHomeContentProps {
   userName: string;
@@ -27,6 +37,10 @@ interface DashboardHomeContentProps {
   actionItems: ActionItem[];
   activities: ActivityItem[];
   profileSlug?: string | null;
+  sessionTrends: SessionTrendData[];
+  clientStatus: ClientStatusData[];
+  servicePopularity: ServicePopularityData[];
+  sessionFormats: SessionFormatData[];
 }
 
 function getGreeting(): string {
@@ -43,6 +57,10 @@ export function DashboardHomeContent({
   actionItems,
   activities,
   profileSlug,
+  sessionTrends,
+  clientStatus,
+  servicePopularity,
+  sessionFormats,
 }: DashboardHomeContentProps) {
   const firstName = userName?.split(" ")[0] || "there";
 
@@ -59,6 +77,12 @@ export function DashboardHomeContent({
       </div>
 
       {/* Stats Grid */}
+      <SectionHeader
+        title="Overview"
+        helpTitle={DASHBOARD_HELP.stats.title}
+        helpContent={DASHBOARD_HELP.stats.content}
+        className="mb-3"
+      />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <StatCard
           title="Today's Sessions"
@@ -102,6 +126,16 @@ export function DashboardHomeContent({
       {/* Today's Schedule */}
       <div className="mb-6 sm:mb-8">
         <TodaySchedule schedule={schedule} />
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <SessionsChart data={sessionTrends} />
+        <ClientStatusChart data={clientStatus} />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <ServicePopularityChart data={servicePopularity} />
+        <SessionFormatChart data={sessionFormats} />
       </div>
 
       {/* Two Column Layout */}

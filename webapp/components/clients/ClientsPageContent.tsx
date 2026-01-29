@@ -31,6 +31,8 @@ interface Conversation {
   needsAttention: boolean;
 }
 
+type EmailDeliveryStatus = "sent" | "delivered" | "opened" | "failed";
+
 interface BookingRequest {
   id: string;
   visitor_name: string;
@@ -47,6 +49,9 @@ interface BookingRequest {
   service?: {
     name: string;
   } | null;
+  verificationEmailStatus?: EmailDeliveryStatus;
+  notificationEmailStatus?: EmailDeliveryStatus;
+  confirmationEmailStatus?: EmailDeliveryStatus;
 }
 
 interface ClientsPageContentProps {

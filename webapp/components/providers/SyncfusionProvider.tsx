@@ -303,6 +303,58 @@ const darkModeStyles = `
   .e-tab .e-tab-header .e-hscroll-bar {
     background-color: transparent !important;
   }
+
+  /* Syncfusion Chart dark mode */
+  .e-chart,
+  .e-accumulationchart {
+    background-color: transparent !important;
+  }
+
+  .e-chart text,
+  .e-accumulationchart text {
+    fill: #a3a3a3 !important;
+  }
+
+  .e-chart .e-chart-title,
+  .e-accumulationchart .e-chart-title {
+    fill: #e5e5e5 !important;
+  }
+
+  .e-chart .e-axis-label,
+  .e-chart .e-axis-title,
+  .e-accumulationchart .e-axis-label {
+    fill: #a3a3a3 !important;
+  }
+
+  .e-chart .e-legend-text,
+  .e-accumulationchart .e-legend-text {
+    fill: #e5e5e5 !important;
+  }
+
+  .e-chart .e-gridlines line,
+  .e-chart .e-grid-lines line {
+    stroke: #404040 !important;
+  }
+
+  .e-chart .e-axis line,
+  .e-chart .e-axis-line {
+    stroke: #525252 !important;
+  }
+
+  .e-chart-tooltip,
+  .e-tooltip-wrap {
+    background-color: #262626 !important;
+    border-color: #404040 !important;
+  }
+
+  .e-chart-tooltip text,
+  .e-tooltip-wrap text {
+    fill: #e5e5e5 !important;
+  }
+
+  .e-accumulationchart .e-center-label text {
+    fill: #e5e5e5 !important;
+  }
 `
 
 export function SyncfusionProvider({ children }: { children: React.ReactNode }) {

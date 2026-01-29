@@ -10,6 +10,8 @@ import {
   IconUser,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
+import { SectionHeader } from "./SectionHeader";
+import { DASHBOARD_HELP } from "./helpContent";
 
 interface ScheduleItem {
   id: string;
@@ -51,18 +53,21 @@ export function TodaySchedule({ schedule }: TodayScheduleProps) {
   if (schedule.length === 0) {
     return (
       <div className="bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <IconClock className="w-5 h-5" />
-            Today&apos;s Schedule
-          </h2>
-          <Link
-            href="/dashboard/calendar"
-            className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-          >
-            View Calendar
-          </Link>
-        </div>
+        <SectionHeader
+          title="Today's Schedule"
+          helpTitle={DASHBOARD_HELP.schedule.title}
+          helpContent={DASHBOARD_HELP.schedule.content}
+          icon={<IconClock className="w-5 h-5" />}
+          action={
+            <Link
+              href="/dashboard/calendar"
+              className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              View Calendar
+            </Link>
+          }
+          className="mb-4"
+        />
         <div className="text-center py-8">
           <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-neutral-700 rounded-full flex items-center justify-center">
             <IconCalendar className="w-8 h-8 text-gray-400 dark:text-gray-500" />
@@ -80,17 +85,21 @@ export function TodaySchedule({ schedule }: TodayScheduleProps) {
 
   return (
     <div className="bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 overflow-hidden">
-      <div className="flex items-center justify-between p-4 sm:p-5 border-b border-gray-100 dark:border-neutral-700">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <IconClock className="w-5 h-5" />
-          Today&apos;s Schedule
-        </h2>
-        <Link
-          href="/dashboard/calendar"
-          className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-        >
-          View Calendar
-        </Link>
+      <div className="p-4 sm:p-5 border-b border-gray-100 dark:border-neutral-700">
+        <SectionHeader
+          title="Today's Schedule"
+          helpTitle={DASHBOARD_HELP.schedule.title}
+          helpContent={DASHBOARD_HELP.schedule.content}
+          icon={<IconClock className="w-5 h-5" />}
+          action={
+            <Link
+              href="/dashboard/calendar"
+              className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              View Calendar
+            </Link>
+          }
+        />
       </div>
 
       <div className="divide-y divide-gray-100 dark:divide-neutral-700">

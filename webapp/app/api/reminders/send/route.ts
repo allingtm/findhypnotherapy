@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
               html: visitorEmail.html,
             });
 
-            if (!visitorSent) {
+            if (!visitorSent.success) {
               results.errors.push(`Failed to send 24h visitor reminder for booking ${booking.id}`);
             }
           }
@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
               html: therapistEmail.html,
             });
 
-            if (!therapistSent) {
+            if (!therapistSent.success) {
               results.errors.push(`Failed to send 24h therapist reminder for booking ${booking.id}`);
             }
           }
@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
               html: visitorEmail.html,
             });
 
-            if (!visitorSent) {
+            if (!visitorSent.success) {
               results.errors.push(`Failed to send 1h visitor reminder for booking ${booking.id}`);
             }
           }
@@ -220,7 +220,7 @@ export async function POST(request: NextRequest) {
               html: therapistEmail.html,
             });
 
-            if (!therapistSent) {
+            if (!therapistSent.success) {
               results.errors.push(`Failed to send 1h therapist reminder for booking ${booking.id}`);
             }
           }

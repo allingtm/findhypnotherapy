@@ -7,6 +7,10 @@ import {
   getDashboardTodaySchedule,
   getDashboardActionItems,
   getDashboardRecentActivity,
+  getDashboardSessionTrends,
+  getDashboardClientStatus,
+  getDashboardServicePopularity,
+  getDashboardSessionFormats,
 } from "@/app/actions/dashboard";
 import Link from "next/link";
 
@@ -83,13 +87,25 @@ export default async function DashboardPage() {
   }
 
   // Fetch all dashboard data in parallel
-  const [statsResult, scheduleResult, actionItemsResult, activitiesResult] =
-    await Promise.all([
-      getDashboardStats(),
-      getDashboardTodaySchedule(),
-      getDashboardActionItems(),
-      getDashboardRecentActivity(),
-    ]);
+  const [
+    statsResult,
+    scheduleResult,
+    actionItemsResult,
+    activitiesResult,
+    sessionTrendsResult,
+    clientStatusResult,
+    servicePopularityResult,
+    sessionFormatsResult,
+  ] = await Promise.all([
+    getDashboardStats(),
+    getDashboardTodaySchedule(),
+    getDashboardActionItems(),
+    getDashboardRecentActivity(),
+    getDashboardSessionTrends(),
+    getDashboardClientStatus(),
+    getDashboardServicePopularity(),
+    getDashboardSessionFormats(),
+  ]);
 
   // Default stats if there's an error
   const defaultStats = {
@@ -128,6 +144,10 @@ export default async function DashboardPage() {
         actionItems={actionItemsResult.items}
         activities={activitiesResult.activities}
         profileSlug={profileSlug}
+        sessionTrends={sessionTrendsResult.data}
+        clientStatus={clientStatusResult.data}
+        servicePopularity={servicePopularityResult.data}
+        sessionFormats={sessionFormatsResult.data}
       />
     </div>
   );

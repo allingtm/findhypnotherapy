@@ -1,12 +1,14 @@
 "use client";
 
 import { useRef, useEffect } from "react";
+import { IconCheck, IconChecks, IconEye, IconAlertCircle } from "@tabler/icons-react";
 
 interface Message {
   id: string;
   content: string;
   sender_type: string;
   created_at: string;
+  deliveryStatus?: "sent" | "delivered" | "opened" | "failed";
 }
 
 interface ConversationThreadProps {
@@ -34,6 +36,43 @@ function formatTime(dateString: string): string {
   });
 
   return `${dateStr}, ${timeStr}`;
+}
+
+function DeliveryIndicator({ status }: { status?: Message["deliveryStatus"] }) {
+  if (!status) return null;
+
+  switch (status) {
+    case "sent":
+      return (
+        <IconCheck
+          className="w-3 h-3 text-emerald-100 dark:text-emerald-200"
+          title="Sent"
+        />
+      );
+    case "delivered":
+      return (
+        <IconChecks
+          className="w-3 h-3 text-emerald-100 dark:text-emerald-200"
+          title="Delivered"
+        />
+      );
+    case "opened":
+      return (
+        <IconEye
+          className="w-3 h-3 text-blue-200"
+          title="Opened"
+        />
+      );
+    case "failed":
+      return (
+        <IconAlertCircle
+          className="w-3 h-3 text-red-300"
+          title="Failed to deliver"
+        />
+      );
+    default:
+      return null;
+  }
 }
 
 export function ConversationThread({
@@ -77,15 +116,16 @@ export function ConversationThread({
               >
                 {message.content}
               </p>
-              <p
-                className={`text-[10px] mt-1 text-right ${
+              <div
+                className={`flex items-center justify-end gap-1 mt-1 ${
                   isVisitor
                     ? "text-gray-500 dark:text-gray-400"
                     : "text-emerald-100 dark:text-emerald-200"
                 }`}
               >
-                {formatTime(message.created_at)}
-              </p>
+                <span className="text-[10px]">{formatTime(message.created_at)}</span>
+                {!isVisitor && <DeliveryIndicator status={message.deliveryStatus} />}
+              </div>
             </div>
           </div>
         );

@@ -214,7 +214,7 @@ export async function sendClientInvitationAction(
       html: emailContent.html,
     });
 
-    if (!emailSent) {
+    if (!emailSent.success) {
       console.error("Failed to send invitation email");
       // Don't fail the action - the invitation was created, they can resend
     }

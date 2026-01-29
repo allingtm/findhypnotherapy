@@ -12,6 +12,7 @@ import {
   IconClock,
   IconUser,
   IconCheck,
+  IconChecks,
   IconX,
   IconVideo,
   IconMapPin,
@@ -19,7 +20,11 @@ import {
   IconMail,
   IconNote,
   IconInbox,
+  IconEye,
+  IconAlertCircle,
 } from "@tabler/icons-react";
+
+type EmailDeliveryStatus = "sent" | "delivered" | "opened" | "failed";
 
 interface BookingRequest {
   id: string;
@@ -37,6 +42,53 @@ interface BookingRequest {
   service?: {
     name: string;
   } | null;
+  verificationEmailStatus?: EmailDeliveryStatus;
+  notificationEmailStatus?: EmailDeliveryStatus;
+  confirmationEmailStatus?: EmailDeliveryStatus;
+}
+
+function EmailStatusBadge({
+  status,
+  label,
+}: {
+  status: EmailDeliveryStatus | undefined;
+  label: string;
+}) {
+  if (!status) return null;
+
+  const config = {
+    sent: {
+      icon: IconCheck,
+      className: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+      text: `${label} Sent`,
+    },
+    delivered: {
+      icon: IconChecks,
+      className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+      text: `${label} Delivered`,
+    },
+    opened: {
+      icon: IconEye,
+      className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+      text: `${label} Opened`,
+    },
+    failed: {
+      icon: IconAlertCircle,
+      className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+      text: `${label} Failed`,
+    },
+  };
+
+  const { icon: Icon, className, text } = config[status];
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full ${className}`}
+    >
+      <Icon className="w-3 h-3" />
+      {text}
+    </span>
+  );
 }
 
 interface BookingRequestsListProps {
@@ -156,15 +208,29 @@ export function BookingRequestsList({ bookings }: BookingRequestsListProps) {
                 </p>
               </div>
             </div>
-            <span
-              className={`px-2.5 py-1 text-xs font-medium rounded-full ${
-                booking.is_verified
-                  ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
-                  : "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300"
-              }`}
-            >
-              {booking.is_verified ? "Verified" : "Awaiting Verification"}
-            </span>
+            <div className="flex flex-col items-end gap-1">
+              <span
+                className={`px-2.5 py-1 text-xs font-medium rounded-full ${
+                  booking.is_verified
+                    ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
+                    : "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300"
+                }`}
+              >
+                {booking.is_verified ? "Verified" : "Awaiting Verification"}
+              </span>
+              {!booking.is_verified && booking.verificationEmailStatus && (
+                <EmailStatusBadge
+                  status={booking.verificationEmailStatus}
+                  label="Email"
+                />
+              )}
+              {booking.is_verified && booking.notificationEmailStatus && (
+                <EmailStatusBadge
+                  status={booking.notificationEmailStatus}
+                  label="Notification"
+                />
+              )}
+            </div>
           </div>
 
           {/* Details */}

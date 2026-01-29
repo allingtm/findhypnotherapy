@@ -16,6 +16,7 @@
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.91.0",
     "@syncfusion/ej2-base": "^32.1.24",
+    "@syncfusion/ej2-react-charts": "^32.1.25",
     "@syncfusion/ej2-react-navigations": "^32.1.24",
     "@syncfusion/ej2-react-schedule": "^32.1.25",
     "@tabler/icons-react": "^3.36.1",

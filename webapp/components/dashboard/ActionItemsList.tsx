@@ -10,6 +10,8 @@ import {
   IconInbox,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
+import { SectionHeader } from "./SectionHeader";
+import { DASHBOARD_HELP } from "./helpContent";
 
 interface ActionItem {
   id: string;
@@ -69,10 +71,13 @@ export function ActionItemsList({ items }: ActionItemsListProps) {
   if (items.length === 0) {
     return (
       <div className="bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <IconAlertCircle className="w-5 h-5" />
-          Action Items
-        </h2>
+        <SectionHeader
+          title="Action Items"
+          helpTitle={DASHBOARD_HELP.actionItems.title}
+          helpContent={DASHBOARD_HELP.actionItems.content}
+          icon={<IconAlertCircle className="w-5 h-5" />}
+          className="mb-4"
+        />
         <div className="text-center py-6">
           <div className="w-12 h-12 mx-auto mb-3 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
             <IconInbox className="w-6 h-6 text-green-600 dark:text-green-400" />
@@ -91,13 +96,17 @@ export function ActionItemsList({ items }: ActionItemsListProps) {
   return (
     <div className="bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 overflow-hidden">
       <div className="p-4 sm:p-5 border-b border-gray-100 dark:border-neutral-700">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <IconAlertCircle className="w-5 h-5" />
-          Action Items
-          <span className="ml-auto px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 rounded-full">
-            {items.length}
-          </span>
-        </h2>
+        <SectionHeader
+          title="Action Items"
+          helpTitle={DASHBOARD_HELP.actionItems.title}
+          helpContent={DASHBOARD_HELP.actionItems.content}
+          icon={<IconAlertCircle className="w-5 h-5" />}
+          action={
+            <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 rounded-full">
+              {items.length}
+            </span>
+          }
+        />
       </div>
 
       <div className="divide-y divide-gray-100 dark:divide-neutral-700">

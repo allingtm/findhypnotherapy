@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { IconMail, IconMailOpened, IconInbox } from "@tabler/icons-react";
+import { IconMail, IconMailOpened, IconInbox, IconCheck, IconChecks, IconEye, IconAlertCircle } from "@tabler/icons-react";
+
+type DeliveryStatus = "sent" | "delivered" | "opened" | "failed";
 
 interface Conversation {
   id: string;
@@ -15,9 +17,25 @@ interface Conversation {
     senderType: string;
     createdAt: string;
   } | null;
+  lastMessageDeliveryStatus?: DeliveryStatus;
   totalMessages: number;
   messagesLast30Days: number;
   needsAttention: boolean;
+}
+
+function DeliveryStatusIcon({ status }: { status: DeliveryStatus }) {
+  switch (status) {
+    case "sent":
+      return <IconCheck className="w-3 h-3 text-gray-400" title="Sent" />;
+    case "delivered":
+      return <IconChecks className="w-3 h-3 text-green-500" title="Delivered" />;
+    case "opened":
+      return <IconEye className="w-3 h-3 text-blue-500" title="Opened" />;
+    case "failed":
+      return <IconAlertCircle className="w-3 h-3 text-red-500" title="Failed" />;
+    default:
+      return null;
+  }
 }
 
 interface ConversationListProps {
@@ -131,7 +149,13 @@ export function ConversationList({ conversations }: ConversationListProps) {
                     }`}
                   >
                     {conversation.lastMessage.senderType === "member" && (
-                      <span className="text-gray-400 dark:text-gray-500">You: </span>
+                      <span className="inline-flex items-center gap-1">
+                        <span className="text-gray-400 dark:text-gray-500">You:</span>
+                        {conversation.lastMessageDeliveryStatus && (
+                          <DeliveryStatusIcon status={conversation.lastMessageDeliveryStatus} />
+                        )}
+                        <span> </span>
+                      </span>
                     )}
                     {conversation.lastMessage.content}
                   </p>

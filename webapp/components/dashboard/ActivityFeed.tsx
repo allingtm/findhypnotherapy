@@ -11,6 +11,8 @@ import {
   IconHistory,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
+import { SectionHeader } from "./SectionHeader";
+import { DASHBOARD_HELP } from "./helpContent";
 
 interface ActivityItem {
   id: string;
@@ -88,10 +90,13 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
   if (activities.length === 0) {
     return (
       <div className="bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 p-4 sm:p-5">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <IconHistory className="w-5 h-5" />
-          Recent Activity
-        </h2>
+        <SectionHeader
+          title="Recent Activity"
+          helpTitle={DASHBOARD_HELP.activityFeed.title}
+          helpContent={DASHBOARD_HELP.activityFeed.content}
+          icon={<IconHistory className="w-5 h-5" />}
+          className="mb-4"
+        />
         <div className="text-center py-6">
           <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 dark:bg-neutral-700 rounded-full flex items-center justify-center">
             <IconActivity className="w-6 h-6 text-gray-400 dark:text-gray-500" />
@@ -109,10 +114,13 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
 
   return (
     <div className="bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 p-4 sm:p-5">
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-        <IconHistory className="w-5 h-5" />
-        Recent Activity
-      </h2>
+      <SectionHeader
+        title="Recent Activity"
+        helpTitle={DASHBOARD_HELP.activityFeed.title}
+        helpContent={DASHBOARD_HELP.activityFeed.content}
+        icon={<IconHistory className="w-5 h-5" />}
+        className="mb-4"
+      />
 
       <div className="space-y-1">
         {activities.map((activity, idx) => {

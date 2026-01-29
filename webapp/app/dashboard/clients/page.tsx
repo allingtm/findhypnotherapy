@@ -35,13 +35,11 @@ export default async function ClientsPage() {
   // Fetch conversations (inquiries) and pending bookings in parallel
   const [conversationsResult, bookingsResult] = await Promise.all([
     getConversationsAction(),
-    getBookingsForMember("pending"),
+    getBookingsForMember("pending_all"),
   ]);
 
   const conversations = conversationsResult.conversations || [];
-  const pendingBookings = (bookingsResult.bookings || []).filter(
-    (b: { is_verified: boolean }) => b.is_verified
-  );
+  const pendingBookings = bookingsResult.bookings || [];
 
   // Count conversations that need attention (unread messages from visitors)
   const unreadCount = conversations.filter(
@@ -49,12 +47,17 @@ export default async function ClientsPage() {
       c.unreadCount > 0 || c.needsAttention
   ).length;
 
+  // Count only verified pending bookings (those needing therapist action)
+  const pendingCount = pendingBookings.filter(
+    (b: { is_verified: boolean }) => b.is_verified
+  ).length;
+
   return (
     <ClientsPageContent
       conversations={conversations}
       pendingBookings={pendingBookings}
       unreadCount={unreadCount}
-      pendingCount={pendingBookings.length}
+      pendingCount={pendingCount}
     />
   );
 }

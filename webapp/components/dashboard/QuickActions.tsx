@@ -10,6 +10,8 @@ import {
   IconEye,
   IconBolt,
 } from "@tabler/icons-react";
+import { SectionHeader } from "./SectionHeader";
+import { DASHBOARD_HELP } from "./helpContent";
 
 interface QuickActionsProps {
   profileSlug?: string | null;
@@ -42,10 +44,13 @@ export function QuickActions({ profileSlug }: QuickActionsProps) {
 
   return (
     <div className="bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 p-4 sm:p-5">
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-        <IconBolt className="w-5 h-5" />
-        Quick Actions
-      </h2>
+      <SectionHeader
+        title="Quick Actions"
+        helpTitle={DASHBOARD_HELP.quickActions.title}
+        helpContent={DASHBOARD_HELP.quickActions.content}
+        icon={<IconBolt className="w-5 h-5" />}
+        className="mb-4"
+      />
 
       <div className="space-y-2">
         {actions.map((action, idx) => {
