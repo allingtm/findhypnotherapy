@@ -26,10 +26,10 @@ export default async function SessionRsvpPage({ searchParams }: PageProps) {
     redirect("/session-rsvp/error?reason=invalid_action");
   }
 
-  // Process the RSVP response
+  // Process the RSVP response - map "accept"/"decline" to "accepted"/"declined"
   const result = await respondToSessionRsvpAction({
     token,
-    response: action as "accepted" | "declined",
+    response: action === "accept" ? "accepted" : "declined",
   });
 
   if (!result.success) {
