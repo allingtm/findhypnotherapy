@@ -19,6 +19,7 @@ interface SessionsStepProps {
     showPerSessionPrice: boolean
   }>) => void
   errors: Record<string, string[]>
+  onBlur?: (fieldName: string, value: string) => void
 }
 
 export function SessionsStep({
@@ -31,6 +32,7 @@ export function SessionsStep({
   showPerSessionPrice,
   onChange,
   errors,
+  onBlur,
 }: SessionsStepProps) {
   const isProgramme = serviceType === "programme"
   const isPackageOrProgramme = serviceType === "package" || serviceType === "programme"
@@ -53,6 +55,7 @@ export function SessionsStep({
           type="number"
           value={durationMinutes}
           onChange={(e) => onChange({ durationMinutes: e.target.value })}
+          onBlur={(e) => onBlur?.("duration_minutes", e.target.value)}
           placeholder="60"
           min={15}
           max={480}
@@ -76,6 +79,7 @@ export function SessionsStep({
               type="number"
               value={sessionCountMin}
               onChange={(e) => onChange({ sessionCountMin: e.target.value })}
+              onBlur={(e) => onBlur?.("session_count_min", e.target.value)}
               placeholder="4"
               min={1}
               max={50}
@@ -86,6 +90,7 @@ export function SessionsStep({
               type="number"
               value={sessionCountMax}
               onChange={(e) => onChange({ sessionCountMax: e.target.value })}
+              onBlur={(e) => onBlur?.("session_count_max", e.target.value)}
               placeholder="8"
               min={1}
               max={50}
@@ -99,6 +104,7 @@ export function SessionsStep({
           type="number"
           value={sessionCount}
           onChange={(e) => onChange({ sessionCount: e.target.value })}
+          onBlur={(e) => onBlur?.("session_count", e.target.value)}
           placeholder={serviceType === "single_session" || serviceType === "consultation" ? "1" : "4"}
           min={1}
           max={50}

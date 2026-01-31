@@ -4,6 +4,7 @@ import { useState, useRef, useActionState } from 'react'
 import { uploadServiceImageAction, deleteServiceImageAction } from '@/app/actions/therapist-services'
 import { Button } from '@/components/ui/Button'
 import { Alert } from '@/components/ui/Alert'
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
 import { validateImageFile } from '@/lib/utils/fileValidation'
 import { toast } from 'sonner'
 
@@ -19,6 +20,7 @@ export function ServiceImageUpload({
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [deleteSuccess, setDeleteSuccess] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [uploadState, uploadAction] = useActionState(uploadServiceImageAction, {
@@ -49,11 +51,8 @@ export function ServiceImageUpload({
     }
   }
 
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to remove this image?')) {
-      return
-    }
-
+  const handleDeleteConfirm = async () => {
+    setShowDeleteConfirm(false)
     setIsDeleting(true)
     setDeleteError(null)
     setDeleteSuccess(false)
@@ -122,7 +121,7 @@ export function ServiceImageUpload({
           <Button
             type="button"
             variant="secondary"
-            onClick={handleDelete}
+            onClick={() => setShowDeleteConfirm(true)}
             loading={isDeleting}
           >
             Remove
@@ -151,6 +150,18 @@ export function ServiceImageUpload({
       {deleteSuccess && (
         <Alert type="success" message="Image removed!" />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Remove Image"
+        message="Are you sure you want to remove this image?"
+        confirmText="Remove"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </div>
   )
 }

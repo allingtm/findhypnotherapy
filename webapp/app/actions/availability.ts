@@ -129,6 +129,14 @@ export async function updateBookingSettingsAction(
       send_therapist_reminders: formData.get('send_therapist_reminders') !== 'false',
       video_platform_preference: formData.get('video_platform_preference') || 'none',
       default_video_link: formData.get('default_video_link') || null,
+      // RSVP and session reminder settings
+      require_session_rsvp: formData.get('require_session_rsvp') === 'true',
+      send_rsvp_reminders: formData.get('send_rsvp_reminders') === 'true',
+      rsvp_first_reminder_hours: parseInt(formData.get('rsvp_first_reminder_hours') as string) || 24,
+      rsvp_second_reminder_hours: parseInt(formData.get('rsvp_second_reminder_hours') as string) || 48,
+      send_client_session_reminders: formData.get('send_client_session_reminders') === 'true',
+      client_session_reminder_24h: formData.get('client_session_reminder_24h') === 'true',
+      client_session_reminder_1h: formData.get('client_session_reminder_1h') === 'true',
     }
 
     const validation = bookingSettingsSchema.safeParse(rawData)
@@ -157,6 +165,14 @@ export async function updateBookingSettingsAction(
         send_therapist_reminders: rawData.send_therapist_reminders,
         video_platform_preference: data.video_platform_preference,
         default_video_link: data.default_video_link || null,
+        // RSVP and session reminder settings
+        require_session_rsvp: rawData.require_session_rsvp,
+        send_rsvp_reminders: rawData.send_rsvp_reminders,
+        rsvp_first_reminder_hours: rawData.rsvp_first_reminder_hours,
+        rsvp_second_reminder_hours: rawData.rsvp_second_reminder_hours,
+        send_client_session_reminders: rawData.send_client_session_reminders,
+        client_session_reminder_24h: rawData.client_session_reminder_24h,
+        client_session_reminder_1h: rawData.client_session_reminder_1h,
       })
       .eq('therapist_profile_id', profileId)
 

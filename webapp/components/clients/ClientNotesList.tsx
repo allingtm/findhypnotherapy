@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
+import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
 import {
   IconNotes,
   IconPlus,
@@ -53,6 +54,7 @@ export function ClientNotesList({
   const [isPrivate, setIsPrivate] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleteNoteId, setDeleteNoteId] = useState<string | null>(null);
 
   // Sort notes by date (most recent first)
   const sortedNotes = [...notes].sort(
@@ -94,8 +96,10 @@ export function ClientNotesList({
     }
   };
 
-  const handleDelete = async (noteId: string) => {
-    if (!confirm("Are you sure you want to delete this note?")) return;
+  const handleDeleteConfirm = async () => {
+    if (!deleteNoteId) return;
+    const noteId = deleteNoteId;
+    setDeleteNoteId(null);
 
     try {
       await deleteClientNoteAction(noteId);
@@ -184,7 +188,7 @@ export function ClientNotesList({
                   )}
                 </div>
                 <button
-                  onClick={() => handleDelete(note.id)}
+                  onClick={() => setDeleteNoteId(note.id)}
                   className="p-1.5 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded transition-colors text-gray-400 hover:text-red-500"
                 >
                   <IconTrash className="w-4 h-4" />
@@ -317,6 +321,18 @@ export function ClientNotesList({
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={!!deleteNoteId}
+        onClose={() => setDeleteNoteId(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Note"
+        message="Are you sure you want to delete this note? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </div>
   );
 }

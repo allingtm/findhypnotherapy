@@ -740,12 +740,11 @@ export async function getClientsForMemberAction(
       supabase.from("clients").select("*", { count: "exact", head: true }).eq("therapist_profile_id", profile.id).eq("status", "archived"),
     ]);
 
-    // Build query for filtered clients
+    // Build query for filtered clients (without nested session count due to RLS issues)
     let query = supabase
       .from("clients")
       .select(`
         *,
-        client_sessions(count),
         conversations(id)
       `)
       .eq("therapist_profile_id", profile.id)
@@ -768,10 +767,33 @@ export async function getClientsForMemberAction(
       return { success: false, error: "Failed to load clients" };
     }
 
+    // Get session counts separately (direct query works with RLS)
+    const clientIds = (clients || []).map((c: { id: string }) => c.id);
+    let sessionCounts: Record<string, number> = {};
+
+    if (clientIds.length > 0) {
+      const { data: sessions } = await supabase
+        .from("client_sessions")
+        .select("client_id")
+        .eq("therapist_profile_id", profile.id)
+        .in("client_id", clientIds);
+
+      // Count sessions per client
+      (sessions || []).forEach((s: { client_id: string }) => {
+        sessionCounts[s.client_id] = (sessionCounts[s.client_id] || 0) + 1;
+      });
+    }
+
+    // Merge session counts into clients
+    const clientsWithCounts = (clients || []).map((client: { id: string }) => ({
+      ...client,
+      session_count: sessionCounts[client.id] || 0,
+    }));
+
     return {
       success: true,
       data: {
-        clients: clients || [],
+        clients: clientsWithCounts,
         counts: {
           total: totalCount || 0,
           invited: invitedCount || 0,
@@ -801,50 +823,17 @@ export async function getClientBySlugAction(
       return { success: false, error: "You must be logged in" };
     }
 
-    const { data: profile } = await supabase
-      .from("therapist_profiles")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
+    // Use RPC function to get client with sessions
+    // (nested selects don't work correctly with RLS on client_sessions)
+    const { data: client, error } = await supabase
+      .rpc('get_client_with_sessions', { p_slug: slug });
 
-    if (!profile) {
-      return { success: false, error: "Therapist profile not found" };
+    if (error) {
+      console.error("Error getting client:", error);
+      return { success: false, error: "Failed to load client" };
     }
 
-    const { data: client, error } = await supabase
-      .from("clients")
-      .select(`
-        *,
-        client_sessions(
-          id,
-          title,
-          session_date,
-          start_time,
-          end_time,
-          status,
-          session_format
-        ),
-        client_notes(
-          id,
-          note_type,
-          content,
-          created_at
-        ),
-        conversations(
-          id,
-          visitor_token
-        ),
-        client_terms_acceptance(
-          id,
-          accepted_at,
-          therapist_terms(title, version)
-        )
-      `)
-      .eq("therapist_profile_id", profile.id)
-      .eq("slug", slug)
-      .single();
-
-    if (error || !client) {
+    if (!client) {
       return { success: false, error: "Client not found" };
     }
 

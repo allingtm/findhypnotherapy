@@ -9,9 +9,10 @@ interface AddressStepProps {
   onChange: (updates: Partial<OnboardingData>) => void;
   errors: Record<string, string[]>;
   requirement?: OnboardingFieldRequirement;
+  onBlur?: (fieldName: string, value: string) => void;
 }
 
-export function AddressStep({ data, onChange, errors, requirement = "optional" }: AddressStepProps) {
+export function AddressStep({ data, onChange, errors, requirement = "optional", onBlur }: AddressStepProps) {
   const isRequired = requirement === "required";
   const suffix = isRequired ? " *" : " (optional)";
 
@@ -27,6 +28,7 @@ export function AddressStep({ data, onChange, errors, requirement = "optional" }
         label={`Address Line 1${suffix}`}
         value={data.addressLine1}
         onChange={(e) => onChange({ addressLine1: e.target.value })}
+        onBlur={(e) => onBlur?.("addressLine1", e.target.value)}
         placeholder="123 Main Street"
         error={errors.addressLine1?.[0]}
       />
@@ -35,6 +37,7 @@ export function AddressStep({ data, onChange, errors, requirement = "optional" }
         label="Address Line 2 (optional)"
         value={data.addressLine2}
         onChange={(e) => onChange({ addressLine2: e.target.value })}
+        onBlur={(e) => onBlur?.("addressLine2", e.target.value)}
         placeholder="Apartment 4B"
         error={errors.addressLine2?.[0]}
       />
@@ -44,6 +47,7 @@ export function AddressStep({ data, onChange, errors, requirement = "optional" }
           label={`City${suffix}`}
           value={data.city}
           onChange={(e) => onChange({ city: e.target.value })}
+          onBlur={(e) => onBlur?.("city", e.target.value)}
           placeholder="London"
           error={errors.city?.[0]}
         />
@@ -51,6 +55,7 @@ export function AddressStep({ data, onChange, errors, requirement = "optional" }
           label={`Postal Code${suffix}`}
           value={data.postalCode}
           onChange={(e) => onChange({ postalCode: e.target.value })}
+          onBlur={(e) => onBlur?.("postalCode", e.target.value)}
           placeholder="SW1A 1AA"
           error={errors.postalCode?.[0]}
         />
@@ -60,6 +65,7 @@ export function AddressStep({ data, onChange, errors, requirement = "optional" }
         label="Country"
         value={data.country}
         onChange={(e) => onChange({ country: e.target.value })}
+        onBlur={(e) => onBlur?.("country", e.target.value)}
         placeholder="United Kingdom"
         error={errors.country?.[0]}
       />

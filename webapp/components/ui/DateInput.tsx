@@ -26,7 +26,7 @@ export function DateInput({
   required,
   minDate,
   maxDate,
-  placeholder = "dd/MM/yyyy",
+  placeholder = "dd/mm/yyyy",
   disabled,
 }: DateInputProps) {
   // Convert ISO string to Date object for the picker

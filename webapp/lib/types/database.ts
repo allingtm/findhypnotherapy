@@ -381,6 +381,18 @@ export type Database = {
           location: string | null
           meeting_url: string | null
           microsoft_event_id: string | null
+          proposed_date: string | null
+          proposed_end_time: string | null
+          proposed_start_time: string | null
+          reminder_1h_sent_at: string | null
+          reminder_24h_sent_at: string | null
+          rsvp_message: string | null
+          rsvp_reminder_1_sent_at: string | null
+          rsvp_reminder_2_sent_at: string | null
+          rsvp_responded_at: string | null
+          rsvp_status: string | null
+          rsvp_token: string | null
+          rsvp_token_expires_at: string | null
           service_id: string | null
           session_date: string
           session_format: string | null
@@ -404,6 +416,18 @@ export type Database = {
           location?: string | null
           meeting_url?: string | null
           microsoft_event_id?: string | null
+          proposed_date?: string | null
+          proposed_end_time?: string | null
+          proposed_start_time?: string | null
+          reminder_1h_sent_at?: string | null
+          reminder_24h_sent_at?: string | null
+          rsvp_message?: string | null
+          rsvp_reminder_1_sent_at?: string | null
+          rsvp_reminder_2_sent_at?: string | null
+          rsvp_responded_at?: string | null
+          rsvp_status?: string | null
+          rsvp_token?: string | null
+          rsvp_token_expires_at?: string | null
           service_id?: string | null
           session_date: string
           session_format?: string | null
@@ -427,6 +451,18 @@ export type Database = {
           location?: string | null
           meeting_url?: string | null
           microsoft_event_id?: string | null
+          proposed_date?: string | null
+          proposed_end_time?: string | null
+          proposed_start_time?: string | null
+          reminder_1h_sent_at?: string | null
+          reminder_24h_sent_at?: string | null
+          rsvp_message?: string | null
+          rsvp_reminder_1_sent_at?: string | null
+          rsvp_reminder_2_sent_at?: string | null
+          rsvp_responded_at?: string | null
+          rsvp_status?: string | null
+          rsvp_token?: string | null
+          rsvp_token_expires_at?: string | null
           service_id?: string | null
           session_date?: string
           session_format?: string | null
@@ -1103,6 +1139,8 @@ export type Database = {
         Row: {
           accepts_online_booking: boolean | null
           buffer_minutes: number | null
+          client_session_reminder_1h: boolean | null
+          client_session_reminder_24h: boolean | null
           created_at: string | null
           default_video_link: string | null
           google_calendar_connected: boolean | null
@@ -1110,7 +1148,12 @@ export type Database = {
           max_booking_days_ahead: number | null
           microsoft_calendar_connected: boolean | null
           min_booking_notice_hours: number | null
+          require_session_rsvp: boolean | null
           requires_approval: boolean | null
+          rsvp_first_reminder_hours: number | null
+          rsvp_second_reminder_hours: number | null
+          send_client_session_reminders: boolean | null
+          send_rsvp_reminders: boolean | null
           send_therapist_reminders: boolean | null
           send_visitor_reminders: boolean | null
           slot_duration_minutes: number
@@ -1123,6 +1166,8 @@ export type Database = {
         Insert: {
           accepts_online_booking?: boolean | null
           buffer_minutes?: number | null
+          client_session_reminder_1h?: boolean | null
+          client_session_reminder_24h?: boolean | null
           created_at?: string | null
           default_video_link?: string | null
           google_calendar_connected?: boolean | null
@@ -1130,7 +1175,12 @@ export type Database = {
           max_booking_days_ahead?: number | null
           microsoft_calendar_connected?: boolean | null
           min_booking_notice_hours?: number | null
+          require_session_rsvp?: boolean | null
           requires_approval?: boolean | null
+          rsvp_first_reminder_hours?: number | null
+          rsvp_second_reminder_hours?: number | null
+          send_client_session_reminders?: boolean | null
+          send_rsvp_reminders?: boolean | null
           send_therapist_reminders?: boolean | null
           send_visitor_reminders?: boolean | null
           slot_duration_minutes?: number
@@ -1143,6 +1193,8 @@ export type Database = {
         Update: {
           accepts_online_booking?: boolean | null
           buffer_minutes?: number | null
+          client_session_reminder_1h?: boolean | null
+          client_session_reminder_24h?: boolean | null
           created_at?: string | null
           default_video_link?: string | null
           google_calendar_connected?: boolean | null
@@ -1150,7 +1202,12 @@ export type Database = {
           max_booking_days_ahead?: number | null
           microsoft_calendar_connected?: boolean | null
           min_booking_notice_hours?: number | null
+          require_session_rsvp?: boolean | null
           requires_approval?: boolean | null
+          rsvp_first_reminder_hours?: number | null
+          rsvp_second_reminder_hours?: number | null
+          send_client_session_reminders?: boolean | null
+          send_rsvp_reminders?: boolean | null
           send_therapist_reminders?: boolean | null
           send_visitor_reminders?: boolean | null
           slot_duration_minutes?: number
@@ -1658,6 +1715,7 @@ export type Database = {
         Returns: string
       }
       get_client_account_id: { Args: never; Returns: string }
+      get_client_with_sessions: { Args: { p_slug: string }; Returns: Json }
       get_user_roles: { Args: never; Returns: string[] }
       has_active_subscription: { Args: never; Returns: boolean }
       has_role: { Args: { role_name: string }; Returns: boolean }
@@ -1873,33 +1931,24 @@ export const Constants = {
   },
 } as const
 
-// Custom type exports derived from database enums
-export type ServiceType = "single_session" | "package" | "programme" | "consultation" | "subscription"
-export type PriceDisplayMode = "exact" | "from" | "range" | "contact" | "free"
-export type VideoStatus = "processing" | "published" | "rejected" | "deleted"
-
-// Client-related type exports
-export type ClientStatus = "invited" | "onboarding" | "active" | "archived"
+// Custom type aliases for convenience
 export type ClientSessionStatus = "scheduled" | "completed" | "cancelled" | "no_show"
 export type ClientSessionFormat = "online" | "in-person" | "phone"
-export type ClientNoteType = "session_note" | "general_note" | "progress_note"
-export type ClientTherapistRelationshipStatus = "active" | "paused" | "ended"
-
-// Onboarding requirements type for services
-export type OnboardingFieldRequirement = "required" | "optional" | "hidden"
-
-export interface OnboardingRequirements {
-  phone?: OnboardingFieldRequirement
-  address?: OnboardingFieldRequirement
-  emergency_contact?: OnboardingFieldRequirement
-  health_info?: OnboardingFieldRequirement
-  gp_info?: OnboardingFieldRequirement
+export type RsvpStatus = "pending" | "accepted" | "declined" | "reschedule_requested"
+export type ServiceType = 'single_session' | 'package' | 'programme' | 'consultation' | 'subscription'
+export type PriceDisplayMode = 'exact' | 'from' | 'range' | 'contact' | 'free'
+export type OnboardingFieldRequirement = 'required' | 'optional' | 'hidden'
+export type OnboardingRequirements = {
+  phone: OnboardingFieldRequirement
+  address: OnboardingFieldRequirement
+  emergency_contact: OnboardingFieldRequirement
+  health_info: OnboardingFieldRequirement
+  gp_info: OnboardingFieldRequirement
 }
-
 export const DEFAULT_ONBOARDING_REQUIREMENTS: OnboardingRequirements = {
-  phone: "required",
-  address: "required",
-  emergency_contact: "required",
-  health_info: "optional",
-  gp_info: "optional",
+  phone: 'optional',
+  address: 'optional',
+  emergency_contact: 'optional',
+  health_info: 'optional',
+  gp_info: 'optional',
 }

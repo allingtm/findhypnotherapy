@@ -10,6 +10,7 @@ interface HealthInfoStepProps {
   errors: Record<string, string[]>;
   healthRequirement?: OnboardingFieldRequirement;
   gpRequirement?: OnboardingFieldRequirement;
+  onBlur?: (fieldName: string, value: string) => void;
 }
 
 export function HealthInfoStep({
@@ -17,7 +18,8 @@ export function HealthInfoStep({
   onChange,
   errors,
   healthRequirement = "optional",
-  gpRequirement = "optional"
+  gpRequirement = "optional",
+  onBlur
 }: HealthInfoStepProps) {
   const showHealthInfo = healthRequirement !== "hidden";
   const showGpInfo = gpRequirement !== "hidden";
@@ -43,6 +45,7 @@ export function HealthInfoStep({
               id="health-conditions"
               value={data.healthConditions}
               onChange={(e) => onChange({ healthConditions: e.target.value })}
+              onBlur={(e) => onBlur?.("healthConditions", e.target.value)}
               placeholder="Please list any medical conditions, mental health diagnoses, or ongoing health concerns..."
               rows={3}
               className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
@@ -65,6 +68,7 @@ export function HealthInfoStep({
               id="medications"
               value={data.medications}
               onChange={(e) => onChange({ medications: e.target.value })}
+              onBlur={(e) => onBlur?.("medications", e.target.value)}
               placeholder="List any medications you are currently taking, including supplements..."
               rows={2}
               className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
@@ -80,6 +84,7 @@ export function HealthInfoStep({
             label={`Allergies${healthSuffix}`}
             value={data.allergies}
             onChange={(e) => onChange({ allergies: e.target.value })}
+            onBlur={(e) => onBlur?.("allergies", e.target.value)}
             placeholder="Any known allergies..."
             error={errors.allergies?.[0]}
           />
@@ -92,6 +97,7 @@ export function HealthInfoStep({
             label={`GP / Doctor Name${gpSuffix}`}
             value={data.gpName}
             onChange={(e) => onChange({ gpName: e.target.value })}
+            onBlur={(e) => onBlur?.("gpName", e.target.value)}
             placeholder="Dr. Sarah Jones"
             error={errors.gpName?.[0]}
           />
@@ -99,6 +105,7 @@ export function HealthInfoStep({
             label={`GP Practice${gpSuffix}`}
             value={data.gpPractice}
             onChange={(e) => onChange({ gpPractice: e.target.value })}
+            onBlur={(e) => onBlur?.("gpPractice", e.target.value)}
             placeholder="City Health Centre"
             error={errors.gpPractice?.[0]}
           />

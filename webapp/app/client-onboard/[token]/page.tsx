@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getInvitationByTokenAction } from "@/app/actions/clients";
 import { OnboardingForm } from "@/components/onboarding/OnboardingForm";
 import Link from "next/link";
+import type { OnboardingRequirements } from "@/lib/types/database";
 
 export const metadata = {
   title: "Complete Your Profile | Find Hypnotherapy",
@@ -72,7 +73,7 @@ export default async function ClientOnboardPage({ params }: PageProps) {
       description: string | null;
       price: number | null;
       durationMinutes: number | null;
-      onboardingRequirements: Record<string, string> | null;
+      onboardingRequirements: OnboardingRequirements | null;
     } | null;
   };
 

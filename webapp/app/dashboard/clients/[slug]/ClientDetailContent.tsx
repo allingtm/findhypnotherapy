@@ -24,7 +24,6 @@ export function ClientDetailContent({
   const router = useRouter();
   const [client, setClient] = useState(initialClient);
   const [activeTab, setActiveTab] = useState(initialTab);
-  const [showAddSession, setShowAddSession] = useState(false);
   const [showEditClient, setShowEditClient] = useState(false);
 
   const clientData = client as unknown as {
@@ -62,6 +61,11 @@ export function ClientDetailContent({
       meeting_url: string | null;
       therapist_notes: string | null;
       created_at: string;
+      rsvp_status: string | null;
+      rsvp_message: string | null;
+      proposed_date: string | null;
+      proposed_start_time: string | null;
+      proposed_end_time: string | null;
     }>;
     client_notes: Array<{
       id: string;
@@ -97,18 +101,12 @@ export function ClientDetailContent({
     window.history.replaceState({}, "", url.toString());
   };
 
-  const handleAddSession = () => {
-    setShowAddSession(true);
-    setActiveTab("sessions");
-  };
-
   return (
     <div className="max-w-5xl space-y-6">
       {/* Header */}
       <ClientHeader
         client={clientData}
         onUpdate={reloadClient}
-        onAddSession={handleAddSession}
       />
 
       {/* Tabs */}
@@ -122,8 +120,6 @@ export function ClientDetailContent({
             clientName={`${clientData.first_name || ""} ${clientData.last_name || ""}`.trim() || "Client"}
             sessions={clientData.client_sessions || []}
             onUpdate={reloadClient}
-            showAddDialog={showAddSession}
-            onCloseAddDialog={() => setShowAddSession(false)}
           />
         )}
 

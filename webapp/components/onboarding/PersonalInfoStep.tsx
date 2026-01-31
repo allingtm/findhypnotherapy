@@ -9,9 +9,10 @@ interface PersonalInfoStepProps {
   onChange: (updates: Partial<OnboardingData>) => void;
   errors: Record<string, string[]>;
   phoneRequirement?: OnboardingFieldRequirement;
+  onBlur?: (fieldName: string, value: string) => void;
 }
 
-export function PersonalInfoStep({ data, onChange, errors, phoneRequirement = "optional" }: PersonalInfoStepProps) {
+export function PersonalInfoStep({ data, onChange, errors, phoneRequirement = "optional", onBlur }: PersonalInfoStepProps) {
   const phoneLabel = phoneRequirement === "required"
     ? "Phone Number *"
     : phoneRequirement === "hidden"
@@ -29,6 +30,7 @@ export function PersonalInfoStep({ data, onChange, errors, phoneRequirement = "o
           label="First Name *"
           value={data.firstName}
           onChange={(e) => onChange({ firstName: e.target.value })}
+          onBlur={(e) => onBlur?.("firstName", e.target.value)}
           placeholder="John"
           error={errors.firstName?.[0]}
         />
@@ -36,6 +38,7 @@ export function PersonalInfoStep({ data, onChange, errors, phoneRequirement = "o
           label="Last Name *"
           value={data.lastName}
           onChange={(e) => onChange({ lastName: e.target.value })}
+          onBlur={(e) => onBlur?.("lastName", e.target.value)}
           placeholder="Smith"
           error={errors.lastName?.[0]}
         />
@@ -47,6 +50,7 @@ export function PersonalInfoStep({ data, onChange, errors, phoneRequirement = "o
           type="tel"
           value={data.phone}
           onChange={(e) => onChange({ phone: e.target.value })}
+          onBlur={(e) => onBlur?.("phone", e.target.value)}
           placeholder="07123 456789"
           error={errors.phone?.[0]}
         />

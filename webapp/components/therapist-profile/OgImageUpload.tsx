@@ -5,6 +5,7 @@ import { OgImageUploadModal } from './OgImageUploadModal'
 import { uploadOgImageAction, deleteOgImageAction } from '@/app/actions/therapist-profile'
 import { Button } from '@/components/ui/Button'
 import { Alert } from '@/components/ui/Alert'
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
 import { validateImageFile } from '@/lib/utils/fileValidation'
 import { toast } from 'sonner'
 
@@ -15,6 +16,7 @@ interface OgImageUploadProps {
 export function OgImageUpload({ currentOgImageUrl }: OgImageUploadProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [uploadState, uploadAction] = useActionState(uploadOgImageAction, {
@@ -55,11 +57,8 @@ export function OgImageUpload({ currentOgImageUrl }: OgImageUploadProps) {
     }
   }
 
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to remove the social sharing image?')) {
-      return
-    }
-
+  const handleDeleteConfirm = async () => {
+    setShowDeleteConfirm(false)
     const formData = new FormData()
     await deleteAction(formData)
   }
@@ -117,7 +116,7 @@ export function OgImageUpload({ currentOgImageUrl }: OgImageUploadProps) {
           {displayImageUrl && (
             <Button
               variant="secondary"
-              onClick={handleDelete}
+              onClick={() => setShowDeleteConfirm(true)}
             >
               Remove
             </Button>
@@ -162,6 +161,18 @@ export function OgImageUpload({ currentOgImageUrl }: OgImageUploadProps) {
           initialImage={selectedImage}
         />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Remove Image"
+        message="Are you sure you want to remove the social sharing image?"
+        confirmText="Remove"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </div>
   )
 }

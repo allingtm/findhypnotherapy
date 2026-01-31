@@ -1,11 +1,23 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { z } from 'zod'
 import { createServiceAction, updateServiceAction } from '@/app/actions/therapist-services'
 import { Alert } from '@/components/ui/Alert'
 import type { Tables, ServiceType, PriceDisplayMode, OnboardingRequirements } from '@/lib/types/database'
 import { DEFAULT_ONBOARDING_REQUIREMENTS } from '@/lib/types/database'
 import { IconX } from '@tabler/icons-react'
+import {
+  serviceNameSchema,
+  serviceShortDescriptionSchema,
+  serviceDescriptionSchema,
+  serviceOutcomeFocusSchema,
+  servicePriceSchema,
+  servicePriceMinSchema,
+  servicePriceMaxSchema,
+  serviceDurationSchema,
+  serviceSessionCountSchema,
+} from '@/lib/validation/services'
 
 // Wizard components
 import { WizardProgress } from './service-wizard/WizardProgress'
@@ -101,6 +113,57 @@ export function ServiceForm({ service, onClose, onSuccess }: ServiceFormProps) {
   // Update form data helper
   const updateFormData = (updates: Partial<FormData>) => {
     setFormData((prev) => ({ ...prev, ...updates }))
+  }
+
+  // Validate single field on blur
+  const validateField = (fieldName: string, value: string) => {
+    try {
+      let schema: z.ZodTypeAny | undefined
+      switch (fieldName) {
+        case 'name':
+          schema = serviceNameSchema
+          break
+        case 'short_description':
+          schema = serviceShortDescriptionSchema
+          break
+        case 'description':
+          schema = serviceDescriptionSchema
+          break
+        case 'outcome_focus':
+          schema = serviceOutcomeFocusSchema
+          break
+        case 'price':
+          schema = servicePriceSchema
+          break
+        case 'price_min':
+          schema = servicePriceMinSchema
+          break
+        case 'price_max':
+          schema = servicePriceMaxSchema
+          break
+        case 'duration_minutes':
+          schema = serviceDurationSchema
+          break
+        case 'session_count':
+        case 'session_count_min':
+        case 'session_count_max':
+          schema = serviceSessionCountSchema
+          break
+      }
+      if (schema) {
+        schema.parse(value || undefined)
+        setFieldErrors((prev) => {
+          const updated = { ...prev }
+          delete updated[fieldName]
+          return updated
+        })
+      }
+    } catch (err: unknown) {
+      if (err instanceof z.ZodError) {
+        const message = err.issues[0]?.message || 'Invalid input'
+        setFieldErrors((prev) => ({ ...prev, [fieldName]: [message] }))
+      }
+    }
   }
 
   // Validate current step
@@ -302,6 +365,7 @@ export function ServiceForm({ service, onClose, onSuccess }: ServiceFormProps) {
                 serviceType={formData.serviceType}
                 onChange={updateFormData}
                 errors={fieldErrors}
+                onBlur={validateField}
               />
             )}
 
@@ -313,6 +377,7 @@ export function ServiceForm({ service, onClose, onSuccess }: ServiceFormProps) {
                 priceMax={formData.priceMax}
                 onChange={updateFormData}
                 errors={fieldErrors}
+                onBlur={validateField}
               />
             )}
 
@@ -327,6 +392,7 @@ export function ServiceForm({ service, onClose, onSuccess }: ServiceFormProps) {
                 showPerSessionPrice={formData.showPerSessionPrice}
                 onChange={updateFormData}
                 errors={fieldErrors}
+                onBlur={validateField}
               />
             )}
 

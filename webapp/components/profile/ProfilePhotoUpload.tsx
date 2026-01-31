@@ -5,6 +5,7 @@ import { PhotoUploadModal } from './PhotoUploadModal'
 import { uploadProfilePhotoAction, deleteProfilePhotoAction } from '@/app/actions/profile'
 import { Button } from '@/components/ui/Button'
 import { Alert } from '@/components/ui/Alert'
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
 import { validateImageFile } from '@/lib/utils/fileValidation'
 import { toast } from 'sonner'
 
@@ -19,6 +20,7 @@ export function ProfilePhotoUpload({
 }: ProfilePhotoUploadProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [uploadState, uploadAction] = useActionState(uploadProfilePhotoAction, {
@@ -62,11 +64,8 @@ export function ProfilePhotoUpload({
     }
   }
 
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to remove your profile photo?')) {
-      return
-    }
-
+  const handleDeleteConfirm = async () => {
+    setShowDeleteConfirm(false)
     const formData = new FormData()
     await deleteAction(formData)
   }
@@ -109,7 +108,7 @@ export function ProfilePhotoUpload({
             {displayPhotoUrl && (
               <Button
                 variant="secondary"
-                onClick={handleDelete}
+                onClick={() => setShowDeleteConfirm(true)}
               >
                 Remove
               </Button>
@@ -155,6 +154,18 @@ export function ProfilePhotoUpload({
           initialImage={selectedImage}
         />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Remove Photo"
+        message="Are you sure you want to remove your profile photo?"
+        confirmText="Remove"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </div>
   )
 }

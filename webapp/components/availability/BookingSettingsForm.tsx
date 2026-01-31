@@ -37,7 +37,25 @@ interface BookingSettings {
   send_therapist_reminders: boolean | null;
   video_platform_preference: string | null;
   default_video_link: string | null;
+  // RSVP and session reminder settings
+  require_session_rsvp: boolean | null;
+  send_rsvp_reminders: boolean | null;
+  rsvp_first_reminder_hours: number | null;
+  rsvp_second_reminder_hours: number | null;
+  send_client_session_reminders: boolean | null;
+  client_session_reminder_24h: boolean | null;
+  client_session_reminder_1h: boolean | null;
 }
+
+const RSVP_REMINDER_OPTIONS = [
+  { value: 6, label: "6 hours after invite" },
+  { value: 12, label: "12 hours after invite" },
+  { value: 24, label: "24 hours after invite" },
+  { value: 48, label: "48 hours after invite" },
+  { value: 72, label: "72 hours after invite" },
+  { value: 96, label: "4 days after invite" },
+  { value: 168, label: "1 week after invite" },
+];
 
 interface BookingSettingsFormProps {
   settings: BookingSettings;
@@ -59,7 +77,7 @@ export function BookingSettingsForm({ settings }: BookingSettingsFormProps) {
       videoLinkSchema.parse(value);
       setVideoLinkError(null);
     } catch (err: any) {
-      const message = err.errors?.[0]?.message || "Invalid URL";
+      const message = err.issues?.[0]?.message || "Invalid URL";
       setVideoLinkError(message);
     }
   };
@@ -283,6 +301,145 @@ export function BookingSettingsForm({ settings }: BookingSettingsFormProps) {
             </p>
           </div>
         </label>
+      </div>
+
+      {/* Client Session RSVP Settings */}
+      <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-neutral-700">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          Session RSVP & Reminders
+        </h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Configure RSVP requests and reminders for sessions you schedule with your clients.
+        </p>
+
+        {/* Require Session RSVP */}
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            name="require_session_rsvp"
+            value="true"
+            defaultChecked={settings.require_session_rsvp ?? true}
+            className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <div>
+            <span className="font-medium text-gray-900 dark:text-gray-100">
+              Request RSVP for Sessions
+            </span>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Ask clients to confirm their attendance when you schedule a session
+            </p>
+          </div>
+        </label>
+
+        {/* Send RSVP Reminders */}
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            name="send_rsvp_reminders"
+            value="true"
+            defaultChecked={settings.send_rsvp_reminders ?? true}
+            className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <div>
+            <span className="font-medium text-gray-900 dark:text-gray-100">
+              Send RSVP Reminders
+            </span>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Remind clients who haven&apos;t responded to session invitations
+            </p>
+          </div>
+        </label>
+
+        {/* RSVP Reminder Intervals */}
+        <div className="ml-7 grid gap-4 md:grid-cols-2">
+          <div>
+            <label
+              htmlFor="rsvp_first_reminder_hours"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
+              First RSVP Reminder
+            </label>
+            <select
+              id="rsvp_first_reminder_hours"
+              name="rsvp_first_reminder_hours"
+              defaultValue={settings.rsvp_first_reminder_hours ?? 24}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {RSVP_REMINDER_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label
+              htmlFor="rsvp_second_reminder_hours"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
+              Second RSVP Reminder
+            </label>
+            <select
+              id="rsvp_second_reminder_hours"
+              name="rsvp_second_reminder_hours"
+              defaultValue={settings.rsvp_second_reminder_hours ?? 48}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {RSVP_REMINDER_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Client Session Reminders */}
+        <label className="flex items-start gap-3 cursor-pointer mt-4">
+          <input
+            type="checkbox"
+            name="send_client_session_reminders"
+            value="true"
+            defaultChecked={settings.send_client_session_reminders ?? true}
+            className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <div>
+            <span className="font-medium text-gray-900 dark:text-gray-100">
+              Send Session Reminders to Clients
+            </span>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Remind clients of upcoming sessions (only for confirmed sessions)
+            </p>
+          </div>
+        </label>
+
+        {/* Session Reminder Timing */}
+        <div className="ml-7 space-y-2">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              name="client_session_reminder_24h"
+              value="true"
+              defaultChecked={settings.client_session_reminder_24h ?? true}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              24 hours before session
+            </span>
+          </label>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              name="client_session_reminder_1h"
+              value="true"
+              defaultChecked={settings.client_session_reminder_1h ?? true}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              1 hour before session
+            </span>
+          </label>
+        </div>
       </div>
 
       {/* Video Conferencing Settings */}

@@ -1,10 +1,28 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { z } from "zod";
 import { submitContactFormAction } from "@/app/actions/messages";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { IconSend, IconCircleCheck, IconMail } from "@tabler/icons-react";
+
+// Field schemas for client-side validation
+const nameSchema = z
+  .string()
+  .min(1, "Name is required")
+  .max(50, "Name must be 50 characters or less");
+
+const emailSchema = z
+  .string()
+  .min(1, "Email is required")
+  .email("Please enter a valid email address")
+  .max(255, "Email must be 255 characters or less");
+
+const messageSchema = z
+  .string()
+  .min(10, "Message must be at least 10 characters")
+  .max(2000, "Message must be 2000 characters or less");
 
 interface ContactFormProps {
   memberProfileId: string;
@@ -16,6 +34,30 @@ export function ContactForm({ memberProfileId, therapistName }: ContactFormProps
     success: false,
   });
   const [isExpanded, setIsExpanded] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
+  const [message, setMessage] = useState("");
+
+  const validateField = (field: string, value: string) => {
+    try {
+      switch (field) {
+        case "visitorName":
+          nameSchema.parse(value);
+          break;
+        case "visitorEmail":
+          emailSchema.parse(value);
+          break;
+        case "message":
+          messageSchema.parse(value);
+          break;
+      }
+      setFieldErrors((prev) => ({ ...prev, [field]: null }));
+    } catch (err: unknown) {
+      if (err instanceof z.ZodError) {
+        const errorMsg = err.issues[0]?.message || "Invalid input";
+        setFieldErrors((prev) => ({ ...prev, [field]: errorMsg }));
+      }
+    }
+  };
 
   if (state.success) {
     const isPreVerified = (state as { preVerified?: boolean }).preVerified;
@@ -80,7 +122,8 @@ export function ContactForm({ memberProfileId, therapistName }: ContactFormProps
           placeholder="Enter your first name"
           required
           maxLength={50}
-          error={state.fieldErrors?.visitorName?.[0]}
+          onBlur={(e) => validateField("visitorName", e.target.value)}
+          error={fieldErrors.visitorName || state.fieldErrors?.visitorName?.[0]}
         />
 
         <Input
@@ -90,7 +133,8 @@ export function ContactForm({ memberProfileId, therapistName }: ContactFormProps
           placeholder="Enter your email address"
           required
           maxLength={255}
-          error={state.fieldErrors?.visitorEmail?.[0]}
+          onBlur={(e) => validateField("visitorEmail", e.target.value)}
+          error={fieldErrors.visitorEmail || state.fieldErrors?.visitorEmail?.[0]}
         />
 
         <div className="mb-4">
@@ -108,20 +152,33 @@ export function ContactForm({ memberProfileId, therapistName }: ContactFormProps
             required
             minLength={10}
             maxLength={2000}
+            value={message}
+            onChange={(e) => {
+              setMessage(e.target.value);
+              if (fieldErrors.message && e.target.value.length >= 10 && e.target.value.length <= 2000) {
+                setFieldErrors((prev) => ({ ...prev, message: null }));
+              }
+            }}
+            onBlur={(e) => validateField("message", e.target.value)}
             className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none ${
-              state.fieldErrors?.message
+              fieldErrors.message || state.fieldErrors?.message
                 ? "border-red-500"
                 : "border-gray-300 dark:border-neutral-600"
             }`}
           />
-          {state.fieldErrors?.message && (
+          {(fieldErrors.message || state.fieldErrors?.message) && (
             <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-              {state.fieldErrors.message[0]}
+              {fieldErrors.message || state.fieldErrors?.message?.[0]}
             </p>
           )}
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Minimum 10 characters, maximum 2000 characters
-          </p>
+          <div className="flex justify-between mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Minimum 10 characters
+            </p>
+            <span className={`text-xs ${message.length > 1900 ? "text-orange-500" : "text-gray-400"}`}>
+              {message.length}/2000
+            </span>
+          </div>
         </div>
 
         {state.error && (

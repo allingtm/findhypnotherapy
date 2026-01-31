@@ -2,10 +2,33 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { z } from "zod";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { TermsAcceptance } from "./TermsAcceptance";
 import { submitBookingAction } from "@/app/actions/bookings";
+
+// Field schemas for client-side validation
+const nameSchema = z
+  .string()
+  .min(2, "Name must be at least 2 characters")
+  .max(100, "Name must be 100 characters or less");
+
+const emailSchema = z
+  .string()
+  .min(1, "Email is required")
+  .email("Please enter a valid email address")
+  .max(255, "Email must be 255 characters or less");
+
+const phoneSchema = z
+  .string()
+  .max(20, "Phone number must be 20 characters or less")
+  .optional();
+
+const notesSchema = z
+  .string()
+  .max(1000, "Notes must be 1000 characters or less")
+  .optional();
 
 interface TimeSlot {
   start_time: string;
@@ -44,6 +67,33 @@ export function BookingForm({
   const [successType, setSuccessType] = useState<"verification_sent" | "pre_verified" | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [acceptedTermsId, setAcceptedTermsId] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
+  const [notes, setNotes] = useState("");
+
+  const validateField = (field: string, value: string) => {
+    try {
+      switch (field) {
+        case "visitorName":
+          nameSchema.parse(value);
+          break;
+        case "visitorEmail":
+          emailSchema.parse(value);
+          break;
+        case "visitorPhone":
+          if (value) phoneSchema.parse(value);
+          break;
+        case "visitorNotes":
+          if (value) notesSchema.parse(value);
+          break;
+      }
+      setFieldErrors((prev) => ({ ...prev, [field]: null }));
+    } catch (err: unknown) {
+      if (err instanceof z.ZodError) {
+        const message = err.issues[0]?.message || "Invalid input";
+        setFieldErrors((prev) => ({ ...prev, [field]: message }));
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -211,10 +261,21 @@ export function BookingForm({
             id="visitorName"
             name="visitorName"
             required
+            maxLength={100}
             disabled={isFormDisabled || isSubmitting}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            onBlur={(e) => validateField("visitorName", e.target.value)}
+            className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+              fieldErrors.visitorName
+                ? "border-red-500 dark:border-red-500"
+                : "border-gray-300 dark:border-neutral-600"
+            }`}
             placeholder="John Smith"
           />
+          {fieldErrors.visitorName && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+              {fieldErrors.visitorName}
+            </p>
+          )}
         </div>
 
         <div>
@@ -229,13 +290,25 @@ export function BookingForm({
             id="visitorEmail"
             name="visitorEmail"
             required
+            maxLength={255}
             disabled={isFormDisabled || isSubmitting}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            onBlur={(e) => validateField("visitorEmail", e.target.value)}
+            className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+              fieldErrors.visitorEmail
+                ? "border-red-500 dark:border-red-500"
+                : "border-gray-300 dark:border-neutral-600"
+            }`}
             placeholder="john@example.com"
           />
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            We&apos;ll send a confirmation link to this address
-          </p>
+          {fieldErrors.visitorEmail ? (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+              {fieldErrors.visitorEmail}
+            </p>
+          ) : (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              We&apos;ll send a confirmation link to this address
+            </p>
+          )}
         </div>
 
         <div>
@@ -249,10 +322,21 @@ export function BookingForm({
             type="tel"
             id="visitorPhone"
             name="visitorPhone"
+            maxLength={20}
             disabled={isFormDisabled || isSubmitting}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            onBlur={(e) => validateField("visitorPhone", e.target.value)}
+            className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+              fieldErrors.visitorPhone
+                ? "border-red-500 dark:border-red-500"
+                : "border-gray-300 dark:border-neutral-600"
+            }`}
             placeholder="07123 456789"
           />
+          {fieldErrors.visitorPhone && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+              {fieldErrors.visitorPhone}
+            </p>
+          )}
         </div>
 
         <div>
@@ -266,10 +350,35 @@ export function BookingForm({
             id="visitorNotes"
             name="visitorNotes"
             rows={3}
+            maxLength={1000}
+            value={notes}
             disabled={isFormDisabled || isSubmitting}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed resize-none"
+            onChange={(e) => {
+              setNotes(e.target.value);
+              if (fieldErrors.visitorNotes && e.target.value.length <= 1000) {
+                setFieldErrors((prev) => ({ ...prev, visitorNotes: null }));
+              }
+            }}
+            onBlur={(e) => validateField("visitorNotes", e.target.value)}
+            className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed resize-none ${
+              fieldErrors.visitorNotes
+                ? "border-red-500 dark:border-red-500"
+                : "border-gray-300 dark:border-neutral-600"
+            }`}
             placeholder="Briefly describe what you're looking for help with..."
           />
+          <div className="flex justify-between mt-1">
+            {fieldErrors.visitorNotes ? (
+              <p className="text-sm text-red-600 dark:text-red-400">
+                {fieldErrors.visitorNotes}
+              </p>
+            ) : (
+              <span />
+            )}
+            <span className={`text-xs ${notes.length > 900 ? "text-orange-500" : "text-gray-400"}`}>
+              {notes.length}/1000
+            </span>
+          </div>
         </div>
 
         {/* Terms & Conditions */}

@@ -16,6 +16,7 @@ interface PricingStepProps {
     priceMax: string
   }>) => void
   errors: Record<string, string[]>
+  onBlur?: (fieldName: string, value: string) => void
 }
 
 export function PricingStep({
@@ -25,6 +26,7 @@ export function PricingStep({
   priceMax,
   onChange,
   errors,
+  onBlur,
 }: PricingStepProps) {
   const showSinglePrice = priceDisplayMode === "exact" || priceDisplayMode === "from"
   const showRangePrice = priceDisplayMode === "range"
@@ -78,6 +80,7 @@ export function PricingStep({
           type="number"
           value={price}
           onChange={(e) => onChange({ price: e.target.value })}
+          onBlur={(e) => onBlur?.("price", e.target.value)}
           placeholder="80"
           min={0}
           step={0.01}
@@ -92,6 +95,7 @@ export function PricingStep({
             type="number"
             value={priceMin}
             onChange={(e) => onChange({ priceMin: e.target.value })}
+            onBlur={(e) => onBlur?.("price_min", e.target.value)}
             placeholder="80"
             min={0}
             step={0.01}
@@ -102,6 +106,7 @@ export function PricingStep({
             type="number"
             value={priceMax}
             onChange={(e) => onChange({ priceMax: e.target.value })}
+            onBlur={(e) => onBlur?.("price_max", e.target.value)}
             placeholder="150"
             min={0}
             step={0.01}

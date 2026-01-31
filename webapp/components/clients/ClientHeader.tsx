@@ -2,14 +2,12 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
 import {
   IconArrowLeft,
   IconArchive,
   IconArchiveOff,
   IconDots,
   IconMail,
-  IconCalendarPlus,
   IconUserCheck,
   IconClock,
   IconAlertCircle,
@@ -31,10 +29,9 @@ interface ClientHeaderProps {
     client_account_id: string | null;
   };
   onUpdate: () => void;
-  onAddSession: () => void;
 }
 
-export function ClientHeader({ client, onUpdate, onAddSession }: ClientHeaderProps) {
+export function ClientHeader({ client, onUpdate }: ClientHeaderProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -124,7 +121,75 @@ export function ClientHeader({ client, onUpdate, onAddSession }: ClientHeaderPro
   };
 
   return (
-    <div className="bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 p-6">
+    <div className="bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 p-6 relative">
+      {/* More menu - top right */}
+      <div className="absolute top-4 right-4">
+        <div className="relative">
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            disabled={isLoading}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-lg transition-colors disabled:opacity-50"
+          >
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <IconDots className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            )}
+          </button>
+
+          {showMenu && (
+            <>
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => setShowMenu(false)}
+              />
+              <div className="absolute right-0 top-full mt-1 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-gray-200 dark:border-neutral-700 py-1 z-20 min-w-[180px]">
+                <a
+                  href={`mailto:${client.email}`}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-neutral-700 flex items-center gap-2"
+                  onClick={() => setShowMenu(false)}
+                >
+                  <IconMail className="w-4 h-4" />
+                  Send Email
+                </a>
+                {client.status === "active" && !client.client_account_id && (
+                  <button
+                    onClick={handleEnablePortal}
+                    className="w-full px-4 py-2 text-left text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-neutral-700 flex items-center gap-2"
+                  >
+                    <IconDeviceDesktop className="w-4 h-4" />
+                    Enable Portal Access
+                  </button>
+                )}
+                {client.status === "active" && client.client_account_id && (
+                  <div className="px-4 py-2 text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
+                    <IconCheck className="w-4 h-4" />
+                    Portal Enabled
+                  </div>
+                )}
+                {client.status === "archived" ? (
+                  <button
+                    onClick={handleRestore}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-neutral-700 flex items-center gap-2"
+                  >
+                    <IconArchiveOff className="w-4 h-4" />
+                    Restore Client
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleArchive}
+                    className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-neutral-700 flex items-center gap-2"
+                  >
+                    <IconArchive className="w-4 h-4" />
+                    Archive Client
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         {/* Back Link & Avatar */}
         <div className="flex items-center gap-4">
@@ -142,7 +207,7 @@ export function ClientHeader({ client, onUpdate, onAddSession }: ClientHeaderPro
         </div>
 
         {/* Name & Email */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 pr-10">
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               {name}
@@ -160,81 +225,6 @@ export function ClientHeader({ client, onUpdate, onAddSession }: ClientHeaderPro
               })}
             </p>
           )}
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-2">
-          {client.status === "active" && (
-            <Button onClick={onAddSession}>
-              <IconCalendarPlus className="w-4 h-4 mr-2" />
-              Add Session
-            </Button>
-          )}
-
-          <div className="relative">
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              disabled={isLoading}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-lg transition-colors disabled:opacity-50"
-            >
-              {isLoading ? (
-                <div className="w-5 h-5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <IconDots className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-              )}
-            </button>
-
-            {showMenu && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setShowMenu(false)}
-                />
-                <div className="absolute right-0 top-full mt-1 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-gray-200 dark:border-neutral-700 py-1 z-20 min-w-[180px]">
-                  <a
-                    href={`mailto:${client.email}`}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-neutral-700 flex items-center gap-2"
-                    onClick={() => setShowMenu(false)}
-                  >
-                    <IconMail className="w-4 h-4" />
-                    Send Email
-                  </a>
-                  {client.status === "active" && !client.client_account_id && (
-                    <button
-                      onClick={handleEnablePortal}
-                      className="w-full px-4 py-2 text-left text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-neutral-700 flex items-center gap-2"
-                    >
-                      <IconDeviceDesktop className="w-4 h-4" />
-                      Enable Portal Access
-                    </button>
-                  )}
-                  {client.status === "active" && client.client_account_id && (
-                    <div className="px-4 py-2 text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
-                      <IconCheck className="w-4 h-4" />
-                      Portal Enabled
-                    </div>
-                  )}
-                  {client.status === "archived" ? (
-                    <button
-                      onClick={handleRestore}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-neutral-700 flex items-center gap-2"
-                    >
-                      <IconArchiveOff className="w-4 h-4" />
-                      Restore Client
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleArchive}
-                      className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-neutral-700 flex items-center gap-2"
-                    >
-                      <IconArchive className="w-4 h-4" />
-                      Archive Client
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
         </div>
       </div>
     </div>

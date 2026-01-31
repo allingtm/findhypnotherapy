@@ -797,3 +797,489 @@ export function getClientMagicLinkEmail(props: ClientMagicLinkEmailProps): { sub
     html: getEmailWrapper(content),
   };
 }
+
+// =====================
+// SESSION RSVP REQUEST EMAIL (to client)
+// =====================
+
+interface SessionRsvpRequestEmailProps {
+  clientName: string;
+  therapistName: string;
+  sessionTitle: string;
+  sessionDate: string;
+  startTime: string;
+  endTime: string;
+  sessionFormat?: string;
+  location?: string;
+  meetingUrl?: string;
+  acceptUrl: string;
+  declineUrl: string;
+  rescheduleUrl: string;
+  portalUrl: string;
+}
+
+export function getSessionRsvpRequestEmail(props: SessionRsvpRequestEmailProps): { subject: string; html: string } {
+  const formatLabel = props.sessionFormat === 'online' ? 'Online Session' :
+                      props.sessionFormat === 'in-person' ? 'In-Person Session' :
+                      props.sessionFormat === 'phone' ? 'Phone Session' : 'Session';
+
+  const locationSection = props.location ? `
+    <p style="color: #1e40af; font-size: 14px; line-height: 1.5; margin: 8px 0 0 0;">
+      <strong>Location:</strong> ${props.location}
+    </p>
+  ` : '';
+
+  const content = `
+    <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">Session Invitation - Please Respond</h2>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Hi ${props.clientName},
+    </p>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      <strong>${props.therapistName}</strong> has scheduled a session with you and would like you to confirm your attendance.
+    </p>
+    <div style="background-color: #dbeafe; border: 1px solid #93c5fd; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #1e40af; font-size: 14px; margin: 0 0 8px; font-weight: 600;">${props.sessionTitle}</p>
+      <p style="color: #1e40af; font-size: 14px; line-height: 1.5; margin: 0;">
+        <strong>Date:</strong> ${formatBookingDate(props.sessionDate)}<br>
+        <strong>Time:</strong> ${formatBookingTime(props.startTime)} - ${formatBookingTime(props.endTime)}<br>
+        <strong>Format:</strong> ${formatLabel}
+      </p>
+      ${locationSection}
+    </div>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px; text-align: center; font-weight: 600;">
+      Can you make this session?
+    </p>
+    <div style="text-align: center; margin: 0 0 24px;">
+      <a href="${props.acceptUrl}" style="display: inline-block; background-color: #16a34a; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 6px; margin: 0 8px 8px 0;">
+        Yes, I'll Be There
+      </a>
+      <a href="${props.declineUrl}" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 6px; margin: 0 8px 8px 0;">
+        No, I Can't Make It
+      </a>
+      <a href="${props.rescheduleUrl}" style="display: inline-block; background-color: #f59e0b; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 6px; margin: 0 0 8px 0;">
+        Propose New Time
+      </a>
+    </div>
+    <p style="color: #666666; font-size: 14px; text-align: center; margin: 0;">
+      You can also manage your sessions in your <a href="${props.portalUrl}" style="color: #2563eb;">client portal</a>.
+    </p>
+  `;
+
+  return {
+    subject: `Please confirm: ${props.sessionTitle} with ${props.therapistName}`,
+    html: getEmailWrapper(content),
+  };
+}
+
+// =====================
+// SESSION RSVP CONFIRMATION EMAIL (to client)
+// =====================
+
+interface SessionRsvpConfirmationEmailProps {
+  clientName: string;
+  therapistName: string;
+  sessionTitle: string;
+  sessionDate: string;
+  startTime: string;
+  endTime: string;
+  response: 'accepted' | 'declined';
+  sessionFormat?: string;
+  location?: string;
+  meetingUrl?: string;
+}
+
+export function getSessionRsvpConfirmationEmail(props: SessionRsvpConfirmationEmailProps): { subject: string; html: string } {
+  const formatLabel = props.sessionFormat === 'online' ? 'Online Session' :
+                      props.sessionFormat === 'in-person' ? 'In-Person Session' :
+                      props.sessionFormat === 'phone' ? 'Phone Session' : 'Session';
+
+  const isAccepted = props.response === 'accepted';
+
+  const meetingSection = props.meetingUrl && props.sessionFormat === 'online' && isAccepted ? `
+    <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 16px; margin: 20px 0 0 0;">
+      <p style="color: #1e40af; font-size: 14px; margin: 0 0 12px; font-weight: 600;">
+        Video Meeting Link
+      </p>
+      <div style="text-align: center;">
+        <a href="${props.meetingUrl}" style="display: inline-block; background-color: #2563eb; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 10px 24px; border-radius: 6px;">
+          Join Video Session
+        </a>
+      </div>
+    </div>
+  ` : '';
+
+  const content = isAccepted ? `
+    <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">Session Confirmed!</h2>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Hi ${props.clientName},
+    </p>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Thank you for confirming your session with <strong>${props.therapistName}</strong>.
+    </p>
+    <div style="background-color: #dcfce7; border: 1px solid #86efac; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #166534; font-size: 14px; margin: 0 0 8px; font-weight: 600;">${props.sessionTitle}</p>
+      <p style="color: #166534; font-size: 14px; line-height: 1.5; margin: 0;">
+        <strong>Date:</strong> ${formatBookingDate(props.sessionDate)}<br>
+        <strong>Time:</strong> ${formatBookingTime(props.startTime)} - ${formatBookingTime(props.endTime)}<br>
+        <strong>Format:</strong> ${formatLabel}
+      </p>
+    </div>
+    ${meetingSection}
+    <p style="color: #666666; font-size: 14px; margin: 20px 0 0 0;">
+      We look forward to seeing you! If you need to make any changes, please contact ${props.therapistName} directly.
+    </p>
+  ` : `
+    <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">Response Received</h2>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Hi ${props.clientName},
+    </p>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      We've noted that you won't be able to attend the session with <strong>${props.therapistName}</strong>.
+    </p>
+    <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #991b1b; font-size: 14px; margin: 0 0 8px; font-weight: 600;">${props.sessionTitle}</p>
+      <p style="color: #991b1b; font-size: 14px; line-height: 1.5; margin: 0;">
+        <strong>Date:</strong> ${formatBookingDate(props.sessionDate)}<br>
+        <strong>Time:</strong> ${formatBookingTime(props.startTime)} - ${formatBookingTime(props.endTime)}
+      </p>
+    </div>
+    <p style="color: #666666; font-size: 14px; margin: 0;">
+      ${props.therapistName} has been notified. They may reach out to reschedule if needed.
+    </p>
+  `;
+
+  return {
+    subject: isAccepted
+      ? `Confirmed: ${props.sessionTitle} with ${props.therapistName}`
+      : `Session declined: ${props.sessionTitle}`,
+    html: getEmailWrapper(content),
+  };
+}
+
+// =====================
+// SESSION RSVP REMINDER EMAIL (to client)
+// =====================
+
+interface SessionRsvpReminderEmailProps {
+  clientName: string;
+  therapistName: string;
+  sessionTitle: string;
+  sessionDate: string;
+  startTime: string;
+  endTime: string;
+  acceptUrl: string;
+  declineUrl: string;
+  rescheduleUrl: string;
+  reminderNumber: 1 | 2;
+}
+
+export function getSessionRsvpReminderEmail(props: SessionRsvpReminderEmailProps): { subject: string; html: string } {
+  const urgency = props.reminderNumber === 2 ? 'Final reminder: ' : 'Reminder: ';
+
+  const content = `
+    <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">Please Respond to Session Invitation</h2>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Hi ${props.clientName},
+    </p>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      We haven't heard back from you about your upcoming session with <strong>${props.therapistName}</strong>. Please let us know if you can attend.
+    </p>
+    <div style="background-color: #fef3c7; border: 1px solid #fcd34d; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #92400e; font-size: 14px; margin: 0 0 8px; font-weight: 600;">${props.sessionTitle}</p>
+      <p style="color: #92400e; font-size: 14px; line-height: 1.5; margin: 0;">
+        <strong>Date:</strong> ${formatBookingDate(props.sessionDate)}<br>
+        <strong>Time:</strong> ${formatBookingTime(props.startTime)} - ${formatBookingTime(props.endTime)}
+      </p>
+    </div>
+    <div style="text-align: center; margin: 0 0 24px;">
+      <a href="${props.acceptUrl}" style="display: inline-block; background-color: #16a34a; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 6px; margin: 0 8px 8px 0;">
+        Yes, I'll Be There
+      </a>
+      <a href="${props.declineUrl}" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 6px; margin: 0 8px 8px 0;">
+        No, I Can't Make It
+      </a>
+      <a href="${props.rescheduleUrl}" style="display: inline-block; background-color: #f59e0b; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 6px; margin: 0 0 8px 0;">
+        Propose New Time
+      </a>
+    </div>
+  `;
+
+  return {
+    subject: `${urgency}Please confirm your session with ${props.therapistName}`,
+    html: getEmailWrapper(content),
+  };
+}
+
+// =====================
+// SESSION RSVP DECLINED NOTIFICATION (to therapist)
+// =====================
+
+interface SessionRsvpDeclinedNotificationEmailProps {
+  therapistName: string;
+  clientName: string;
+  clientEmail: string;
+  sessionTitle: string;
+  sessionDate: string;
+  startTime: string;
+  message?: string;
+  clientDetailUrl: string;
+}
+
+export function getSessionRsvpDeclinedNotificationEmail(props: SessionRsvpDeclinedNotificationEmailProps): { subject: string; html: string } {
+  const messageSection = props.message ? `
+    <div style="background-color: #f3f4f6; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #374151; font-size: 14px; margin: 0 0 8px; font-weight: 600;">Message from ${props.clientName}:</p>
+      <p style="color: #374151; font-size: 14px; line-height: 1.5; margin: 0; font-style: italic;">
+        "${props.message}"
+      </p>
+    </div>
+  ` : '';
+
+  const content = `
+    <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">Session Declined</h2>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Hi ${props.therapistName},
+    </p>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      <strong>${props.clientName}</strong> (${props.clientEmail}) has declined the following session:
+    </p>
+    <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #991b1b; font-size: 14px; margin: 0 0 8px; font-weight: 600;">${props.sessionTitle}</p>
+      <p style="color: #991b1b; font-size: 14px; line-height: 1.5; margin: 0;">
+        <strong>Date:</strong> ${formatBookingDate(props.sessionDate)}<br>
+        <strong>Time:</strong> ${formatBookingTime(props.startTime)}
+      </p>
+    </div>
+    ${messageSection}
+    <p style="color: #666666; font-size: 14px; margin: 0 0 20px;">
+      You may want to reach out to reschedule or cancel this session.
+    </p>
+    <div style="text-align: center;">
+      <a href="${props.clientDetailUrl}" style="display: inline-block; background-color: #2563eb; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 6px;">
+        View Client Details
+      </a>
+    </div>
+  `;
+
+  return {
+    subject: `${props.clientName} declined: ${props.sessionTitle}`,
+    html: getEmailWrapper(content),
+  };
+}
+
+// =====================
+// SESSION RESCHEDULE PROPOSAL EMAIL (to therapist)
+// =====================
+
+interface SessionRescheduleProposalEmailProps {
+  therapistName: string;
+  clientName: string;
+  clientEmail: string;
+  sessionTitle: string;
+  originalDate: string;
+  originalStartTime: string;
+  proposedDate: string;
+  proposedStartTime: string;
+  proposedEndTime: string;
+  message?: string;
+  clientDetailUrl: string;
+}
+
+export function getSessionRescheduleProposalEmail(props: SessionRescheduleProposalEmailProps): { subject: string; html: string } {
+  const messageSection = props.message ? `
+    <div style="background-color: #f3f4f6; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #374151; font-size: 14px; margin: 0 0 8px; font-weight: 600;">Message from ${props.clientName}:</p>
+      <p style="color: #374151; font-size: 14px; line-height: 1.5; margin: 0; font-style: italic;">
+        "${props.message}"
+      </p>
+    </div>
+  ` : '';
+
+  const content = `
+    <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">Reschedule Request</h2>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Hi ${props.therapistName},
+    </p>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      <strong>${props.clientName}</strong> (${props.clientEmail}) would like to reschedule the following session:
+    </p>
+    <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 16px; margin: 0 0 16px;">
+      <p style="color: #991b1b; font-size: 14px; margin: 0 0 8px; font-weight: 600;">Original Session</p>
+      <p style="color: #991b1b; font-size: 14px; line-height: 1.5; margin: 0;">
+        <strong>Session:</strong> ${props.sessionTitle}<br>
+        <strong>Date:</strong> ${formatBookingDate(props.originalDate)}<br>
+        <strong>Time:</strong> ${formatBookingTime(props.originalStartTime)}
+      </p>
+    </div>
+    <div style="background-color: #dcfce7; border: 1px solid #86efac; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #166534; font-size: 14px; margin: 0 0 8px; font-weight: 600;">Proposed New Time</p>
+      <p style="color: #166534; font-size: 14px; line-height: 1.5; margin: 0;">
+        <strong>Date:</strong> ${formatBookingDate(props.proposedDate)}<br>
+        <strong>Time:</strong> ${formatBookingTime(props.proposedStartTime)} - ${formatBookingTime(props.proposedEndTime)}
+      </p>
+    </div>
+    ${messageSection}
+    <p style="color: #666666; font-size: 14px; margin: 0 0 20px;">
+      Please review this request and respond via your dashboard.
+    </p>
+    <div style="text-align: center;">
+      <a href="${props.clientDetailUrl}" style="display: inline-block; background-color: #2563eb; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 6px;">
+        Review Request
+      </a>
+    </div>
+  `;
+
+  return {
+    subject: `Reschedule request from ${props.clientName}: ${props.sessionTitle}`,
+    html: getEmailWrapper(content),
+  };
+}
+
+// =====================
+// SESSION RESCHEDULE RESPONSE EMAIL (to client)
+// =====================
+
+interface SessionRescheduleResponseEmailProps {
+  clientName: string;
+  therapistName: string;
+  sessionTitle: string;
+  accepted: boolean;
+  newDate?: string;
+  newStartTime?: string;
+  newEndTime?: string;
+  message?: string;
+  portalUrl: string;
+}
+
+export function getSessionRescheduleResponseEmail(props: SessionRescheduleResponseEmailProps): { subject: string; html: string } {
+  const messageSection = props.message ? `
+    <div style="background-color: #f3f4f6; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #374151; font-size: 14px; margin: 0 0 8px; font-weight: 600;">Message from ${props.therapistName}:</p>
+      <p style="color: #374151; font-size: 14px; line-height: 1.5; margin: 0; font-style: italic;">
+        "${props.message}"
+      </p>
+    </div>
+  ` : '';
+
+  const content = props.accepted ? `
+    <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">Reschedule Approved!</h2>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Hi ${props.clientName},
+    </p>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      <strong>${props.therapistName}</strong> has approved your reschedule request for <strong>${props.sessionTitle}</strong>.
+    </p>
+    <div style="background-color: #dcfce7; border: 1px solid #86efac; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #166534; font-size: 14px; margin: 0 0 8px; font-weight: 600;">New Session Time</p>
+      <p style="color: #166534; font-size: 14px; line-height: 1.5; margin: 0;">
+        <strong>Date:</strong> ${props.newDate ? formatBookingDate(props.newDate) : 'TBD'}<br>
+        <strong>Time:</strong> ${props.newStartTime ? formatBookingTime(props.newStartTime) : ''} - ${props.newEndTime ? formatBookingTime(props.newEndTime) : ''}
+      </p>
+    </div>
+    ${messageSection}
+    <p style="color: #666666; font-size: 14px; margin: 0 0 20px;">
+      Please confirm this new time at your earliest convenience.
+    </p>
+    <div style="text-align: center;">
+      <a href="${props.portalUrl}" style="display: inline-block; background-color: #2563eb; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 6px;">
+        View in Portal
+      </a>
+    </div>
+  ` : `
+    <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">Reschedule Request Declined</h2>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Hi ${props.clientName},
+    </p>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Unfortunately, <strong>${props.therapistName}</strong> was unable to accommodate your reschedule request for <strong>${props.sessionTitle}</strong>.
+    </p>
+    ${messageSection}
+    <p style="color: #666666; font-size: 14px; margin: 0 0 20px;">
+      Please contact ${props.therapistName} directly to discuss alternative options.
+    </p>
+    <div style="text-align: center;">
+      <a href="${props.portalUrl}" style="display: inline-block; background-color: #2563eb; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 6px;">
+        View in Portal
+      </a>
+    </div>
+  `;
+
+  return {
+    subject: props.accepted
+      ? `Reschedule approved: ${props.sessionTitle}`
+      : `Reschedule request declined: ${props.sessionTitle}`,
+    html: getEmailWrapper(content),
+  };
+}
+
+// =====================
+// CLIENT SESSION REMINDER EMAIL (to client)
+// =====================
+
+interface ClientSessionReminderEmailProps {
+  clientName: string;
+  therapistName: string;
+  sessionTitle: string;
+  sessionDate: string;
+  startTime: string;
+  endTime: string;
+  sessionFormat?: string;
+  location?: string;
+  meetingUrl?: string;
+  reminderType: '24h' | '1h';
+}
+
+export function getClientSessionReminderEmail(props: ClientSessionReminderEmailProps): { subject: string; html: string } {
+  const formatLabel = props.sessionFormat === 'online' ? 'Online Session' :
+                      props.sessionFormat === 'in-person' ? 'In-Person Session' :
+                      props.sessionFormat === 'phone' ? 'Phone Session' : 'Session';
+
+  const timeLabel = props.reminderType === '24h' ? 'tomorrow' : 'in 1 hour';
+
+  const locationSection = props.location ? `
+    <p style="color: #1e40af; font-size: 14px; line-height: 1.5; margin: 8px 0 0 0;">
+      <strong>Location:</strong> ${props.location}
+    </p>
+  ` : '';
+
+  const meetingSection = props.meetingUrl && props.sessionFormat === 'online' ? `
+    <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 16px; margin: 20px 0 0 0;">
+      <p style="color: #1e40af; font-size: 14px; margin: 0 0 12px; font-weight: 600;">
+        Video Meeting Link
+      </p>
+      <div style="text-align: center;">
+        <a href="${props.meetingUrl}" style="display: inline-block; background-color: #2563eb; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 10px 24px; border-radius: 6px;">
+          Join Video Session
+        </a>
+      </div>
+    </div>
+  ` : '';
+
+  const content = `
+    <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">Session Reminder</h2>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Hi ${props.clientName},
+    </p>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      This is a reminder that your session with <strong>${props.therapistName}</strong> is ${timeLabel}.
+    </p>
+    <div style="background-color: #dbeafe; border: 1px solid #93c5fd; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #1e40af; font-size: 14px; margin: 0 0 8px; font-weight: 600;">${props.sessionTitle}</p>
+      <p style="color: #1e40af; font-size: 14px; line-height: 1.5; margin: 0;">
+        <strong>Date:</strong> ${formatBookingDate(props.sessionDate)}<br>
+        <strong>Time:</strong> ${formatBookingTime(props.startTime)} - ${formatBookingTime(props.endTime)}<br>
+        <strong>Format:</strong> ${formatLabel}
+      </p>
+      ${locationSection}
+    </div>
+    ${meetingSection}
+    <p style="color: #666666; font-size: 14px; margin: 20px 0 0 0;">
+      We look forward to seeing you!
+    </p>
+  `;
+
+  return {
+    subject: `Reminder: ${props.sessionTitle} ${timeLabel}`,
+    html: getEmailWrapper(content),
+  };
+}

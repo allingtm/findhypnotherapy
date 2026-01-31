@@ -38,41 +38,10 @@ export default async function ClientDetailPage({ params, searchParams }: PagePro
     redirect("/dashboard/profile/therapist");
   }
 
-  // Get client with related data
+  // Get client with related data using RPC function
+  // (nested selects don't work correctly with RLS on client_sessions)
   const { data: client, error: clientError } = await supabase
-    .from("clients")
-    .select(`
-      *,
-      client_sessions(
-        id,
-        title,
-        session_date,
-        start_time,
-        end_time,
-        status,
-        session_format,
-        location,
-        meeting_url,
-        therapist_notes,
-        created_at
-      ),
-      client_notes(
-        id,
-        note_type,
-        content,
-        is_private,
-        created_at,
-        session_id
-      ),
-      client_terms_acceptance(
-        id,
-        accepted_at,
-        therapist_terms(title, version)
-      )
-    `)
-    .eq("therapist_profile_id", profile.id)
-    .eq("slug", slug)
-    .single();
+    .rpc('get_client_with_sessions', { p_slug: slug });
 
   if (clientError || !client) {
     notFound();

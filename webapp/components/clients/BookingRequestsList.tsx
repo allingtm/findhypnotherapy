@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
 import {
   confirmBookingAction,
   cancelBookingAction,
@@ -132,6 +133,7 @@ export function BookingRequestsList({ bookings }: BookingRequestsListProps) {
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [localBookings, setLocalBookings] = useState(bookings);
+  const [cancelBookingId, setCancelBookingId] = useState<string | null>(null);
 
   const handleConfirm = async (bookingId: string) => {
     setLoadingId(bookingId);
@@ -149,10 +151,14 @@ export function BookingRequestsList({ bookings }: BookingRequestsListProps) {
     }
   };
 
-  const handleCancel = async (bookingId: string) => {
-    if (!confirm("Are you sure you want to cancel this intro call request?")) {
-      return;
-    }
+  const handleCancelClick = (bookingId: string) => {
+    setCancelBookingId(bookingId);
+  };
+
+  const handleCancelConfirm = async () => {
+    if (!cancelBookingId) return;
+    const bookingId = cancelBookingId;
+    setCancelBookingId(null);
     setLoadingId(bookingId);
     try {
       const result = await cancelBookingAction(bookingId, "Declined by therapist");
@@ -320,7 +326,7 @@ export function BookingRequestsList({ bookings }: BookingRequestsListProps) {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => handleCancel(booking.id)}
+                  onClick={() => handleCancelClick(booking.id)}
                   disabled={loadingId === booking.id}
                   className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 border-red-200 dark:border-red-800"
                 >
@@ -336,6 +342,18 @@ export function BookingRequestsList({ bookings }: BookingRequestsListProps) {
           </div>
         </div>
       ))}
+
+      {/* Cancel Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={!!cancelBookingId}
+        onClose={() => setCancelBookingId(null)}
+        onConfirm={handleCancelConfirm}
+        title="Decline Intro Call"
+        message="Are you sure you want to decline this intro call request? The visitor will be notified."
+        confirmText="Decline"
+        cancelText="Keep"
+        variant="danger"
+      />
     </div>
   );
 }

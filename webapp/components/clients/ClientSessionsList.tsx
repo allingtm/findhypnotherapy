@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import { CreateSessionDialog } from "@/components/sessions/CreateSessionDialog";
+import { Button } from "@/components/ui/Button";
+import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
 import {
   IconCalendarEvent,
+  IconCalendarPlus,
   IconClock,
   IconMapPin,
   IconVideo,
@@ -19,6 +22,7 @@ import {
   markSessionNoShowAction,
   cancelClientSessionAction,
 } from "@/app/actions/client-sessions";
+import { respondToRescheduleProposalAction } from "@/app/actions/session-rsvp";
 
 interface Session {
   id: string;
@@ -32,6 +36,11 @@ interface Session {
   meeting_url: string | null;
   therapist_notes: string | null;
   created_at: string;
+  rsvp_status: string | null;
+  rsvp_message: string | null;
+  proposed_date: string | null;
+  proposed_start_time: string | null;
+  proposed_end_time: string | null;
 }
 
 interface Service {
@@ -48,8 +57,8 @@ interface ClientSessionsListProps {
   sessions: Session[];
   services?: Service[];
   onUpdate: () => void;
-  showAddDialog: boolean;
-  onCloseAddDialog: () => void;
+  showAddDialog?: boolean;
+  onCloseAddDialog?: () => void;
 }
 
 export function ClientSessionsList({
@@ -58,11 +67,20 @@ export function ClientSessionsList({
   sessions,
   services = [],
   onUpdate,
-  showAddDialog,
-  onCloseAddDialog,
+  showAddDialog: externalShowDialog,
+  onCloseAddDialog: externalCloseDialog,
 }: ClientSessionsListProps) {
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<string | null>(null);
+  const [internalShowDialog, setInternalShowDialog] = useState(false);
+  const [cancelSessionId, setCancelSessionId] = useState<string | null>(null);
+
+  // Support both internal and external dialog control
+  const showDialog = externalShowDialog || internalShowDialog;
+  const closeDialog = () => {
+    setInternalShowDialog(false);
+    externalCloseDialog?.();
+  };
 
   // Sort sessions by date (most recent first)
   const sortedSessions = [...sessions].sort(
@@ -114,6 +132,39 @@ export function ClientSessionsList({
     }
   };
 
+  const getRsvpStatusBadge = (rsvpStatus: string | null) => {
+    switch (rsvpStatus) {
+      case "pending":
+        return (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
+            Awaiting RSVP
+          </span>
+        );
+      case "accepted":
+        return (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+            <IconCheck className="w-3 h-3 inline mr-1" />
+            Confirmed
+          </span>
+        );
+      case "declined":
+        return (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+            <IconX className="w-3 h-3 inline mr-1" />
+            Declined
+          </span>
+        );
+      case "reschedule_requested":
+        return (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">
+            Reschedule Requested
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
+
   const getFormatIcon = (format: string | null) => {
     switch (format) {
       case "online":
@@ -153,18 +204,38 @@ export function ClientSessionsList({
     }
   };
 
-  const handleCancel = async (sessionId: string) => {
-    if (!confirm("Are you sure you want to cancel this session?")) return;
-    setIsLoading(sessionId);
+  const handleCancelClick = (sessionId: string) => {
+    setCancelSessionId(sessionId);
     setMenuOpenId(null);
+  };
+
+  const handleCancelConfirm = async () => {
+    if (!cancelSessionId) return;
+    setIsLoading(cancelSessionId);
+    setCancelSessionId(null);
     try {
       await cancelClientSessionAction({
-        sessionId,
+        sessionId: cancelSessionId,
         sendNotification: true,
       });
       onUpdate();
     } catch (error) {
       console.error("Failed to cancel session:", error);
+    } finally {
+      setIsLoading(null);
+    }
+  };
+
+  const handleRescheduleResponse = async (sessionId: string, accept: boolean) => {
+    setIsLoading(sessionId);
+    try {
+      await respondToRescheduleProposalAction({
+        sessionId,
+        accept,
+      });
+      onUpdate();
+    } catch (error) {
+      console.error("Failed to respond to reschedule:", error);
     } finally {
       setIsLoading(null);
     }
@@ -209,6 +280,7 @@ export function ClientSessionsList({
           </div>
           <div className="flex items-center gap-2">
             {getStatusBadge(session.status)}
+            {session.status === "scheduled" && session.rsvp_status && getRsvpStatusBadge(session.rsvp_status)}
             {session.status === "scheduled" && (
               <div className="relative">
                 <button
@@ -250,7 +322,7 @@ export function ClientSessionsList({
                         </>
                       )}
                       <button
-                        onClick={() => handleCancel(session.id)}
+                        onClick={() => handleCancelClick(session.id)}
                         className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-neutral-700 flex items-center gap-2"
                       >
                         <IconX className="w-4 h-4" />
@@ -263,6 +335,47 @@ export function ClientSessionsList({
             )}
           </div>
         </div>
+        {/* Reschedule Proposal Section */}
+        {session.rsvp_status === "reschedule_requested" && session.proposed_date && (
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-neutral-700">
+            <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4">
+              <p className="font-medium text-orange-800 dark:text-orange-300 text-sm mb-2">
+                Client requested to reschedule
+              </p>
+              <div className="text-sm text-orange-700 dark:text-orange-400 mb-3">
+                <p>
+                  <span className="font-medium">Proposed:</span>{" "}
+                  {new Date(session.proposed_date).toLocaleDateString("en-GB", {
+                    weekday: "short",
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}{" "}
+                  at {session.proposed_start_time} - {session.proposed_end_time}
+                </p>
+                {session.rsvp_message && (
+                  <p className="mt-2 italic">&quot;{session.rsvp_message}&quot;</p>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleRescheduleResponse(session.id, true)}
+                  disabled={isLoading === session.id}
+                  className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                >
+                  Accept New Time
+                </button>
+                <button
+                  onClick={() => handleRescheduleResponse(session.id, false)}
+                  disabled={isLoading === session.id}
+                  className="flex-1 px-3 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-gray-800 dark:text-gray-200 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                >
+                  Decline
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {session.therapist_notes && (
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-neutral-700">
             <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
@@ -276,6 +389,17 @@ export function ClientSessionsList({
 
   return (
     <div className="space-y-6">
+      {/* Header with Add Button */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          Sessions
+        </h2>
+        <Button onClick={() => setInternalShowDialog(true)}>
+          <IconCalendarPlus className="w-4 h-4 mr-2" />
+          Add Session
+        </Button>
+      </div>
+
       {/* Empty State */}
       {sessions.length === 0 && (
         <div className="text-center py-12 bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700">
@@ -319,12 +443,24 @@ export function ClientSessionsList({
 
       {/* Create Session Dialog */}
       <CreateSessionDialog
-        isOpen={showAddDialog}
-        onClose={onCloseAddDialog}
+        isOpen={showDialog}
+        onClose={closeDialog}
         onSuccess={onUpdate}
         clientId={clientId}
         clientName={clientName}
         services={services}
+      />
+
+      {/* Cancel Session Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={!!cancelSessionId}
+        onClose={() => setCancelSessionId(null)}
+        onConfirm={handleCancelConfirm}
+        title="Cancel Session"
+        message="Are you sure you want to cancel this session? The client will be notified."
+        confirmText="Cancel Session"
+        cancelText="Keep Session"
+        variant="danger"
       />
     </div>
   );

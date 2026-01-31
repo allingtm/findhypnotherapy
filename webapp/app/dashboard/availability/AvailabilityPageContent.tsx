@@ -34,6 +34,14 @@ interface BookingSettings {
   send_therapist_reminders: boolean | null;
   video_platform_preference: string | null;
   default_video_link: string | null;
+  // RSVP and reminder settings
+  require_session_rsvp: boolean | null;
+  send_rsvp_reminders: boolean | null;
+  rsvp_first_reminder_hours: number | null;
+  rsvp_second_reminder_hours: number | null;
+  send_client_session_reminders: boolean | null;
+  client_session_reminder_24h: boolean | null;
+  client_session_reminder_1h: boolean | null;
 }
 
 interface CalendarConnection {

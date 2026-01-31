@@ -20,7 +20,7 @@ export function PortalLoginForm() {
       emailSchema.parse(value)
       setEmailError(null)
     } catch (err: any) {
-      const message = err.errors?.[0]?.message || "Invalid email"
+      const message = err.issues?.[0]?.message || "Invalid email"
       setEmailError(message)
     }
   }

@@ -11,8 +11,27 @@ import { HealthInfoStep } from "./HealthInfoStep";
 import { TermsStep } from "./TermsStep";
 import { completeClientOnboardingAction } from "@/app/actions/clients";
 import { IconCheck, IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
+import { z } from "zod";
 import type { OnboardingFieldRequirement, OnboardingRequirements } from "@/lib/types/database";
 import { DEFAULT_ONBOARDING_REQUIREMENTS } from "@/lib/types/database";
+import {
+  firstNameSchema,
+  lastNameSchema,
+  phoneSchema,
+  addressLine1Schema,
+  addressLine2Schema,
+  citySchema,
+  postalCodeSchema,
+  countrySchema,
+  emergencyContactNameSchema,
+  emergencyContactPhoneSchema,
+  emergencyContactRelationshipSchema,
+  healthConditionsSchema,
+  medicationsSchema,
+  allergiesSchema,
+  gpNameSchema,
+  gpPracticeSchema,
+} from "@/lib/validation/onboarding";
 
 export interface ServiceInfo {
   id: string;
@@ -139,6 +158,81 @@ export function OnboardingForm({
 
   const updateFormData = (updates: Partial<OnboardingData>) => {
     setFormData((prev) => ({ ...prev, ...updates }));
+  };
+
+  const validateField = (fieldName: string, value: string) => {
+    try {
+      let schema: z.ZodTypeAny | undefined;
+      switch (fieldName) {
+        // Personal Info
+        case "firstName":
+          schema = firstNameSchema;
+          break;
+        case "lastName":
+          schema = lastNameSchema;
+          break;
+        case "phone":
+          schema = phoneSchema;
+          break;
+        // Address
+        case "addressLine1":
+          schema = addressLine1Schema;
+          break;
+        case "addressLine2":
+          schema = addressLine2Schema;
+          break;
+        case "city":
+          schema = citySchema;
+          break;
+        case "postalCode":
+          schema = postalCodeSchema;
+          break;
+        case "country":
+          schema = countrySchema;
+          break;
+        // Emergency Contact
+        case "emergencyContactName":
+          schema = emergencyContactNameSchema;
+          break;
+        case "emergencyContactPhone":
+          schema = emergencyContactPhoneSchema;
+          break;
+        case "emergencyContactRelationship":
+          schema = emergencyContactRelationshipSchema;
+          break;
+        // Health Info
+        case "healthConditions":
+          schema = healthConditionsSchema;
+          break;
+        case "medications":
+          schema = medicationsSchema;
+          break;
+        case "allergies":
+          schema = allergiesSchema;
+          break;
+        case "gpName":
+          schema = gpNameSchema;
+          break;
+        case "gpPractice":
+          schema = gpPracticeSchema;
+          break;
+      }
+
+      if (schema) {
+        schema.parse(value || undefined);
+        // Clear error on success
+        setFieldErrors((prev) => {
+          const updated = { ...prev };
+          delete updated[fieldName];
+          return updated;
+        });
+      }
+    } catch (err: unknown) {
+      if (err instanceof z.ZodError) {
+        const message = err.issues[0]?.message || "Invalid input";
+        setFieldErrors((prev) => ({ ...prev, [fieldName]: [message] }));
+      }
+    }
   };
 
   const validateCurrentStep = (): boolean => {
@@ -361,6 +455,7 @@ export function OnboardingForm({
                 onChange={updateFormData}
                 errors={fieldErrors}
                 phoneRequirement={getRequirement("phone")}
+                onBlur={validateField}
               />
             )}
             {currentStepConfig.id === "address" && (
@@ -369,6 +464,7 @@ export function OnboardingForm({
                 onChange={updateFormData}
                 errors={fieldErrors}
                 requirement={getRequirement("address")}
+                onBlur={validateField}
               />
             )}
             {currentStepConfig.id === "emergency" && (
@@ -377,6 +473,7 @@ export function OnboardingForm({
                 onChange={updateFormData}
                 errors={fieldErrors}
                 requirement={getRequirement("emergency_contact")}
+                onBlur={validateField}
               />
             )}
             {currentStepConfig.id === "health" && (
@@ -386,6 +483,7 @@ export function OnboardingForm({
                 errors={fieldErrors}
                 healthRequirement={getRequirement("health_info")}
                 gpRequirement={getRequirement("gp_info")}
+                onBlur={validateField}
               />
             )}
             {currentStepConfig.id === "terms" && (

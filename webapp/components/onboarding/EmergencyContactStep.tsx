@@ -9,9 +9,10 @@ interface EmergencyContactStepProps {
   onChange: (updates: Partial<OnboardingData>) => void;
   errors: Record<string, string[]>;
   requirement?: OnboardingFieldRequirement;
+  onBlur?: (fieldName: string, value: string) => void;
 }
 
-export function EmergencyContactStep({ data, onChange, errors, requirement = "required" }: EmergencyContactStepProps) {
+export function EmergencyContactStep({ data, onChange, errors, requirement = "required", onBlur }: EmergencyContactStepProps) {
   const isRequired = requirement === "required";
   const suffix = isRequired ? " *" : " (optional)";
 
@@ -27,6 +28,7 @@ export function EmergencyContactStep({ data, onChange, errors, requirement = "re
         label={`Contact Name${suffix}`}
         value={data.emergencyContactName}
         onChange={(e) => onChange({ emergencyContactName: e.target.value })}
+        onBlur={(e) => onBlur?.("emergencyContactName", e.target.value)}
         placeholder="Jane Smith"
         error={errors.emergencyContactName?.[0]}
       />
@@ -36,6 +38,7 @@ export function EmergencyContactStep({ data, onChange, errors, requirement = "re
         type="tel"
         value={data.emergencyContactPhone}
         onChange={(e) => onChange({ emergencyContactPhone: e.target.value })}
+        onBlur={(e) => onBlur?.("emergencyContactPhone", e.target.value)}
         placeholder="07123 456789"
         error={errors.emergencyContactPhone?.[0]}
       />
@@ -44,6 +47,7 @@ export function EmergencyContactStep({ data, onChange, errors, requirement = "re
         label="Relationship (optional)"
         value={data.emergencyContactRelationship}
         onChange={(e) => onChange({ emergencyContactRelationship: e.target.value })}
+        onBlur={(e) => onBlur?.("emergencyContactRelationship", e.target.value)}
         placeholder="Partner, Parent, Friend, etc."
         error={errors.emergencyContactRelationship?.[0]}
       />

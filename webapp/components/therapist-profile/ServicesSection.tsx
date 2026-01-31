@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { deleteServiceAction } from '@/app/actions/therapist-services'
 import { Button } from '@/components/ui/Button'
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
 import { ServiceForm } from './ServiceForm'
 import type { Tables } from '@/lib/types/database'
 import { SERVICE_TYPE_LABELS } from '@/lib/types/services'
@@ -17,11 +18,17 @@ export function ServicesSection({ services }: ServicesSectionProps) {
   const [showForm, setShowForm] = useState(false)
   const [editingService, setEditingService] = useState<Tables<'therapist_services'> | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null)
 
-  const handleDelete = (serviceId: string, serviceName: string) => {
-    if (!confirm(`Are you sure you want to delete "${serviceName}"?`)) {
-      return
-    }
+  const handleDeleteClick = (serviceId: string, serviceName: string) => {
+    setDeleteConfirm({ id: serviceId, name: serviceName })
+  }
+
+  const handleDeleteConfirm = () => {
+    if (!deleteConfirm) return
+
+    const serviceId = deleteConfirm.id
+    setDeleteConfirm(null)
 
     startTransition(async () => {
       const result = await deleteServiceAction(serviceId)
@@ -182,7 +189,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
                     </svg>
                   </button>
                   <button
-                    onClick={() => handleDelete(service.id, service.name)}
+                    onClick={() => handleDeleteClick(service.id, service.name)}
                     disabled={isPending}
                     className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50"
                     title="Delete service"
@@ -253,7 +260,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
                         </svg>
                       </button>
                       <button
-                        onClick={() => handleDelete(service.id, service.name)}
+                        onClick={() => handleDeleteClick(service.id, service.name)}
                         disabled={isPending}
                         className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50"
                         title="Delete service"
@@ -278,6 +285,19 @@ export function ServicesSection({ services }: ServicesSectionProps) {
           onClose={handleCloseForm}
         />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Service"
+        message={`Are you sure you want to delete "${deleteConfirm?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        loading={isPending}
+      />
     </div>
   )
 }

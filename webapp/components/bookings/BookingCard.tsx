@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
 import { confirmBookingAction, cancelBookingAction } from "@/app/actions/bookings";
 import { getOrCreateConversationFromBooking } from "@/app/actions/messages";
 import {
@@ -112,6 +113,7 @@ export function BookingCard({ booking, onStatusChange }: BookingCardProps) {
   const [isCancelling, setIsCancelling] = useState(false);
   const [isStartingConversation, setIsStartingConversation] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleConfirm = async () => {
@@ -132,11 +134,8 @@ export function BookingCard({ booking, onStatusChange }: BookingCardProps) {
     }
   };
 
-  const handleCancel = async () => {
-    if (!confirm("Are you sure you want to cancel this booking?")) {
-      return;
-    }
-
+  const handleCancelConfirm = async () => {
+    setShowCancelConfirm(false);
     setIsCancelling(true);
     setError(null);
 
@@ -270,7 +269,7 @@ export function BookingCard({ booking, onStatusChange }: BookingCardProps) {
           {canCancel && (
             <Button
               variant="secondary"
-              onClick={handleCancel}
+              onClick={() => setShowCancelConfirm(true)}
               loading={isCancelling}
               disabled={isConfirming}
               className={canConfirm ? "" : "flex-1"}
@@ -313,6 +312,18 @@ export function BookingCard({ booking, onStatusChange }: BookingCardProps) {
         }}
         prefillEmail={booking.visitor_email}
         prefillFirstName={booking.visitor_name.split(" ")[0]}
+      />
+
+      {/* Cancel Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showCancelConfirm}
+        onClose={() => setShowCancelConfirm(false)}
+        onConfirm={handleCancelConfirm}
+        title="Cancel Booking"
+        message="Are you sure you want to cancel this booking? The visitor will be notified."
+        confirmText="Cancel Booking"
+        cancelText="Keep Booking"
+        variant="danger"
       />
     </div>
   );

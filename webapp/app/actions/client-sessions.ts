@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { randomBytes } from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import {
   clientSessionSchema,
@@ -15,8 +16,14 @@ import {
   getSessionCreatedEmail,
   getSessionUpdatedEmail,
   getSessionCancelledEmail,
+  getSessionRsvpRequestEmail,
 } from "@/lib/email/templates";
 import { generateICS, ICSEventData } from "@/lib/calendar/ics";
+
+// Generate a secure RSVP token
+function generateRsvpToken(): string {
+  return randomBytes(32).toString("hex");
+}
 
 type ActionResponse = {
   success: boolean;
@@ -84,16 +91,22 @@ export async function createClientSessionAction(
       return { success: false, error: "You must be logged in" };
     }
 
-    // Get therapist profile
+    // Get therapist profile with user name and booking settings
     const { data: profile } = await supabase
       .from("therapist_profiles")
-      .select("id, display_name, user_id")
+      .select("id, user_id, users(name), therapist_booking_settings(*)")
       .eq("user_id", user.id)
       .single();
 
     if (!profile) {
       return { success: false, error: "Therapist profile not found" };
     }
+
+    // Get booking settings (with defaults)
+    const bookingSettings = profile.therapist_booking_settings as {
+      require_session_rsvp?: boolean;
+    } | null;
+    const requireRsvp = bookingSettings?.require_session_rsvp ?? true;
 
     // Verify client ownership and get client info
     const { data: client } = await supabase
@@ -110,6 +123,12 @@ export async function createClientSessionAction(
     if (client.status !== "active") {
       return { success: false, error: "Cannot create sessions for inactive clients" };
     }
+
+    // Generate RSVP token if RSVP is required and notification will be sent
+    const rsvpToken = (requireRsvp && sendNotification) ? generateRsvpToken() : null;
+    const rsvpTokenExpiresAt = rsvpToken
+      ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
+      : null;
 
     // Create session
     const { data: session, error } = await supabase
@@ -129,6 +148,9 @@ export async function createClientSessionAction(
         meeting_url: meetingUrl || null,
         therapist_notes: therapistNotes || null,
         status: "scheduled",
+        rsvp_status: rsvpToken ? "pending" : null,
+        rsvp_token: rsvpToken,
+        rsvp_token_expires_at: rsvpTokenExpiresAt,
       })
       .select()
       .single();
@@ -142,6 +164,7 @@ export async function createClientSessionAction(
     if (sendNotification) {
       try {
         const clientName = `${client.first_name || ""} ${client.last_name || ""}`.trim() || "Client";
+        const therapistName = (profile.users as unknown as { name: string } | null)?.name ?? "Therapist";
 
         // Generate ICS file
         const icsData: ICSEventData = {
@@ -153,7 +176,7 @@ export async function createClientSessionAction(
           endTime,
           location: location || undefined,
           meetingUrl: meetingUrl || undefined,
-          organizerName: profile.display_name,
+          organizerName: therapistName,
           organizerEmail: user.email || "",
           attendeeName: clientName,
           attendeeEmail: client.email,
@@ -162,17 +185,45 @@ export async function createClientSessionAction(
         };
         const icsContent = generateICS(icsData);
 
-        const email = getSessionCreatedEmail({
-          clientName,
-          therapistName: profile.display_name,
-          sessionTitle: title,
-          sessionDate,
-          startTime,
-          endTime,
-          sessionFormat: sessionFormat || undefined,
-          location: location || undefined,
-          meetingUrl: meetingUrl || undefined,
-        });
+        // Build RSVP URLs if RSVP is required
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://findhypnotherapy.co.uk";
+        const rsvpUrls = rsvpToken
+          ? {
+              acceptUrl: `${baseUrl}/session-rsvp?token=${rsvpToken}&action=accept`,
+              declineUrl: `${baseUrl}/session-rsvp?token=${rsvpToken}&action=decline`,
+              rescheduleUrl: `${baseUrl}/session-rsvp/propose?token=${rsvpToken}`,
+              portalUrl: `${baseUrl}/portal`,
+            }
+          : null;
+
+        // Use RSVP email template if RSVP is required, otherwise use standard template
+        const email = rsvpUrls
+          ? getSessionRsvpRequestEmail({
+              clientName,
+              therapistName,
+              sessionTitle: title,
+              sessionDate,
+              startTime,
+              endTime,
+              sessionFormat: sessionFormat || undefined,
+              location: location || undefined,
+              meetingUrl: meetingUrl || undefined,
+              acceptUrl: rsvpUrls.acceptUrl,
+              declineUrl: rsvpUrls.declineUrl,
+              rescheduleUrl: rsvpUrls.rescheduleUrl,
+              portalUrl: rsvpUrls.portalUrl,
+            })
+          : getSessionCreatedEmail({
+              clientName,
+              therapistName,
+              sessionTitle: title,
+              sessionDate,
+              startTime,
+              endTime,
+              sessionFormat: sessionFormat || undefined,
+              location: location || undefined,
+              meetingUrl: meetingUrl || undefined,
+            });
 
         await sendEmail({
           to: client.email,
@@ -245,16 +296,22 @@ export async function updateClientSessionAction(
       return { success: false, error: "You must be logged in" };
     }
 
-    // Get therapist profile
+    // Get therapist profile with user name and booking settings
     const { data: profile } = await supabase
       .from("therapist_profiles")
-      .select("id, display_name")
+      .select("id, users(name), therapist_booking_settings(*)")
       .eq("user_id", user.id)
       .single();
 
     if (!profile) {
       return { success: false, error: "Therapist profile not found" };
     }
+
+    // Get booking settings (with defaults)
+    const bookingSettings = profile.therapist_booking_settings as {
+      require_session_rsvp?: boolean;
+    } | null;
+    const requireRsvp = bookingSettings?.require_session_rsvp ?? true;
 
     // Get existing session with client info
     const { data: existingSession } = await supabase
@@ -275,6 +332,11 @@ export async function updateClientSessionAction(
       return { success: false, error: "Cannot update a cancelled session" };
     }
 
+    // Check if date/time has changed - requires RSVP reset
+    const dateTimeChanged =
+      (sessionDate && sessionDate !== existingSession.session_date) ||
+      (startTime && startTime !== existingSession.start_time);
+
     // Build update data
     const updateData: Record<string, unknown> = {};
     if (serviceId !== undefined) updateData.service_id = serviceId;
@@ -288,6 +350,22 @@ export async function updateClientSessionAction(
     if (location !== undefined) updateData.location = location;
     if (meetingUrl !== undefined) updateData.meeting_url = meetingUrl;
     if (therapistNotes !== undefined) updateData.therapist_notes = therapistNotes;
+
+    // Reset RSVP if date/time changed and RSVP is required
+    let newRsvpToken: string | null = null;
+    if (dateTimeChanged && requireRsvp && sendNotification) {
+      newRsvpToken = generateRsvpToken();
+      updateData.rsvp_status = "pending";
+      updateData.rsvp_token = newRsvpToken;
+      updateData.rsvp_token_expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      updateData.rsvp_responded_at = null;
+      updateData.rsvp_message = null;
+      updateData.proposed_date = null;
+      updateData.proposed_start_time = null;
+      updateData.proposed_end_time = null;
+      updateData.rsvp_reminder_1_sent_at = null;
+      updateData.rsvp_reminder_2_sent_at = null;
+    }
 
     // Update session
     const { data: updatedSession, error } = await supabase
@@ -307,6 +385,7 @@ export async function updateClientSessionAction(
       try {
         const client = existingSession.clients as { email: string; first_name: string | null; last_name: string | null };
         const clientName = `${client.first_name || ""} ${client.last_name || ""}`.trim() || "Client";
+        const therapistName = (profile.users as unknown as { name: string } | null)?.name ?? "Therapist";
 
         // Generate updated ICS
         const icsData: ICSEventData = {
@@ -318,7 +397,7 @@ export async function updateClientSessionAction(
           endTime: endTime || existingSession.end_time,
           location: location !== undefined ? location || undefined : existingSession.location || undefined,
           meetingUrl: meetingUrl !== undefined ? meetingUrl || undefined : existingSession.meeting_url || undefined,
-          organizerName: profile.display_name,
+          organizerName: therapistName,
           organizerEmail: user.email || "",
           attendeeName: clientName,
           attendeeEmail: client.email,
@@ -337,7 +416,7 @@ export async function updateClientSessionAction(
 
         const email = getSessionUpdatedEmail({
           clientName,
-          therapistName: profile.display_name,
+          therapistName,
           sessionTitle: title || existingSession.title,
           sessionDate: sessionDate || existingSession.session_date,
           startTime: startTime || existingSession.start_time,
@@ -404,10 +483,10 @@ export async function cancelClientSessionAction(
       return { success: false, error: "You must be logged in" };
     }
 
-    // Get therapist profile
+    // Get therapist profile with user name
     const { data: profile } = await supabase
       .from("therapist_profiles")
-      .select("id, display_name")
+      .select("id, users(name)")
       .eq("user_id", user.id)
       .single();
 
@@ -434,13 +513,20 @@ export async function cancelClientSessionAction(
       return { success: false, error: "Session is already cancelled" };
     }
 
-    // Cancel session
+    // Cancel session and clear RSVP fields
     const { error } = await supabase
       .from("client_sessions")
       .update({
         status: "cancelled",
         cancelled_at: new Date().toISOString(),
         cancellation_reason: reason || null,
+        // Clear RSVP fields
+        rsvp_token: null,
+        rsvp_token_expires_at: null,
+        rsvp_reminder_1_sent_at: null,
+        rsvp_reminder_2_sent_at: null,
+        reminder_24h_sent_at: null,
+        reminder_1h_sent_at: null,
       })
       .eq("id", sessionId);
 
@@ -454,6 +540,7 @@ export async function cancelClientSessionAction(
       try {
         const client = session.clients as { email: string; first_name: string | null; last_name: string | null };
         const clientName = `${client.first_name || ""} ${client.last_name || ""}`.trim() || "Client";
+        const therapistName = (profile.users as unknown as { name: string } | null)?.name ?? "Therapist";
 
         // Generate cancellation ICS
         const icsData: ICSEventData = {
@@ -462,7 +549,7 @@ export async function cancelClientSessionAction(
           startDate: session.session_date,
           startTime: session.start_time,
           endTime: session.end_time,
-          organizerName: profile.display_name,
+          organizerName: therapistName,
           organizerEmail: user.email || "",
           attendeeName: clientName,
           attendeeEmail: client.email,
@@ -473,7 +560,7 @@ export async function cancelClientSessionAction(
 
         const email = getSessionCancelledEmail({
           clientName,
-          therapistName: profile.display_name,
+          therapistName,
           sessionTitle: session.title,
           sessionDate: session.session_date,
           startTime: session.start_time,

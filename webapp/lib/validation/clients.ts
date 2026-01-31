@@ -361,3 +361,69 @@ export const therapistTermsUpdateSchema = z.object({
 });
 
 export type TherapistTermsUpdateData = z.infer<typeof therapistTermsUpdateSchema>;
+
+// =====================
+// SESSION RSVP
+// =====================
+
+export const rsvpResponseSchema = z.object({
+  token: z.string().min(64, "Invalid token").max(64, "Invalid token"),
+  response: z.enum(["accepted", "declined"], {
+    message: "Response must be 'accepted' or 'declined'",
+  }),
+});
+
+export type RsvpResponseData = z.infer<typeof rsvpResponseSchema>;
+
+export const rsvpProposeRescheduleSchema = z.object({
+  token: z.string().min(64, "Invalid token").max(64, "Invalid token"),
+  proposedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
+  proposedStartTime: z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format (HH:MM)"),
+  proposedEndTime: z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format (HH:MM)"),
+  message: z
+    .string()
+    .max(500, "Message must be 500 characters or less")
+    .trim()
+    .optional()
+    .or(z.literal("")),
+});
+
+export type RsvpProposeRescheduleData = z.infer<typeof rsvpProposeRescheduleSchema>;
+
+export const therapistRescheduleResponseSchema = z.object({
+  sessionId: z.string().uuid("Invalid session ID"),
+  accept: z.boolean(),
+  message: z
+    .string()
+    .max(500, "Message must be 500 characters or less")
+    .trim()
+    .optional()
+    .or(z.literal("")),
+});
+
+export type TherapistRescheduleResponseData = z.infer<typeof therapistRescheduleResponseSchema>;
+
+// Client portal RSVP (authenticated)
+export const clientRsvpResponseSchema = z.object({
+  sessionId: z.string().uuid("Invalid session ID"),
+  response: z.enum(["accepted", "declined"], {
+    message: "Response must be 'accepted' or 'declined'",
+  }),
+});
+
+export type ClientRsvpResponseData = z.infer<typeof clientRsvpResponseSchema>;
+
+export const clientProposeRescheduleSchema = z.object({
+  sessionId: z.string().uuid("Invalid session ID"),
+  proposedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
+  proposedStartTime: z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format (HH:MM)"),
+  proposedEndTime: z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format (HH:MM)"),
+  message: z
+    .string()
+    .max(500, "Message must be 500 characters or less")
+    .trim()
+    .optional()
+    .or(z.literal("")),
+});
+
+export type ClientProposeRescheduleData = z.infer<typeof clientProposeRescheduleSchema>;

@@ -38,7 +38,7 @@ export function MessageInput({
       messageSchema.parse(value);
       setMessageError(null);
     } catch (err: any) {
-      const errorMessage = err.errors?.[0]?.message || "Invalid message";
+      const errorMessage = err.issues?.[0]?.message || "Invalid message";
       setMessageError(errorMessage);
     }
   };

@@ -5,6 +5,7 @@ import { BannerUploadModal } from './BannerUploadModal'
 import { uploadBannerAction, deleteBannerAction } from '@/app/actions/therapist-profile'
 import { Button } from '@/components/ui/Button'
 import { Alert } from '@/components/ui/Alert'
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
 import { validateImageFile } from '@/lib/utils/fileValidation'
 import { toast } from 'sonner'
 
@@ -15,6 +16,7 @@ interface BannerUploadProps {
 export function BannerUpload({ currentBannerUrl }: BannerUploadProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [uploadState, uploadAction] = useActionState(uploadBannerAction, {
@@ -58,11 +60,8 @@ export function BannerUpload({ currentBannerUrl }: BannerUploadProps) {
     }
   }
 
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to remove your profile banner?')) {
-      return
-    }
-
+  const handleDeleteConfirm = async () => {
+    setShowDeleteConfirm(false)
     const formData = new FormData()
     await deleteAction(formData)
   }
@@ -120,7 +119,7 @@ export function BannerUpload({ currentBannerUrl }: BannerUploadProps) {
           {displayBannerUrl && (
             <Button
               variant="secondary"
-              onClick={handleDelete}
+              onClick={() => setShowDeleteConfirm(true)}
             >
               Remove
             </Button>
@@ -165,6 +164,18 @@ export function BannerUpload({ currentBannerUrl }: BannerUploadProps) {
           initialImage={selectedImage}
         />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Remove Banner"
+        message="Are you sure you want to remove your profile banner?"
+        confirmText="Remove"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </div>
   )
 }
