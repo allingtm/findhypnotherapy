@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
 import { ProfilePhotoUpload } from './ProfilePhotoUpload'
+import { profileSchema, passwordSchema } from '@/lib/validation/profile'
 
 interface ProfileFormProps {
   user: {
@@ -30,6 +31,44 @@ export function ProfileForm({ user }: ProfileFormProps) {
   const [profileState, profileAction] = useActionState(updateProfileAction, { success: false })
   const [passwordState, passwordAction] = useActionState(updatePasswordAction, { success: false })
   const [showPasswordForm, setShowPasswordForm] = useState(false)
+  const [profileErrors, setProfileErrors] = useState<Record<string, string>>({})
+  const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({})
+
+  // Client-side validation for profile fields
+  const validateProfileField = (name: string, value: string) => {
+    try {
+      const fieldSchema = profileSchema.shape[name as keyof typeof profileSchema.shape]
+      if (fieldSchema) {
+        fieldSchema.parse(value)
+        setProfileErrors((prev) => {
+          const updated = { ...prev }
+          delete updated[name]
+          return updated
+        })
+      }
+    } catch (error: any) {
+      const message = error.errors?.[0]?.message || 'Invalid input'
+      setProfileErrors((prev) => ({ ...prev, [name]: message }))
+    }
+  }
+
+  // Client-side validation for password fields
+  const validatePasswordField = (name: string, value: string) => {
+    try {
+      const fieldSchema = passwordSchema.shape[name as keyof typeof passwordSchema.shape]
+      if (fieldSchema) {
+        fieldSchema.parse(value)
+        setPasswordErrors((prev) => {
+          const updated = { ...prev }
+          delete updated[name]
+          return updated
+        })
+      }
+    } catch (error: any) {
+      const message = error.errors?.[0]?.message || 'Invalid input'
+      setPasswordErrors((prev) => ({ ...prev, [name]: message }))
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -56,6 +95,8 @@ export function ProfileForm({ user }: ProfileFormProps) {
             defaultValue={user.name}
             placeholder="Enter your full name"
             required
+            onBlur={(e) => validateProfileField('name', e.target.value)}
+            error={profileErrors.name}
           />
 
           <Input
@@ -65,6 +106,8 @@ export function ProfileForm({ user }: ProfileFormProps) {
             defaultValue={user.email}
             placeholder="your@email.com"
             required
+            onBlur={(e) => validateProfileField('email', e.target.value)}
+            error={profileErrors.email}
           />
 
           <div className="flex gap-3">
@@ -97,6 +140,8 @@ export function ProfileForm({ user }: ProfileFormProps) {
               name="currentPassword"
               placeholder="Enter current password"
               required
+              onBlur={(e) => validatePasswordField('currentPassword', e.target.value)}
+              error={passwordErrors.currentPassword}
             />
 
             <Input
@@ -105,6 +150,8 @@ export function ProfileForm({ user }: ProfileFormProps) {
               name="newPassword"
               placeholder="At least 8 characters"
               required
+              onBlur={(e) => validatePasswordField('newPassword', e.target.value)}
+              error={passwordErrors.newPassword}
             />
 
             <Input
@@ -113,6 +160,8 @@ export function ProfileForm({ user }: ProfileFormProps) {
               name="confirmPassword"
               placeholder="Confirm new password"
               required
+              onBlur={(e) => validatePasswordField('confirmPassword', e.target.value)}
+              error={passwordErrors.confirmPassword}
             />
 
             <div className="flex gap-3">

@@ -1,7 +1,13 @@
 "use client";
 
-import { useActionState, useRef, useEffect } from "react";
+import { useState, useActionState, useRef, useEffect } from "react";
+import { z } from "zod";
 import { IconSend } from "@tabler/icons-react";
+
+const messageSchema = z
+  .string()
+  .min(1, "Message is required")
+  .max(2000, "Message must be 2000 characters or less");
 
 interface MessageInputProps {
   action: (
@@ -24,22 +30,41 @@ export function MessageInput({
   });
   const formRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [message, setMessage] = useState("");
+  const [messageError, setMessageError] = useState<string | null>(null);
+
+  const validateMessage = (value: string) => {
+    try {
+      messageSchema.parse(value);
+      setMessageError(null);
+    } catch (err: any) {
+      const errorMessage = err.errors?.[0]?.message || "Invalid message";
+      setMessageError(errorMessage);
+    }
+  };
 
   // Clear textarea on successful send
   useEffect(() => {
     if (state.success) {
       formRef.current?.reset();
+      setMessage("");
+      setMessageError(null);
       if (textareaRef.current) {
         textareaRef.current.style.height = "auto";
       }
     }
   }, [state.success]);
 
-  // Auto-resize textarea
+  // Auto-resize textarea and track value
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = e.target;
     textarea.style.height = "auto";
     textarea.style.height = `${Math.min(textarea.scrollHeight, 150)}px`;
+    setMessage(textarea.value);
+    // Clear error while typing if under limit
+    if (textarea.value.length <= 2000 && messageError) {
+      setMessageError(null);
+    }
   };
 
   // Handle Ctrl/Cmd + Enter to submit
@@ -80,9 +105,19 @@ export function MessageInput({
             maxLength={2000}
             disabled={isPending}
             onChange={handleTextareaChange}
+            onBlur={(e) => e.target.value && validateMessage(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none placeholder-gray-400 dark:placeholder-gray-500 disabled:opacity-50"
+            className={`w-full px-4 py-2.5 border rounded-2xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none placeholder-gray-400 dark:placeholder-gray-500 disabled:opacity-50 ${
+              messageError
+                ? "border-red-500 dark:border-red-500"
+                : "border-gray-300 dark:border-gray-600"
+            }`}
           />
+          {messageError && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+              {messageError}
+            </p>
+          )}
         </div>
         <button
           type="submit"
@@ -97,9 +132,12 @@ export function MessageInput({
         </button>
       </div>
 
-      <p className="mt-2 text-xs text-gray-400 dark:text-gray-500 text-center">
-        Press Ctrl+Enter to send
-      </p>
+      <div className="mt-2 flex justify-between text-xs text-gray-400 dark:text-gray-500">
+        <span>Press Ctrl+Enter to send</span>
+        <span className={message.length > 1900 ? "text-orange-500" : ""}>
+          {message.length}/2000
+        </span>
+      </div>
     </form>
   );
 }

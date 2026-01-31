@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useState, useActionState } from 'react'
 import { useFormStatus } from 'react-dom'
 import {
   updateTherapistProfileAction,
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
 import { BannerUpload } from './BannerUpload'
+import { therapistProfileSchema } from '@/lib/validation/therapist-profile'
 import type { Tables } from '@/lib/types/database'
 
 interface TherapistProfileFormProps {
@@ -39,12 +40,16 @@ function TextArea({
   error,
   className = '',
   id,
+  charCount,
+  maxChars,
   ...props
 }: {
   label: string
   error?: string
   className?: string
   id?: string
+  charCount?: number
+  maxChars?: number
 } & React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
   const inputId = id || label.toLowerCase().replace(/\s+/g, '-')
   return (
@@ -54,6 +59,11 @@ function TextArea({
         className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
       >
         {label}
+        {maxChars && charCount !== undefined && (
+          <span className="text-xs text-gray-400 ml-2">
+            {charCount}/{maxChars}
+          </span>
+        )}
       </label>
       <textarea
         id={inputId}
@@ -78,6 +88,28 @@ export function TherapistProfileForm({
   const [profileState, profileAction] = useActionState(updateTherapistProfileAction, { success: false })
   const [specializationsState, specializationsAction] = useActionState(updateSpecializationsAction, { success: false })
   const [publishState, publishAction] = useActionState(togglePublishProfileAction, { success: false })
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [bio, setBio] = useState(profile.bio || '')
+  const [availabilityNotes, setAvailabilityNotes] = useState(profile.availability_notes || '')
+  const [metaDescription, setMetaDescription] = useState(profile.meta_description || '')
+
+  // Client-side validation for individual fields
+  const validateField = (fieldName: string, value: unknown) => {
+    try {
+      const fieldSchema = therapistProfileSchema.shape[fieldName as keyof typeof therapistProfileSchema.shape]
+      if (fieldSchema) {
+        fieldSchema.parse(value)
+        setFieldErrors((prev) => {
+          const updated = { ...prev }
+          delete updated[fieldName]
+          return updated
+        })
+      }
+    } catch (error: any) {
+      const message = error.errors?.[0]?.message || 'Invalid input'
+      setFieldErrors((prev) => ({ ...prev, [fieldName]: message }))
+    }
+  }
 
   // Group specializations by category
   const groupedSpecializations = specializations.reduce((acc, spec) => {
@@ -138,6 +170,8 @@ export function TherapistProfileForm({
             name="professional_title"
             defaultValue={profile.professional_title || ''}
             placeholder="e.g., Clinical Hypnotherapist, Certified Hypnotherapy Practitioner"
+            onBlur={(e) => e.target.value && validateField('professional_title', e.target.value)}
+            error={fieldErrors.professional_title}
           />
 
           <Input
@@ -161,9 +195,14 @@ export function TherapistProfileForm({
           <TextArea
             label="Bio"
             name="bio"
-            defaultValue={profile.bio || ''}
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            onBlur={(e) => e.target.value && validateField('bio', e.target.value)}
             placeholder="Tell potential clients about yourself, your approach, and what makes you unique..."
             rows={6}
+            charCount={bio.length}
+            maxChars={5000}
+            error={fieldErrors.bio}
           />
 
           <hr className="my-6 dark:border-neutral-700" />
@@ -175,6 +214,8 @@ export function TherapistProfileForm({
             name="phone"
             defaultValue={profile.phone || ''}
             placeholder="+44 123 456 7890"
+            onBlur={(e) => e.target.value && validateField('phone', e.target.value)}
+            error={fieldErrors.phone}
           />
 
           <Input
@@ -183,6 +224,8 @@ export function TherapistProfileForm({
             name="website_url"
             defaultValue={profile.website_url || ''}
             placeholder="https://yourwebsite.com"
+            onBlur={(e) => e.target.value && validateField('website_url', e.target.value)}
+            error={fieldErrors.website_url}
           />
 
           <Input
@@ -191,6 +234,8 @@ export function TherapistProfileForm({
             name="booking_url"
             defaultValue={profile.booking_url || ''}
             placeholder="https://calendly.com/yourname"
+            onBlur={(e) => e.target.value && validateField('booking_url', e.target.value)}
+            error={fieldErrors.booking_url}
           />
 
           <hr className="my-6 dark:border-neutral-700" />
@@ -334,9 +379,14 @@ export function TherapistProfileForm({
           <TextArea
             label="Availability Notes"
             name="availability_notes"
-            defaultValue={profile.availability_notes || ''}
+            value={availabilityNotes}
+            onChange={(e) => setAvailabilityNotes(e.target.value)}
+            onBlur={(e) => e.target.value && validateField('availability_notes', e.target.value)}
             placeholder="e.g., Monday-Friday 9am-5pm, Saturdays by appointment"
             rows={2}
+            charCount={availabilityNotes.length}
+            maxChars={1000}
+            error={fieldErrors.availability_notes}
           />
 
           <hr className="my-6 dark:border-neutral-700" />
@@ -345,10 +395,15 @@ export function TherapistProfileForm({
           <TextArea
             label="Meta Description (for search engines)"
             name="meta_description"
-            defaultValue={profile.meta_description || ''}
+            value={metaDescription}
+            onChange={(e) => setMetaDescription(e.target.value)}
+            onBlur={(e) => e.target.value && validateField('meta_description', e.target.value)}
             placeholder="A brief description for search results (max 160 characters)"
             maxLength={160}
             rows={2}
+            charCount={metaDescription.length}
+            maxChars={160}
+            error={fieldErrors.meta_description}
           />
 
           <div className="flex gap-3 pt-4">

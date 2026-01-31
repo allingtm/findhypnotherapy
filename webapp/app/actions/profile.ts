@@ -2,10 +2,10 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { z } from 'zod'
 import { validateImageFile, getFileExtension } from '@/lib/utils/fileValidation'
 import { generatePhotoFilename } from '@/lib/utils/imageCrop'
 import { uploadFile, deleteFile, getPublicUrl, extractR2Path, parsePath } from '@/lib/r2/storage'
+import { profileSchema, passwordSchema } from '@/lib/validation/profile'
 
 // Response type for form actions
 type ActionResponse = {
@@ -17,20 +17,6 @@ type ActionResponse = {
 type PhotoUploadResponse = ActionResponse & {
   photoUrl?: string
 }
-
-// Profile update schema
-const profileSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Invalid email format'),
-  photoUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
-})
-
-// Password change schema
-const passwordSchema = z.object({
-  currentPassword: z.string().min(1, 'Current password is required'),
-  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
-  confirmPassword: z.string().min(1, 'Please confirm your password'),
-})
 
 // Update profile action
 export async function updateProfileAction(prevState: any, formData: FormData): Promise<ActionResponse> {

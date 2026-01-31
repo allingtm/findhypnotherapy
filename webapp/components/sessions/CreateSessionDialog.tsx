@@ -4,7 +4,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
+import { DateInput } from "@/components/ui/DateInput";
+import { TimeInput } from "@/components/ui/TimeInput";
 import { createClientSessionAction } from "@/app/actions/client-sessions";
+import { clientSessionSchema } from "@/lib/validation/clients";
 import {
   IconX,
   IconCalendarEvent,
@@ -52,7 +55,8 @@ export function CreateSessionDialog({
   const [sessionDate, setSessionDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [durationMinutes, setDurationMinutes] = useState(60);
+  const [durationHours, setDurationHours] = useState(1);
+  const [durationMinutesSelect, setDurationMinutesSelect] = useState(0);
   const [sessionFormat, setSessionFormat] = useState<"online" | "in-person" | "phone" | "">(
     ""
   );
@@ -60,6 +64,24 @@ export function CreateSessionDialog({
   const [meetingUrl, setMeetingUrl] = useState("");
   const [therapistNotes, setTherapistNotes] = useState("");
   const [sendNotification, setSendNotification] = useState(true);
+
+  // Client-side field validation using Zod schema
+  const validateField = (fieldName: string, value: unknown) => {
+    try {
+      const fieldSchema = clientSessionSchema.shape[fieldName as keyof typeof clientSessionSchema.shape];
+      if (fieldSchema) {
+        fieldSchema.parse(value);
+        setFieldErrors((prev) => {
+          const updated = { ...prev };
+          delete updated[fieldName];
+          return updated;
+        });
+      }
+    } catch (error: any) {
+      const message = error.errors?.[0]?.message || "Invalid input";
+      setFieldErrors((prev) => ({ ...prev, [fieldName]: [message] }));
+    }
+  };
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -70,7 +92,8 @@ export function CreateSessionDialog({
       setSessionDate("");
       setStartTime("");
       setEndTime("");
-      setDurationMinutes(60);
+      setDurationHours(1);
+      setDurationMinutesSelect(0);
       setSessionFormat("");
       setLocation("");
       setMeetingUrl("");
@@ -81,19 +104,22 @@ export function CreateSessionDialog({
     }
   }, [isOpen]);
 
+  // Compute total duration in minutes
+  const totalDurationMinutes = durationHours * 60 + durationMinutesSelect;
+
   // Update end time when start time or duration changes
   useEffect(() => {
-    if (startTime && durationMinutes) {
+    if (startTime && totalDurationMinutes > 0) {
       const [hours, minutes] = startTime.split(":").map(Number);
       const startMinutes = hours * 60 + minutes;
-      const endMinutes = startMinutes + durationMinutes;
+      const endMinutes = startMinutes + totalDurationMinutes;
       const endHours = Math.floor(endMinutes / 60) % 24;
       const endMins = endMinutes % 60;
       setEndTime(
         `${String(endHours).padStart(2, "0")}:${String(endMins).padStart(2, "0")}`
       );
     }
-  }, [startTime, durationMinutes]);
+  }, [startTime, totalDurationMinutes]);
 
   // Auto-fill from service selection
   const handleServiceChange = (selectedServiceId: string) => {
@@ -102,7 +128,15 @@ export function CreateSessionDialog({
       const service = services.find((s) => s.id === selectedServiceId);
       if (service) {
         setTitle(service.title);
-        setDurationMinutes(service.duration_minutes);
+        // Parse duration into hours and minutes (rounded to nearest 5)
+        const hours = Math.floor(service.duration_minutes / 60);
+        const mins = service.duration_minutes % 60;
+        const roundedMins = Math.round(mins / 5) * 5;
+        setDurationHours(Math.min(hours, 4)); // Cap at 4 hours
+        setDurationMinutesSelect(roundedMins === 60 ? 0 : roundedMins);
+        if (roundedMins === 60) {
+          setDurationHours(Math.min(hours + 1, 4));
+        }
         if (service.session_format) {
           setSessionFormat(service.session_format as "online" | "in-person" | "phone");
         }
@@ -125,7 +159,7 @@ export function CreateSessionDialog({
         sessionDate,
         startTime,
         endTime,
-        durationMinutes,
+        durationMinutes: totalDurationMinutes,
         sessionFormat: sessionFormat || null,
         location: location || undefined,
         meetingUrl: meetingUrl || undefined,
@@ -210,6 +244,7 @@ export function CreateSessionDialog({
             label="Session Title *"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            onBlur={() => validateField("title", title)}
             placeholder="e.g., Initial Consultation"
             error={fieldErrors.title?.[0]}
             required
@@ -217,41 +252,22 @@ export function CreateSessionDialog({
 
           {/* Date & Time */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Date *
-              </label>
-              <input
-                type="date"
-                value={sessionDate}
-                onChange={(e) => setSessionDate(e.target.value)}
-                min={new Date().toISOString().split("T")[0]}
-                required
-                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              {fieldErrors.sessionDate && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                  {fieldErrors.sessionDate[0]}
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Start Time *
-              </label>
-              <input
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                required
-                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              {fieldErrors.startTime && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                  {fieldErrors.startTime[0]}
-                </p>
-              )}
-            </div>
+            <DateInput
+              label="Date"
+              value={sessionDate}
+              onChange={setSessionDate}
+              minDate={new Date()}
+              required
+              error={fieldErrors.sessionDate?.[0]}
+            />
+            <TimeInput
+              label="Start Time"
+              value={startTime}
+              onChange={setStartTime}
+              required
+              timeIntervals={5}
+              error={fieldErrors.startTime?.[0]}
+            />
           </div>
 
           {/* Duration */}
@@ -259,22 +275,35 @@ export function CreateSessionDialog({
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Duration
             </label>
-            <div className="flex gap-2">
-              {[30, 45, 60, 90, 120].map((mins) => (
-                <button
-                  key={mins}
-                  type="button"
-                  onClick={() => setDurationMinutes(mins)}
-                  className={`px-3 py-2 text-sm rounded-lg transition-colors ${
-                    durationMinutes === mins
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-700 dark:text-gray-300 dark:hover:bg-neutral-600"
-                  }`}
-                >
-                  {mins} min
-                </button>
-              ))}
+            <div className="flex gap-2 items-center">
+              <select
+                value={durationHours}
+                onChange={(e) => setDurationHours(Number(e.target.value))}
+                className="px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {[0, 1, 2, 3, 4].map((h) => (
+                  <option key={h} value={h}>
+                    {h} {h === 1 ? "hour" : "hours"}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={durationMinutesSelect}
+                onChange={(e) => setDurationMinutesSelect(Number(e.target.value))}
+                className="px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => (
+                  <option key={m} value={m}>
+                    {m} min
+                  </option>
+                ))}
+              </select>
             </div>
+            {totalDurationMinutes < 5 && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                Duration must be at least 5 minutes
+              </p>
+            )}
           </div>
 
           {/* Session Format */}
@@ -318,9 +347,19 @@ export function CreateSessionDialog({
                 type="text"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
+                onBlur={() => location && validateField("location", location)}
                 placeholder="Enter session location"
-                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  fieldErrors.location
+                    ? "border-red-500 dark:border-red-500"
+                    : "border-gray-300 dark:border-neutral-600"
+                }`}
               />
+              {fieldErrors.location?.[0] && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {fieldErrors.location[0]}
+                </p>
+              )}
             </div>
           )}
 
@@ -334,9 +373,19 @@ export function CreateSessionDialog({
                 type="url"
                 value={meetingUrl}
                 onChange={(e) => setMeetingUrl(e.target.value)}
+                onBlur={() => meetingUrl && validateField("meetingUrl", meetingUrl)}
                 placeholder="https://zoom.us/j/..."
-                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  fieldErrors.meetingUrl
+                    ? "border-red-500 dark:border-red-500"
+                    : "border-gray-300 dark:border-neutral-600"
+                }`}
               />
+              {fieldErrors.meetingUrl?.[0] && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {fieldErrors.meetingUrl[0]}
+                </p>
+              )}
             </div>
           )}
 
@@ -344,28 +393,54 @@ export function CreateSessionDialog({
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Description (optional)
+              <span className="text-xs text-gray-400 ml-2">
+                {description.length}/2000
+              </span>
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              onBlur={() => description && validateField("description", description)}
               placeholder="Session description visible to client..."
               rows={2}
-              className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none ${
+                fieldErrors.description
+                  ? "border-red-500 dark:border-red-500"
+                  : "border-gray-300 dark:border-neutral-600"
+              }`}
             />
+            {fieldErrors.description?.[0] && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                {fieldErrors.description[0]}
+              </p>
+            )}
           </div>
 
           {/* Private Notes */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Private Notes (only visible to you)
+              <span className="text-xs text-gray-400 ml-2">
+                {therapistNotes.length}/5000
+              </span>
             </label>
             <textarea
               value={therapistNotes}
               onChange={(e) => setTherapistNotes(e.target.value)}
+              onBlur={() => therapistNotes && validateField("therapistNotes", therapistNotes)}
               placeholder="Notes for yourself..."
               rows={2}
-              className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none ${
+                fieldErrors.therapistNotes
+                  ? "border-red-500 dark:border-red-500"
+                  : "border-gray-300 dark:border-neutral-600"
+              }`}
             />
+            {fieldErrors.therapistNotes?.[0] && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                {fieldErrors.therapistNotes[0]}
+              </p>
+            )}
           </div>
 
           {/* Send Notification */}
@@ -387,7 +462,7 @@ export function CreateSessionDialog({
           <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} loading={isSubmitting} disabled={!title || !sessionDate || !startTime}>
+          <Button onClick={handleSubmit} loading={isSubmitting} disabled={!title || !sessionDate || !startTime || totalDurationMinutes < 5}>
             Schedule Session
           </Button>
         </div>

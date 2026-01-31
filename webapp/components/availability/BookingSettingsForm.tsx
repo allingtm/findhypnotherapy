@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useActionState } from "react";
+import React, { useState, useActionState } from "react";
+import { z } from "zod";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { updateBookingSettingsAction } from "@/app/actions/availability";
@@ -11,6 +12,13 @@ import {
   MAX_DAYS_AHEAD_OPTIONS,
   COMMON_TIMEZONES,
 } from "@/lib/validation/booking";
+
+const videoLinkSchema = z
+  .string()
+  .url("Please enter a valid URL")
+  .max(500, "URL must be 500 characters or less")
+  .optional()
+  .or(z.literal(""));
 
 interface BookingSettings {
   id: string;
@@ -40,6 +48,21 @@ export function BookingSettingsForm({ settings }: BookingSettingsFormProps) {
     success: false,
     error: undefined,
   });
+  const [videoLinkError, setVideoLinkError] = useState<string | null>(null);
+
+  const validateVideoLink = (value: string) => {
+    if (!value) {
+      setVideoLinkError(null);
+      return;
+    }
+    try {
+      videoLinkSchema.parse(value);
+      setVideoLinkError(null);
+    } catch (err: any) {
+      const message = err.errors?.[0]?.message || "Invalid URL";
+      setVideoLinkError(message);
+    }
+  };
 
   return (
     <form action={formAction} className="space-y-6">
@@ -314,8 +337,18 @@ export function BookingSettingsForm({ settings }: BookingSettingsFormProps) {
             name="default_video_link"
             defaultValue={settings.default_video_link || ""}
             placeholder="https://zoom.us/j/1234567890"
-            className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onBlur={(e) => validateVideoLink(e.target.value)}
+            className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              videoLinkError
+                ? "border-red-500 dark:border-red-500"
+                : "border-gray-300 dark:border-neutral-600"
+            }`}
           />
+          {videoLinkError && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+              {videoLinkError}
+            </p>
+          )}
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             Enter your Zoom Personal Meeting Room URL or other video platform link (used when &quot;Use my personal meeting link&quot; is selected)
           </p>

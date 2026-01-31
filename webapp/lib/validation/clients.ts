@@ -243,7 +243,7 @@ export const clientSessionSchema = z.object({
   durationMinutes: z
     .number()
     .int("Duration must be a whole number")
-    .min(15, "Duration must be at least 15 minutes")
+    .min(5, "Duration must be at least 5 minutes")
     .max(480, "Duration must be 8 hours or less"),
   sessionFormat: z.enum(["online", "in-person", "phone"]).optional().nullable(),
   location: z
@@ -277,7 +277,7 @@ export const clientSessionUpdateSchema = z.object({
   sessionDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   startTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
   endTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
-  durationMinutes: z.number().int().min(15).max(480).optional(),
+  durationMinutes: z.number().int().min(5).max(480).optional(),
   sessionFormat: z.enum(["online", "in-person", "phone"]).optional().nullable(),
   location: z.string().max(500).trim().optional().nullable(),
   meetingUrl: z.string().url().max(500).optional().nullable().or(z.literal("")),

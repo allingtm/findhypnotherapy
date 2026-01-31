@@ -2,10 +2,10 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { z } from 'zod'
 import { validateImageFile, getFileExtension } from '@/lib/utils/fileValidation'
 import { generateBannerFilename, generateMobileBannerFilename, generateOgImageFilename } from '@/lib/utils/imageCrop'
 import { uploadFile, deleteFile, getPublicUrl, extractR2Path, parsePath } from '@/lib/r2/storage'
+import { therapistProfileSchema } from '@/lib/validation/therapist-profile'
 
 // Response type for form actions
 type ActionResponse = {
@@ -17,28 +17,6 @@ type ActionResponse = {
 type BannerUploadResponse = ActionResponse & {
   bannerUrl?: string
 }
-
-// Therapist profile update schema
-const therapistProfileSchema = z.object({
-  professional_title: z.string().max(100, 'Title must be 100 characters or less').optional().or(z.literal('')),
-  credentials: z.array(z.string()).optional(),
-  years_experience: z.coerce.number().int().min(0).max(100).optional().nullable(),
-  bio: z.string().max(5000, 'Bio must be 5000 characters or less').optional().or(z.literal('')),
-  phone: z.string().max(20).optional().or(z.literal('')),
-  website_url: z.string().url('Invalid URL').optional().or(z.literal('')),
-  booking_url: z.string().url('Invalid URL').optional().or(z.literal('')),
-  address_line1: z.string().max(200).optional().or(z.literal('')),
-  address_line2: z.string().max(200).optional().or(z.literal('')),
-  city: z.string().max(100).optional().or(z.literal('')),
-  state_province: z.string().max(100).optional().or(z.literal('')),
-  postal_code: z.string().max(20).optional().or(z.literal('')),
-  country: z.string().max(100).optional().or(z.literal('')),
-  address_visibility: z.enum(['full', 'city_only', 'hidden']).optional(),
-  session_format: z.array(z.enum(['in-person', 'online', 'phone'])).optional(),
-  offers_free_consultation: z.coerce.boolean().optional(),
-  availability_notes: z.string().max(1000).optional().or(z.literal('')),
-  meta_description: z.string().max(160).optional().or(z.literal('')),
-})
 
 // Get or create therapist profile
 export async function getOrCreateTherapistProfile() {

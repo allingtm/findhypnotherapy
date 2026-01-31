@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema } from '@/lib/validation/auth'
+import { checkIsClient } from '@/lib/auth/permissions'
 
 // Response type for form actions
 type ActionResponse = {
@@ -80,7 +81,12 @@ export async function loginAction(prevState: any, formData: FormData): Promise<A
       }
     }
 
-    return { success: true }
+    // Redirect based on user role (server-side redirect is best practice)
+    const isClient = await checkIsClient(supabase)
+    if (isClient) {
+      redirect('/portal')
+    }
+    redirect('/dashboard')
   } catch (err) {
     return {
       success: false,

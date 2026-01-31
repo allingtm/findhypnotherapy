@@ -2,14 +2,28 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { z } from "zod"
 import { IconMail, IconLoader2, IconCheck } from "@tabler/icons-react"
 import { requestMagicLinkAction } from "@/app/actions/client-portal"
+
+const emailSchema = z.string().min(1, "Email is required").email("Please enter a valid email address")
 
 export function PortalLoginForm() {
   const [email, setEmail] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [emailError, setEmailError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+
+  const validateEmail = (value: string) => {
+    try {
+      emailSchema.parse(value)
+      setEmailError(null)
+    } catch (err: any) {
+      const message = err.errors?.[0]?.message || "Invalid email"
+      setEmailError(message)
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -81,10 +95,20 @@ export function PortalLoginForm() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onBlur={(e) => validateEmail(e.target.value)}
                 placeholder="your@email.com"
                 required
-                className="w-full px-4 py-3 border border-gray-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full px-4 py-3 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  emailError
+                    ? "border-red-500 dark:border-red-500"
+                    : "border-gray-300 dark:border-neutral-700"
+                }`}
               />
+              {emailError && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {emailError}
+                </p>
+              )}
             </div>
 
             {error && (
@@ -95,7 +119,7 @@ export function PortalLoginForm() {
 
             <button
               type="submit"
-              disabled={isLoading || !email}
+              disabled={isLoading || !email || !!emailError}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors"
             >
               {isLoading ? (

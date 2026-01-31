@@ -33,7 +33,8 @@
       "WebFetch(domain:ej2.syncfusion.com)",
       "WebFetch(domain:www.syncfusion.com)",
       "Bash(node:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(grep:*)"
     ],
     "additionalDirectories": [
       "d:\\repos\\findhypnotherapy\\webapp\\app\\book",

@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect, useActionState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useActionState } from 'react'
 import { useFormStatus } from 'react-dom'
 import Link from 'next/link'
 import { loginSchema } from '@/lib/validation/auth'
@@ -21,7 +20,6 @@ function SubmitButton() {
 }
 
 export function LoginForm() {
-  const router = useRouter()
   const [state, formAction] = useActionState(loginAction, { success: false })
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({})
 
@@ -44,14 +42,6 @@ export function LoginForm() {
       setClientErrors(prev => ({ ...prev, [name]: message }))
     }
   }
-
-  // Redirect on success
-  useEffect(() => {
-    if (state.success) {
-      router.push('/dashboard')
-      router.refresh()
-    }
-  }, [state.success, router])
 
   // Merge server and client errors, preferring server errors
   const errors = {
