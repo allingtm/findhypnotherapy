@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { CookieConsentProvider } from "@/components/providers/CookieConsentProvider";
 import { CookieConsentBanner } from "@/components/cookies/CookieConsentBanner";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "Find Hypnotherapy",
@@ -21,6 +22,7 @@ export default function RootLayout({
           <CookieConsentProvider>
             {children}
             <CookieConsentBanner />
+            <Toaster position="top-right" richColors />
           </CookieConsentProvider>
         </ThemeProvider>
       </body>

@@ -32,7 +32,8 @@
       "Read(//c/Users/allin/AppData/Local/npm-cache/_logs/**)",
       "WebFetch(domain:ej2.syncfusion.com)",
       "WebFetch(domain:www.syncfusion.com)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(curl:*)"
     ],
     "additionalDirectories": [
       "d:\\repos\\findhypnotherapy\\webapp\\app\\book",

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ClientHeader } from "@/components/clients/ClientHeader";
 import { ClientDetailTabs } from "@/components/clients/ClientDetailTabs";
 import { ClientInfoCard } from "@/components/clients/ClientInfoCard";
+import { EditClientDialog } from "@/components/clients/EditClientDialog";
 import { ClientSessionsList } from "@/components/clients/ClientSessionsList";
 import { ClientNotesList } from "@/components/clients/ClientNotesList";
 import { ClientMessages } from "@/components/clients/ClientMessages";
@@ -24,6 +25,7 @@ export function ClientDetailContent({
   const [client, setClient] = useState(initialClient);
   const [activeTab, setActiveTab] = useState(initialTab);
   const [showAddSession, setShowAddSession] = useState(false);
+  const [showEditClient, setShowEditClient] = useState(false);
 
   const clientData = client as unknown as {
     id: string;
@@ -34,6 +36,7 @@ export function ClientDetailContent({
     phone: string | null;
     status: string;
     onboarded_at: string | null;
+    client_account_id: string | null;
     address_line1: string | null;
     address_line2: string | null;
     city: string | null;
@@ -141,8 +144,21 @@ export function ClientDetailContent({
           />
         )}
 
-        {activeTab === "details" && <ClientInfoCard client={clientData} />}
+        {activeTab === "details" && (
+          <ClientInfoCard
+            client={clientData}
+            onEdit={() => setShowEditClient(true)}
+          />
+        )}
       </div>
+
+      {/* Edit Client Dialog */}
+      <EditClientDialog
+        isOpen={showEditClient}
+        onClose={() => setShowEditClient(false)}
+        onSuccess={reloadClient}
+        client={clientData}
+      />
     </div>
   );
 }

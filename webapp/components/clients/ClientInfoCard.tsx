@@ -84,23 +84,28 @@ export function ClientInfoCard({ client, onEdit }: ClientInfoCardProps) {
 
   return (
     <div className="space-y-4">
+      {/* Edit Button */}
+      {onEdit && (
+        <div className="flex justify-end">
+          <button
+            onClick={onEdit}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors"
+          >
+            <IconEdit className="w-4 h-4" />
+            Edit Details
+          </button>
+        </div>
+      )}
+
       {/* Personal Information */}
       <div className="bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700">
-        <div className="px-4 py-3 border-b border-gray-200 dark:border-neutral-700 flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-gray-200 dark:border-neutral-700">
           <div className="flex items-center gap-2">
             <IconUser className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             <h3 className="font-semibold text-gray-900 dark:text-white">
               Personal Information
             </h3>
           </div>
-          {onEdit && (
-            <button
-              onClick={onEdit}
-              className="p-1.5 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded transition-colors"
-            >
-              <IconEdit className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-            </button>
-          )}
         </div>
         <div className="p-4 space-y-3">
           <InfoRow

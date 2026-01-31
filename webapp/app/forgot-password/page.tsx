@@ -31,6 +31,19 @@ export default async function ForgotPasswordPage() {
           </p>
         </div>
         <ForgotPasswordForm />
+
+        <div className="mt-6 pt-6 border-t border-gray-200 dark:border-neutral-700">
+          <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+            Are you a client?{' '}
+            <Link
+              href="/login?role=client"
+              className="text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              Use client portal login
+            </Link>
+            {' '}(no password needed)
+          </p>
+        </div>
       </div>
     </div>
   )

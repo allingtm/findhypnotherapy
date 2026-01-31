@@ -7,6 +7,7 @@ import { ServiceForm } from './ServiceForm'
 import type { Tables } from '@/lib/types/database'
 import { SERVICE_TYPE_LABELS } from '@/lib/types/services'
 import { formatServicePrice, formatSessionCount } from '@/lib/utils/price-display'
+import { toast } from 'sonner'
 
 interface ServicesSectionProps {
   services: Tables<'therapist_services'>[]
@@ -25,7 +26,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
     startTransition(async () => {
       const result = await deleteServiceAction(serviceId)
       if (!result.success) {
-        alert(result.error || 'Failed to delete service')
+        toast.error(result.error || 'Failed to delete service')
       }
     })
   }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createCheckoutSession } from '@/app/actions/stripe'
+import { toast } from 'sonner'
 
 export function SubscribeButton() {
   const [isLoading, setIsLoading] = useState(false)
@@ -12,7 +13,7 @@ export function SubscribeButton() {
       await createCheckoutSession()
     } catch (error) {
       console.error('Checkout error:', error)
-      alert('Failed to start checkout. Please try again.')
+      toast.error('Failed to start checkout. Please try again.')
       setIsLoading(false)
     }
   }

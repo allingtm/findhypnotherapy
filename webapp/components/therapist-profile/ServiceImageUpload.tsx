@@ -5,6 +5,7 @@ import { uploadServiceImageAction, deleteServiceImageAction } from '@/app/action
 import { Button } from '@/components/ui/Button'
 import { Alert } from '@/components/ui/Alert'
 import { validateImageFile } from '@/lib/utils/fileValidation'
+import { toast } from 'sonner'
 
 interface ServiceImageUploadProps {
   serviceId: string
@@ -31,7 +32,7 @@ export function ServiceImageUpload({
     // Validate file
     const validation = validateImageFile(file)
     if (!validation.valid) {
-      alert(validation.error)
+      toast.error(validation.error)
       return
     }
 

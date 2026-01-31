@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 interface Role {
   id: string
@@ -57,7 +58,7 @@ export function RoleManagement({
       setIsOpen(false)
     } catch (error) {
       console.error('Error updating role:', error)
-      alert('Failed to update role. Please try again.')
+      toast.error('Failed to update role. Please try again.')
     } finally {
       setIsLoading(false)
     }

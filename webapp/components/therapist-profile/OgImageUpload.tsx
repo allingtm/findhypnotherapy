@@ -6,6 +6,7 @@ import { uploadOgImageAction, deleteOgImageAction } from '@/app/actions/therapis
 import { Button } from '@/components/ui/Button'
 import { Alert } from '@/components/ui/Alert'
 import { validateImageFile } from '@/lib/utils/fileValidation'
+import { toast } from 'sonner'
 
 interface OgImageUploadProps {
   currentOgImageUrl?: string | null
@@ -29,7 +30,7 @@ export function OgImageUpload({ currentOgImageUrl }: OgImageUploadProps) {
 
     const validation = validateImageFile(file)
     if (!validation.valid) {
-      alert(validation.error)
+      toast.error(validation.error)
       return
     }
 

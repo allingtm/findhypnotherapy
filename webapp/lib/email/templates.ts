@@ -722,3 +722,78 @@ export function getSessionCancelledEmail(props: SessionCancelledEmailProps): { s
     html: getEmailWrapper(content),
   };
 }
+
+// =====================
+// CLIENT PORTAL ACCESS EMAIL
+// =====================
+
+interface PortalAccessEmailProps {
+  clientName: string;
+  therapistName: string;
+  portalUrl: string;
+}
+
+export function getPortalAccessEmail(props: PortalAccessEmailProps): { subject: string; html: string } {
+  const content = `
+    <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">Welcome to Your Client Portal</h2>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Hi ${props.clientName},
+    </p>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Your client profile with <strong>${props.therapistName}</strong> has been set up. You now have access to your personal client portal where you can:
+    </p>
+    <ul style="color: #333333; font-size: 16px; line-height: 1.8; margin: 0 0 20px; padding-left: 20px;">
+      <li>View your upcoming and past sessions</li>
+      <li>Send and receive messages</li>
+      <li>Update your contact information</li>
+      <li>Access session details and meeting links</li>
+    </ul>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${props.portalUrl}" style="display: inline-block; background-color: #2563eb; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 6px;">
+        Access Your Portal
+      </a>
+    </div>
+    <p style="color: #666666; font-size: 14px; text-align: center; margin: 0;">
+      You'll receive a magic link to your email each time you want to log in - no password needed!
+    </p>
+  `;
+
+  return {
+    subject: `Welcome to your client portal - ${props.therapistName}`,
+    html: getEmailWrapper(content),
+  };
+}
+
+// =====================
+// CLIENT MAGIC LINK EMAIL
+// =====================
+
+interface ClientMagicLinkEmailProps {
+  clientName: string;
+  magicLinkUrl: string;
+}
+
+export function getClientMagicLinkEmail(props: ClientMagicLinkEmailProps): { subject: string; html: string } {
+  const content = `
+    <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">Your Login Link</h2>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Hi ${props.clientName},
+    </p>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Click the button below to securely access your client portal.
+    </p>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${props.magicLinkUrl}" style="display: inline-block; background-color: #2563eb; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 6px;">
+        Log In to Portal
+      </a>
+    </div>
+    <p style="color: #666666; font-size: 14px; text-align: center; margin: 0;">
+      This link will expire in 1 hour. If you didn't request this, you can safely ignore it.
+    </p>
+  `;
+
+  return {
+    subject: `Your login link for Find Hypnotherapy`,
+    html: getEmailWrapper(content),
+  };
+}

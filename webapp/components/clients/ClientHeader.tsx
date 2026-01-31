@@ -13,8 +13,11 @@ import {
   IconUserCheck,
   IconClock,
   IconAlertCircle,
+  IconDeviceDesktop,
+  IconCheck,
 } from "@tabler/icons-react";
-import { archiveClientAction, restoreClientAction } from "@/app/actions/clients";
+import { archiveClientAction, restoreClientAction, migrateClientToPortalAction } from "@/app/actions/clients";
+import { toast } from "sonner";
 
 interface ClientHeaderProps {
   client: {
@@ -25,6 +28,7 @@ interface ClientHeaderProps {
     last_name: string | null;
     status: string;
     onboarded_at: string | null;
+    client_account_id: string | null;
   };
   onUpdate: () => void;
   onAddSession: () => void;
@@ -95,6 +99,25 @@ export function ClientHeader({ client, onUpdate, onAddSession }: ClientHeaderPro
       onUpdate();
     } catch (error) {
       console.error("Failed to restore client:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEnablePortal = async () => {
+    setIsLoading(true);
+    setShowMenu(false);
+    try {
+      const result = await migrateClientToPortalAction(client.id, true);
+      if (result.success) {
+        toast.success("Portal access enabled! Client will receive a welcome email.");
+        onUpdate();
+      } else {
+        toast.error(result.error || "Failed to enable portal access");
+      }
+    } catch (error) {
+      console.error("Failed to enable portal:", error);
+      toast.error("Failed to enable portal access");
     } finally {
       setIsLoading(false);
     }
@@ -176,6 +199,21 @@ export function ClientHeader({ client, onUpdate, onAddSession }: ClientHeaderPro
                     <IconMail className="w-4 h-4" />
                     Send Email
                   </a>
+                  {client.status === "active" && !client.client_account_id && (
+                    <button
+                      onClick={handleEnablePortal}
+                      className="w-full px-4 py-2 text-left text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-neutral-700 flex items-center gap-2"
+                    >
+                      <IconDeviceDesktop className="w-4 h-4" />
+                      Enable Portal Access
+                    </button>
+                  )}
+                  {client.status === "active" && client.client_account_id && (
+                    <div className="px-4 py-2 text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
+                      <IconCheck className="w-4 h-4" />
+                      Portal Enabled
+                    </div>
+                  )}
                   {client.status === "archived" ? (
                     <button
                       onClick={handleRestore}

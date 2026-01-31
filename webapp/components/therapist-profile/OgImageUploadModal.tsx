@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import Cropper from 'react-easy-crop'
 import { Area, getCroppedImage } from '@/lib/utils/imageCrop'
 import { Button } from '@/components/ui/Button'
+import { toast } from 'sonner'
 
 interface OgImageUploadModalProps {
   isOpen: boolean
@@ -95,7 +96,7 @@ export function OgImageUploadModal({
       onUpload(file)
     } catch (error) {
       console.error('Error cropping image:', error)
-      alert('Failed to process image. Please try again.')
+      toast.error('Failed to process image. Please try again.')
     } finally {
       setIsProcessing(false)
     }

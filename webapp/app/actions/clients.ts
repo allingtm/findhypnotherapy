@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail } from "@/lib/email/sendgrid";
-import { getClientInvitationEmail, getClientOnboardingCompleteEmail } from "@/lib/email/templates";
+import { getClientInvitationEmail, getClientOnboardingCompleteEmail, getPortalAccessEmail } from "@/lib/email/templates";
 import {
   clientInvitationSchema,
   clientOnboardingSchema,
@@ -31,6 +31,12 @@ function generateSlug(email: string): string {
   const emailPrefix = email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "-");
   const randomSuffix = crypto.randomBytes(4).toString("hex");
   return `${emailPrefix}-${randomSuffix}`.slice(0, 100);
+}
+
+function sanitizeName(name: string): string {
+  // Remove characters not allowed by check_name_format constraint
+  // Only allows: letters, spaces, apostrophes, hyphens
+  return name.replace(/[^a-zA-Z\s'\-]/g, "").trim();
 }
 
 function extractFieldErrors(
@@ -526,6 +532,132 @@ export async function completeClientOnboardingAction(
       return { success: false, error: "Failed to complete onboarding" };
     }
 
+    // Create client auth account for portal access
+    let clientAccountId: string | null = null;
+    try {
+      // Create Supabase auth user (no password - uses magic link)
+      // Sanitize name to comply with check_name_format constraint
+      const sanitizedName = sanitizeName(`${validatedData.firstName} ${validatedData.lastName}`);
+      const { data: authUser, error: authError } = await adminClient.auth.admin.createUser({
+        email: client.email,
+        email_confirm: true, // Auto-confirm since they verified via invitation
+        user_metadata: {
+          name: sanitizedName || "Client",
+          role: "client",
+        },
+      });
+
+      if (authError) {
+        // If user already exists, try to get existing user
+        if (authError.message?.includes("already been registered")) {
+          const { data: existingUsers } = await adminClient.auth.admin.listUsers();
+          const existingUser = existingUsers?.users?.find(u => u.email === client.email);
+          if (existingUser) {
+            // Check if they already have a client account
+            const { data: existingAccount } = await adminClient
+              .from("client_accounts")
+              .select("id")
+              .eq("user_id", existingUser.id)
+              .single();
+
+            if (existingAccount) {
+              clientAccountId = existingAccount.id;
+            } else {
+              // Create client account for existing user
+              const { data: newAccount, error: accountError } = await adminClient
+                .from("client_accounts")
+                .insert({ user_id: existingUser.id })
+                .select("id")
+                .single();
+
+              if (!accountError && newAccount) {
+                clientAccountId = newAccount.id;
+
+                // Assign Client role
+                const { data: clientRole } = await adminClient
+                  .from("roles")
+                  .select("id")
+                  .eq("name", "Client")
+                  .single();
+
+                if (clientRole) {
+                  await adminClient.from("user_roles").upsert({
+                    user_id: existingUser.id,
+                    role_id: clientRole.id,
+                  }, { onConflict: "user_id,role_id" });
+                }
+              }
+            }
+          }
+        } else {
+          console.error("Failed to create auth user:", authError);
+        }
+      } else if (authUser?.user) {
+        // Create client_accounts record
+        const { data: newAccount, error: accountError } = await adminClient
+          .from("client_accounts")
+          .insert({ user_id: authUser.user.id })
+          .select("id")
+          .single();
+
+        if (accountError) {
+          console.error("Failed to create client account:", accountError);
+        } else {
+          clientAccountId = newAccount.id;
+
+          // Assign Client role
+          const { data: clientRole } = await adminClient
+            .from("roles")
+            .select("id")
+            .eq("name", "Client")
+            .single();
+
+          if (clientRole) {
+            await adminClient.from("user_roles").insert({
+              user_id: authUser.user.id,
+              role_id: clientRole.id,
+            });
+          }
+        }
+      }
+
+      // If we have a client account, create the relationship and update the client record
+      if (clientAccountId) {
+        // Update client with account ID
+        await adminClient
+          .from("clients")
+          .update({ client_account_id: clientAccountId })
+          .eq("id", client.id);
+
+        // Create therapist relationship
+        await adminClient
+          .from("client_therapist_relationships")
+          .upsert({
+            client_account_id: clientAccountId,
+            therapist_profile_id: therapistProfile.id,
+            client_record_id: client.id,
+            status: "active",
+          }, { onConflict: "client_account_id,therapist_profile_id" });
+
+        // Send portal access email
+        const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/portal/login`;
+        const emailContent = getPortalAccessEmail({
+          clientName: `${validatedData.firstName} ${validatedData.lastName}`,
+          therapistName: therapistProfile.users.name,
+          portalUrl,
+        });
+
+        await sendEmail({
+          to: client.email,
+          subject: emailContent.subject,
+          html: emailContent.html,
+        });
+      }
+    } catch (accountError) {
+      // Log but don't fail the onboarding - client account is a nice-to-have
+      console.error("Error creating client account:", accountError);
+    }
+
     // Record terms acceptance
     await adminClient.from("client_terms_acceptance").insert({
       client_id: client.id,
@@ -940,6 +1072,253 @@ export async function convertVisitorToClientAction(
     return { success: true, data: result.data };
   } catch (error) {
     console.error("Error converting visitor:", error);
+    return { success: false, error: "An unexpected error occurred" };
+  }
+}
+
+// =====================
+// MIGRATE CLIENT TO PORTAL (Admin)
+// =====================
+
+/**
+ * Creates a portal account for an existing client who was onboarded before the portal feature.
+ * This can be called by therapists from their client management page.
+ */
+export async function migrateClientToPortalAction(
+  clientId: string,
+  sendWelcomeEmail: boolean = true
+): Promise<ActionResponse> {
+  try {
+    const supabase = await createClient();
+    const adminClient = createAdminClient();
+
+    // Verify the requesting user owns this client
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { success: false, error: "You must be logged in" };
+    }
+
+    // Get the client and verify ownership
+    const { data: client, error: clientError } = await supabase
+      .from("clients")
+      .select(`
+        id,
+        email,
+        first_name,
+        last_name,
+        status,
+        client_account_id,
+        therapist_profile_id,
+        therapist_profiles!inner (
+          id,
+          user_id,
+          users!inner (name)
+        )
+      `)
+      .eq("id", clientId)
+      .single();
+
+    if (clientError || !client) {
+      return { success: false, error: "Client not found" };
+    }
+
+    const therapistProfile = client.therapist_profiles as unknown as {
+      id: string;
+      user_id: string;
+      users: { name: string };
+    };
+
+    // Verify the therapist owns this client
+    if (therapistProfile?.user_id !== user.id) {
+      return { success: false, error: "You don't have permission to manage this client" };
+    }
+
+    // Check if client already has an account
+    if (client.client_account_id) {
+      return { success: false, error: "Client already has a portal account" };
+    }
+
+    // Check if client is active
+    if (client.status !== "active") {
+      return { success: false, error: "Only active clients can be migrated to the portal" };
+    }
+
+    // Create Supabase auth user
+    // Sanitize name to comply with check_name_format constraint (letters, spaces, apostrophes, hyphens only)
+    const sanitizedName = sanitizeName(`${client.first_name || ""} ${client.last_name || ""}`.trim());
+    const { data: authUser, error: authUserError } = await adminClient.auth.admin.createUser({
+      email: client.email,
+      email_confirm: true,
+      user_metadata: {
+        name: sanitizedName || "Client",
+        role: "client",
+      },
+    });
+
+    if (authUserError) {
+      // If user already exists, try to get existing user
+      if (authUserError.message?.includes("already been registered")) {
+        const { data: existingUsers } = await adminClient.auth.admin.listUsers();
+        const existingUser = existingUsers?.users?.find(u => u.email === client.email);
+
+        if (existingUser) {
+          // Check if they already have a client account
+          const { data: existingAccount } = await adminClient
+            .from("client_accounts")
+            .select("id")
+            .eq("user_id", existingUser.id)
+            .single();
+
+          if (existingAccount) {
+            // Link existing account to this client
+            await adminClient
+              .from("clients")
+              .update({ client_account_id: existingAccount.id })
+              .eq("id", clientId);
+
+            // Create relationship if it doesn't exist
+            await adminClient
+              .from("client_therapist_relationships")
+              .upsert({
+                client_account_id: existingAccount.id,
+                therapist_profile_id: therapistProfile.id,
+                client_record_id: clientId,
+                status: "active",
+              }, { onConflict: "client_account_id,therapist_profile_id" });
+
+            revalidatePath("/dashboard/clients");
+            return { success: true, data: { message: "Client linked to existing portal account" } };
+          }
+
+          // Create account for existing auth user
+          const { data: newAccount, error: accountError } = await adminClient
+            .from("client_accounts")
+            .insert({ user_id: existingUser.id })
+            .select("id")
+            .single();
+
+          if (accountError) {
+            console.error("Failed to create client account:", accountError);
+            return { success: false, error: "Failed to create portal account" };
+          }
+
+          // Assign Client role
+          const { data: clientRole } = await adminClient
+            .from("roles")
+            .select("id")
+            .eq("name", "Client")
+            .single();
+
+          if (clientRole) {
+            await adminClient.from("user_roles").upsert({
+              user_id: existingUser.id,
+              role_id: clientRole.id,
+            }, { onConflict: "user_id,role_id" });
+          }
+
+          // Update client with account ID
+          await adminClient
+            .from("clients")
+            .update({ client_account_id: newAccount.id })
+            .eq("id", clientId);
+
+          // Create therapist relationship
+          await adminClient
+            .from("client_therapist_relationships")
+            .upsert({
+              client_account_id: newAccount.id,
+              therapist_profile_id: therapistProfile.id,
+              client_record_id: clientId,
+              status: "active",
+            }, { onConflict: "client_account_id,therapist_profile_id" });
+
+          // Send welcome email
+          if (sendWelcomeEmail) {
+            const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/portal/login`;
+            const emailContent = getPortalAccessEmail({
+              clientName: `${client.first_name} ${client.last_name}`,
+              therapistName: therapistProfile.users.name,
+              portalUrl,
+            });
+
+            await sendEmail({
+              to: client.email,
+              subject: emailContent.subject,
+              html: emailContent.html,
+            });
+          }
+
+          revalidatePath("/dashboard/clients");
+          return { success: true, data: { message: "Portal account created successfully" } };
+        }
+      }
+
+      console.error("Failed to create auth user:", authUserError);
+      return { success: false, error: "Failed to create user account" };
+    }
+
+    // Create client_accounts record
+    const { data: newAccount, error: accountError } = await adminClient
+      .from("client_accounts")
+      .insert({ user_id: authUser.user.id })
+      .select("id")
+      .single();
+
+    if (accountError) {
+      console.error("Failed to create client account:", accountError);
+      return { success: false, error: "Failed to create portal account" };
+    }
+
+    // Assign Client role
+    const { data: clientRole } = await adminClient
+      .from("roles")
+      .select("id")
+      .eq("name", "Client")
+      .single();
+
+    if (clientRole) {
+      await adminClient.from("user_roles").insert({
+        user_id: authUser.user.id,
+        role_id: clientRole.id,
+      });
+    }
+
+    // Update client with account ID
+    await adminClient
+      .from("clients")
+      .update({ client_account_id: newAccount.id })
+      .eq("id", clientId);
+
+    // Create therapist relationship
+    await adminClient
+      .from("client_therapist_relationships")
+      .insert({
+        client_account_id: newAccount.id,
+        therapist_profile_id: therapistProfile.id,
+        client_record_id: clientId,
+        status: "active",
+      });
+
+    // Send welcome email
+    if (sendWelcomeEmail) {
+      const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/portal/login`;
+      const emailContent = getPortalAccessEmail({
+        clientName: `${client.first_name} ${client.last_name}`,
+        therapistName: therapistProfile.users.name,
+        portalUrl,
+      });
+
+      await sendEmail({
+        to: client.email,
+        subject: emailContent.subject,
+        html: emailContent.html,
+      });
+    }
+
+    revalidatePath("/dashboard/clients");
+    return { success: true, data: { message: "Portal account created successfully" } };
+  } catch (error) {
+    console.error("Error migrating client to portal:", error);
     return { success: false, error: "An unexpected error occurred" };
   }
 }

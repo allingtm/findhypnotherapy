@@ -6,6 +6,7 @@ import { uploadBannerAction, deleteBannerAction } from '@/app/actions/therapist-
 import { Button } from '@/components/ui/Button'
 import { Alert } from '@/components/ui/Alert'
 import { validateImageFile } from '@/lib/utils/fileValidation'
+import { toast } from 'sonner'
 
 interface BannerUploadProps {
   currentBannerUrl?: string | null
@@ -30,7 +31,7 @@ export function BannerUpload({ currentBannerUrl }: BannerUploadProps) {
     // Validate file
     const validation = validateImageFile(file)
     if (!validation.valid) {
-      alert(validation.error)
+      toast.error(validation.error)
       return
     }
 

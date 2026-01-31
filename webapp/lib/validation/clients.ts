@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+// Name format regex - matches database check_name_format constraint
+// Only allows: letters, spaces, apostrophes, hyphens
+const nameFormatRegex = /^[a-zA-Z\s'\-]*$/;
+const nameFormatMessage = "Name can only contain letters, spaces, apostrophes, and hyphens";
+
 // =====================
 // CLIENT INVITATION
 // =====================
@@ -15,11 +20,13 @@ export const clientInvitationSchema = z.object({
   firstName: z
     .string()
     .max(100, "First name must be 100 characters or less")
+    .regex(nameFormatRegex, nameFormatMessage)
     .trim()
     .optional(),
   lastName: z
     .string()
     .max(100, "Last name must be 100 characters or less")
+    .regex(nameFormatRegex, nameFormatMessage)
     .trim()
     .optional(),
   personalMessage: z
@@ -48,11 +55,13 @@ export const clientOnboardingSchema = z.object({
     .string()
     .min(1, "First name is required")
     .max(100, "First name must be 100 characters or less")
+    .regex(nameFormatRegex, nameFormatMessage)
     .trim(),
   lastName: z
     .string()
     .min(1, "Last name is required")
     .max(100, "Last name must be 100 characters or less")
+    .regex(nameFormatRegex, nameFormatMessage)
     .trim(),
   phone: z
     .string()
@@ -97,6 +106,7 @@ export const clientOnboardingSchema = z.object({
     .string()
     .min(1, "Emergency contact name is required")
     .max(200, "Name must be 200 characters or less")
+    .regex(nameFormatRegex, nameFormatMessage)
     .trim(),
   emergencyContactPhone: z
     .string()
@@ -132,6 +142,7 @@ export const clientOnboardingSchema = z.object({
   gpName: z
     .string()
     .max(200, "GP name must be 200 characters or less")
+    .regex(nameFormatRegex, nameFormatMessage)
     .trim()
     .optional()
     .or(z.literal("")),
@@ -162,12 +173,14 @@ export const clientUpdateSchema = z.object({
     .string()
     .min(1, "First name is required")
     .max(100, "First name must be 100 characters or less")
+    .regex(nameFormatRegex, nameFormatMessage)
     .trim()
     .optional(),
   lastName: z
     .string()
     .min(1, "Last name is required")
     .max(100, "Last name must be 100 characters or less")
+    .regex(nameFormatRegex, nameFormatMessage)
     .trim()
     .optional(),
   phone: z
@@ -192,7 +205,7 @@ export const clientUpdateSchema = z.object({
   country: z.string().max(100).trim().optional().nullable(),
 
   // Emergency Contact
-  emergencyContactName: z.string().max(200).trim().optional().nullable(),
+  emergencyContactName: z.string().max(200).regex(nameFormatRegex, nameFormatMessage).trim().optional().nullable(),
   emergencyContactPhone: z.string().max(50).trim().optional().nullable(),
   emergencyContactRelationship: z.string().max(100).trim().optional().nullable(),
 
@@ -200,7 +213,7 @@ export const clientUpdateSchema = z.object({
   healthConditions: z.string().max(2000).trim().optional().nullable(),
   medications: z.string().max(1000).trim().optional().nullable(),
   allergies: z.string().max(500).trim().optional().nullable(),
-  gpName: z.string().max(200).trim().optional().nullable(),
+  gpName: z.string().max(200).regex(nameFormatRegex, nameFormatMessage).trim().optional().nullable(),
   gpPractice: z.string().max(255).trim().optional().nullable(),
 });
 

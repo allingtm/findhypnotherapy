@@ -41,6 +41,7 @@ export type Database = {
           cancellation_reason: string | null
           cancelled_at: string | null
           cancelled_by: string | null
+          confirmation_email_sg_id: string | null
           confirmed_at: string | null
           created_at: string | null
           duration_minutes: number
@@ -48,10 +49,11 @@ export type Database = {
           id: string
           is_verified: boolean | null
           meeting_url: string | null
+          notification_email_sg_id: string | null
           reminder_1h_sent_at: string | null
           reminder_24h_sent_at: string | null
-          service_terms_snapshot: string | null
           service_id: string | null
+          service_terms_snapshot: string | null
           session_format: string | null
           start_time: string
           status: string
@@ -59,6 +61,7 @@ export type Database = {
           terms_id: string | null
           therapist_profile_id: string
           updated_at: string | null
+          verification_email_sg_id: string | null
           verification_expires_at: string | null
           verification_token: string | null
           visitor_email: string
@@ -72,6 +75,7 @@ export type Database = {
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
+          confirmation_email_sg_id?: string | null
           confirmed_at?: string | null
           created_at?: string | null
           duration_minutes: number
@@ -79,10 +83,11 @@ export type Database = {
           id?: string
           is_verified?: boolean | null
           meeting_url?: string | null
+          notification_email_sg_id?: string | null
           reminder_1h_sent_at?: string | null
           reminder_24h_sent_at?: string | null
-          service_terms_snapshot?: string | null
           service_id?: string | null
+          service_terms_snapshot?: string | null
           session_format?: string | null
           start_time: string
           status?: string
@@ -90,6 +95,7 @@ export type Database = {
           terms_id?: string | null
           therapist_profile_id: string
           updated_at?: string | null
+          verification_email_sg_id?: string | null
           verification_expires_at?: string | null
           verification_token?: string | null
           visitor_email: string
@@ -103,6 +109,7 @@ export type Database = {
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
+          confirmation_email_sg_id?: string | null
           confirmed_at?: string | null
           created_at?: string | null
           duration_minutes?: number
@@ -110,10 +117,11 @@ export type Database = {
           id?: string
           is_verified?: boolean | null
           meeting_url?: string | null
+          notification_email_sg_id?: string | null
           reminder_1h_sent_at?: string | null
           reminder_24h_sent_at?: string | null
-          service_terms_snapshot?: string | null
           service_id?: string | null
+          service_terms_snapshot?: string | null
           session_format?: string | null
           start_time?: string
           status?: string
@@ -121,6 +129,7 @@ export type Database = {
           terms_id?: string | null
           therapist_profile_id?: string
           updated_at?: string | null
+          verification_email_sg_id?: string | null
           verification_expires_at?: string | null
           verification_token?: string | null
           visitor_email?: string
@@ -135,6 +144,13 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "therapist_services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_terms_id_fkey"
+            columns: ["terms_id"]
+            isOneToOne: false
+            referencedRelation: "therapist_terms"
             referencedColumns: ["id"]
           },
           {
@@ -213,6 +229,30 @@ export type Database = {
           scope?: string | null
           sync_error?: string | null
           token_expires_at?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      client_accounts: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_login_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_login_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_login_at?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -426,7 +466,7 @@ export type Database = {
           accepted_at: string
           client_id: string
           id: string
-          ip_address: string | null
+          ip_address: unknown
           terms_id: string
           user_agent: string | null
         }
@@ -434,7 +474,7 @@ export type Database = {
           accepted_at?: string
           client_id: string
           id?: string
-          ip_address?: string | null
+          ip_address?: unknown
           terms_id: string
           user_agent?: string | null
         }
@@ -442,7 +482,7 @@ export type Database = {
           accepted_at?: string
           client_id?: string
           id?: string
-          ip_address?: string | null
+          ip_address?: unknown
           terms_id?: string
           user_agent?: string | null
         }
@@ -463,6 +503,61 @@ export type Database = {
           },
         ]
       }
+      client_therapist_relationships: {
+        Row: {
+          client_account_id: string
+          client_record_id: string
+          created_at: string | null
+          ended_at: string | null
+          id: string
+          started_at: string | null
+          status: string | null
+          therapist_profile_id: string
+        }
+        Insert: {
+          client_account_id: string
+          client_record_id: string
+          created_at?: string | null
+          ended_at?: string | null
+          id?: string
+          started_at?: string | null
+          status?: string | null
+          therapist_profile_id: string
+        }
+        Update: {
+          client_account_id?: string
+          client_record_id?: string
+          created_at?: string | null
+          ended_at?: string | null
+          id?: string
+          started_at?: string | null
+          status?: string | null
+          therapist_profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_therapist_relationships_client_account_id_fkey"
+            columns: ["client_account_id"]
+            isOneToOne: false
+            referencedRelation: "client_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_therapist_relationships_client_record_id_fkey"
+            columns: ["client_record_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_therapist_relationships_therapist_profile_id_fkey"
+            columns: ["therapist_profile_id"]
+            isOneToOne: false
+            referencedRelation: "therapist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address_line1: string | null
@@ -470,6 +565,7 @@ export type Database = {
           allergies: string | null
           archived_at: string | null
           city: string | null
+          client_account_id: string | null
           country: string | null
           created_at: string
           email: string
@@ -497,6 +593,7 @@ export type Database = {
           allergies?: string | null
           archived_at?: string | null
           city?: string | null
+          client_account_id?: string | null
           country?: string | null
           created_at?: string
           email: string
@@ -524,6 +621,7 @@ export type Database = {
           allergies?: string | null
           archived_at?: string | null
           city?: string | null
+          client_account_id?: string | null
           country?: string | null
           created_at?: string
           email?: string
@@ -546,6 +644,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "clients_client_account_id_fkey"
+            columns: ["client_account_id"]
+            isOneToOne: false
+            referencedRelation: "client_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "clients_therapist_profile_id_fkey"
             columns: ["therapist_profile_id"]
@@ -612,6 +717,57 @@ export type Database = {
           },
         ]
       }
+      email_events: {
+        Row: {
+          booking_id: string | null
+          created_at: string | null
+          email: string
+          event_type: string
+          id: string
+          message_id: string | null
+          raw_payload: Json | null
+          sg_message_id: string | null
+          timestamp: string
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string | null
+          email: string
+          event_type: string
+          id?: string
+          message_id?: string | null
+          raw_payload?: Json | null
+          sg_message_id?: string | null
+          timestamp: string
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string | null
+          email?: string
+          event_type?: string
+          id?: string
+          message_id?: string | null
+          raw_payload?: Json | null
+          sg_message_id?: string | null
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_events_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_events_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_verifications: {
         Row: {
           conversation_id: string
@@ -655,6 +811,7 @@ export type Database = {
           id: string
           is_read: boolean | null
           sender_type: string
+          sg_message_id: string | null
         }
         Insert: {
           content: string
@@ -663,6 +820,7 @@ export type Database = {
           id?: string
           is_read?: boolean | null
           sender_type: string
+          sg_message_id?: string | null
         }
         Update: {
           content?: string
@@ -671,6 +829,7 @@ export type Database = {
           id?: string
           is_read?: boolean | null
           sender_type?: string
+          sg_message_id?: string | null
         }
         Relationships: [
           {
@@ -1018,7 +1177,6 @@ export type Database = {
           address_visibility: string | null
           availability_notes: string | null
           banner_url: string | null
-          mobile_banner_url: string | null
           bio: string | null
           booking_url: string | null
           city: string | null
@@ -1034,8 +1192,9 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           meta_description: string | null
-          og_image_url: string | null
+          mobile_banner_url: string | null
           offers_free_consultation: boolean | null
+          og_image_url: string | null
           phone: string | null
           postal_code: string | null
           professional_title: string | null
@@ -1058,7 +1217,6 @@ export type Database = {
           address_visibility?: string | null
           availability_notes?: string | null
           banner_url?: string | null
-          mobile_banner_url?: string | null
           bio?: string | null
           booking_url?: string | null
           city?: string | null
@@ -1074,8 +1232,9 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           meta_description?: string | null
-          og_image_url?: string | null
+          mobile_banner_url?: string | null
           offers_free_consultation?: boolean | null
+          og_image_url?: string | null
           phone?: string | null
           postal_code?: string | null
           professional_title?: string | null
@@ -1098,7 +1257,6 @@ export type Database = {
           address_visibility?: string | null
           availability_notes?: string | null
           banner_url?: string | null
-          mobile_banner_url?: string | null
           bio?: string | null
           booking_url?: string | null
           city?: string | null
@@ -1114,8 +1272,9 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           meta_description?: string | null
-          og_image_url?: string | null
+          mobile_banner_url?: string | null
           offers_free_consultation?: boolean | null
+          og_image_url?: string | null
           phone?: string | null
           postal_code?: string | null
           professional_title?: string | null
@@ -1498,10 +1657,12 @@ export type Database = {
         Args: { profile_user_id: string; user_name: string }
         Returns: string
       }
-      get_user_roles: { Args: Record<PropertyKey, never>; Returns: string[] }
-      has_active_subscription: { Args: Record<PropertyKey, never>; Returns: boolean }
+      get_client_account_id: { Args: never; Returns: string }
+      get_user_roles: { Args: never; Returns: string[] }
+      has_active_subscription: { Args: never; Returns: boolean }
       has_role: { Args: { role_name: string }; Returns: boolean }
-      is_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
+      is_admin: { Args: never; Returns: boolean }
+      is_client: { Args: never; Returns: boolean }
       search_therapists: {
         Args: {
           location_filter?: string
@@ -1561,7 +1722,7 @@ export type Database = {
           video_url: string
         }[]
       }
-      send_booking_reminders: { Args: Record<PropertyKey, never>; Returns: undefined }
+      send_booking_reminders: { Args: never; Returns: undefined }
     }
     Enums: {
       price_display_mode: "exact" | "from" | "range" | "contact" | "free"
@@ -1722,6 +1883,7 @@ export type ClientStatus = "invited" | "onboarding" | "active" | "archived"
 export type ClientSessionStatus = "scheduled" | "completed" | "cancelled" | "no_show"
 export type ClientSessionFormat = "online" | "in-person" | "phone"
 export type ClientNoteType = "session_note" | "general_note" | "progress_note"
+export type ClientTherapistRelationshipStatus = "active" | "paused" | "ended"
 
 // Onboarding requirements type for services
 export type OnboardingFieldRequirement = "required" | "optional" | "hidden"
