@@ -24,7 +24,7 @@ export function VideoDetailView({ video, relatedVideos }: VideoDetailViewProps) 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
       {/* Video Player */}
-      <div className="relative aspect-video bg-black rounded-lg overflow-hidden shadow-lg">
+      <div className={`relative ${video.orientation === 'portrait' ? 'aspect-[9/16] max-w-md mx-auto' : 'aspect-video'} bg-black rounded-lg overflow-hidden shadow-lg`}>
         <VideoPlayer
           src={video.video_url}
           poster={video.thumbnail_url}

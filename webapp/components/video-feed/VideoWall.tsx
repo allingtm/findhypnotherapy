@@ -8,9 +8,10 @@ import { formatDuration } from '@/lib/utils/videoValidation'
 interface VideoWallProps {
   videos: VideoFeedItem[]
   showTherapistInfo?: boolean
+  orientation?: 'landscape' | 'portrait'
 }
 
-export function VideoWall({ videos, showTherapistInfo = true }: VideoWallProps) {
+export function VideoWall({ videos, showTherapistInfo = true, orientation }: VideoWallProps) {
   if (videos.length === 0) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -19,13 +20,18 @@ export function VideoWall({ videos, showTherapistInfo = true }: VideoWallProps) 
     )
   }
 
+  const gridClass = orientation === 'portrait'
+    ? 'grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4'
+    : 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4'
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className={gridClass}>
       {videos.map((video) => (
         <VideoWallCard
           key={video.id}
           video={video}
           showTherapistInfo={showTherapistInfo}
+          orientation={orientation}
         />
       ))}
     </div>
@@ -35,9 +41,10 @@ export function VideoWall({ videos, showTherapistInfo = true }: VideoWallProps) 
 interface VideoWallCardProps {
   video: VideoFeedItem
   showTherapistInfo?: boolean
+  orientation?: 'landscape' | 'portrait'
 }
 
-function VideoWallCard({ video, showTherapistInfo = true }: VideoWallCardProps) {
+function VideoWallCard({ video, showTherapistInfo = true, orientation }: VideoWallCardProps) {
   // Use slug if available, fallback to id
   const videoPath = video.slug || video.id
 
@@ -47,7 +54,7 @@ function VideoWallCard({ video, showTherapistInfo = true }: VideoWallCardProps) 
       className="group block rounded-lg overflow-hidden bg-white dark:bg-neutral-800 shadow-sm hover:shadow-md transition-shadow"
     >
       {/* Thumbnail */}
-      <div className="relative aspect-video bg-gray-100 dark:bg-neutral-700 overflow-hidden">
+      <div className={`relative ${orientation === 'portrait' ? 'aspect-[9/16]' : 'aspect-video'} bg-gray-100 dark:bg-neutral-700 overflow-hidden`}>
         {video.thumbnail_url ? (
           <Image
             src={video.thumbnail_url}

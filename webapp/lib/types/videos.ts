@@ -2,6 +2,8 @@ export type VideoStatus = 'processing' | 'published' | 'rejected' | 'deleted'
 
 export type SessionFormat = 'in-person' | 'online' | 'phone'
 
+export type VideoOrientation = 'landscape' | 'portrait'
+
 export interface TherapistVideo {
   id: string
   therapist_profile_id: string
@@ -13,6 +15,7 @@ export interface TherapistVideo {
   thumbnail_url: string | null
   duration_seconds: number | null
   session_format: SessionFormat[] | null
+  orientation: VideoOrientation
   status: VideoStatus
   view_count: number
   created_at: string
@@ -29,6 +32,7 @@ export interface VideoFeedItem {
   thumbnail_url: string | null
   duration_seconds: number | null
   session_format: SessionFormat[] | null
+  orientation: VideoOrientation
   created_at: string
   published_at: string | null
   therapist_profile_id: string

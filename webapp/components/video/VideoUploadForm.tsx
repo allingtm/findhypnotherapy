@@ -37,6 +37,7 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
   )
   const [showThumbnailSelector, setShowThumbnailSelector] = useState(false)
   const [videoDuration, setVideoDuration] = useState<number | null>(null)
+  const [videoOrientation, setVideoOrientation] = useState<'landscape' | 'portrait' | null>(null)
   const [videoError, setVideoError] = useState<string | null>(null)
   const [dragActive, setDragActive] = useState(false)
 
@@ -90,6 +91,7 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
     }
 
     setVideoDuration(video.duration)
+    setVideoOrientation(aspectValidation.orientation || null)
   }, [])
 
   const handleDrop = useCallback(
@@ -152,12 +154,17 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
         formData.set('duration_seconds', Math.floor(videoDuration).toString())
       }
 
+      // Add orientation if detected
+      if (videoOrientation) {
+        formData.set('orientation', videoOrientation)
+      }
+
       // Add video ID if editing
       if (isEditing && editVideo) {
         formData.set('videoId', editVideo.id)
       }
     },
-    [videoFile, thumbnailFile, videoDuration, isEditing, editVideo]
+    [videoFile, thumbnailFile, videoDuration, videoOrientation, isEditing, editVideo]
   )
 
   // Handle success
@@ -191,7 +198,7 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
         {!isEditing && (
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Video (16:9 landscape, max {VIDEO_CONSTRAINTS.MAX_DURATION_SECONDS}s)
+              Video (landscape 16:9 or portrait 9:16, max {VIDEO_CONSTRAINTS.MAX_DURATION_SECONDS}s)
             </label>
 
             {!videoPreviewUrl ? (
@@ -232,7 +239,7 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
               </div>
             ) : (
               <div className="relative">
-                <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                <div className={`${videoOrientation === 'portrait' ? 'aspect-[9/16] max-w-sm mx-auto' : 'aspect-video'} bg-black rounded-lg overflow-hidden`}>
                   <video
                     ref={videoPreviewRef}
                     src={videoPreviewUrl}
@@ -252,6 +259,7 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
                     setVideoFile(null)
                     setVideoPreviewUrl(null)
                     setVideoDuration(null)
+                    setVideoOrientation(null)
                     setThumbnailFile(null)
                     setThumbnailPreviewUrl(null)
                   }}

@@ -18,6 +18,9 @@ interface VideoFeedClientProps {
 }
 
 export function VideoFeedClient({ initialVideos, hasMore, specializations }: VideoFeedClientProps) {
+  const landscapeVideos = initialVideos.filter(v => v.orientation !== 'portrait')
+  const portraitVideos = initialVideos.filter(v => v.orientation === 'portrait')
+
   if (initialVideos.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-neutral-950">
@@ -63,7 +66,29 @@ export function VideoFeedClient({ initialVideos, hasMore, specializations }: Vid
 
         <VideoFeedFilters specializations={specializations} />
 
-        <VideoWall videos={initialVideos} />
+        {/* Landscape Videos Section */}
+        {landscapeVideos.length > 0 && (
+          <section className="mb-10">
+            {portraitVideos.length > 0 && (
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
+                Landscape
+              </h2>
+            )}
+            <VideoWall videos={landscapeVideos} orientation="landscape" />
+          </section>
+        )}
+
+        {/* Portrait Videos Section */}
+        {portraitVideos.length > 0 && (
+          <section>
+            {landscapeVideos.length > 0 && (
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
+                Portrait
+              </h2>
+            )}
+            <VideoWall videos={portraitVideos} orientation="portrait" />
+          </section>
+        )}
 
         {/* Load more indicator */}
         {hasMore && (

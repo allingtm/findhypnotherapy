@@ -27,7 +27,8 @@ const videoUploadSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100, 'Title must be 100 characters or less'),
   description: z.string().max(500, 'Description must be 500 characters or less').optional(),
   session_format: z.array(z.enum(['in-person', 'online', 'phone'])).optional(),
-  duration_seconds: z.number().min(3).max(90).optional(),
+  duration_seconds: z.number().min(3).max(180).optional(),
+  orientation: z.enum(['landscape', 'portrait']).optional(),
 })
 
 const videoUpdateSchema = z.object({
@@ -98,6 +99,7 @@ export async function uploadVideoAction(
       duration_seconds: formData.get('duration_seconds')
         ? Number(formData.get('duration_seconds'))
         : undefined,
+      orientation: (formData.get('orientation') as string) || undefined,
     }
 
     const validation = videoUploadSchema.safeParse(rawData)
@@ -105,7 +107,7 @@ export async function uploadVideoAction(
       return { success: false, error: validation.error.issues[0]?.message || 'Validation failed' }
     }
 
-    const { title, description, session_format, duration_seconds } = validation.data
+    const { title, description, session_format, duration_seconds, orientation } = validation.data
 
     // Sanitize inputs
     const sanitizedTitle = title.replace(/[<>]/g, '')
@@ -171,6 +173,7 @@ export async function uploadVideoAction(
         thumbnail_url: thumbnailUrl,
         duration_seconds: duration_seconds || null,
         session_format: session_format || [],
+        orientation: orientation || 'landscape',
         status: 'published',
         published_at: new Date().toISOString(),
       })
@@ -422,6 +425,7 @@ export async function getVideoBySlug(slug: string): Promise<VideoFeedItem | null
         thumbnail_url,
         duration_seconds,
         session_format,
+        orientation,
         created_at,
         published_at,
         therapist_profile_id,
@@ -455,6 +459,7 @@ export async function getVideoBySlug(slug: string): Promise<VideoFeedItem | null
       thumbnail_url: video.thumbnail_url,
       duration_seconds: video.duration_seconds,
       session_format: video.session_format,
+      orientation: (video.orientation as 'landscape' | 'portrait') || 'landscape',
       created_at: video.created_at,
       published_at: video.published_at,
       therapist_profile_id: video.therapist_profile_id,
@@ -486,6 +491,7 @@ export async function getVideoByIdPublic(videoId: string): Promise<VideoFeedItem
         thumbnail_url,
         duration_seconds,
         session_format,
+        orientation,
         created_at,
         published_at,
         therapist_profile_id,
@@ -519,6 +525,7 @@ export async function getVideoByIdPublic(videoId: string): Promise<VideoFeedItem
       thumbnail_url: video.thumbnail_url,
       duration_seconds: video.duration_seconds,
       session_format: video.session_format,
+      orientation: (video.orientation as 'landscape' | 'portrait') || 'landscape',
       created_at: video.created_at,
       published_at: video.published_at,
       therapist_profile_id: video.therapist_profile_id,
@@ -554,6 +561,7 @@ export async function getRelatedVideos(
         thumbnail_url,
         duration_seconds,
         session_format,
+        orientation,
         created_at,
         published_at,
         therapist_profile_id,
@@ -594,6 +602,7 @@ export async function getRelatedVideos(
         thumbnail_url: video.thumbnail_url,
         duration_seconds: video.duration_seconds,
         session_format: video.session_format,
+        orientation: video.orientation || 'landscape',
         created_at: video.created_at,
         published_at: video.published_at,
         therapist_profile_id: video.therapist_profile_id,

@@ -1,9 +1,10 @@
 export const VIDEO_CONSTRAINTS = {
   MAX_FILE_SIZE: 50 * 1024 * 1024, // 50MB
-  MAX_DURATION_SECONDS: 90,
+  MAX_DURATION_SECONDS: 180,
   MIN_DURATION_SECONDS: 3,
   ALLOWED_TYPES: ['video/mp4', 'video/webm', 'video/quicktime'] as const,
-  ASPECT_RATIO: 16 / 9, // 16:9 landscape
+  LANDSCAPE_ASPECT_RATIO: 16 / 9, // 16:9 landscape
+  PORTRAIT_ASPECT_RATIO: 9 / 16, // 9:16 portrait
   ASPECT_RATIO_TOLERANCE: 0.1, // Allow 10% variance
 }
 
@@ -58,19 +59,30 @@ export function validateVideoDuration(durationSeconds: number): ValidationResult
   return { valid: true }
 }
 
-export function validateVideoAspectRatio(width: number, height: number): ValidationResult {
+export interface AspectRatioValidationResult {
+  valid: boolean
+  error?: string
+  orientation?: 'landscape' | 'portrait'
+}
+
+export function validateVideoAspectRatio(width: number, height: number): AspectRatioValidationResult {
   const aspectRatio = width / height
-  const targetRatio = VIDEO_CONSTRAINTS.ASPECT_RATIO
   const tolerance = VIDEO_CONSTRAINTS.ASPECT_RATIO_TOLERANCE
 
-  if (Math.abs(aspectRatio - targetRatio) > tolerance) {
-    return {
-      valid: false,
-      error: 'Video must be landscape (16:9 aspect ratio)',
-    }
+  // Check landscape (16:9)
+  if (Math.abs(aspectRatio - VIDEO_CONSTRAINTS.LANDSCAPE_ASPECT_RATIO) <= tolerance) {
+    return { valid: true, orientation: 'landscape' }
   }
 
-  return { valid: true }
+  // Check portrait (9:16)
+  if (Math.abs(aspectRatio - VIDEO_CONSTRAINTS.PORTRAIT_ASPECT_RATIO) <= tolerance) {
+    return { valid: true, orientation: 'portrait' }
+  }
+
+  return {
+    valid: false,
+    error: 'Video must be landscape (16:9) or portrait (9:16) aspect ratio',
+  }
 }
 
 export function validateThumbnailFile(file: File): ValidationResult {

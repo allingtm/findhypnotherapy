@@ -1555,6 +1555,7 @@ export type Database = {
           duration_seconds: number | null
           fts: unknown
           id: string
+          orientation: string
           published_at: string | null
           session_format: string[] | null
           slug: string | null
@@ -1573,6 +1574,7 @@ export type Database = {
           duration_seconds?: number | null
           fts?: unknown
           id?: string
+          orientation?: string
           published_at?: string | null
           session_format?: string[] | null
           slug?: string | null
@@ -1591,6 +1593,7 @@ export type Database = {
           duration_seconds?: number | null
           fts?: unknown
           id?: string
+          orientation?: string
           published_at?: string | null
           session_format?: string[] | null
           slug?: string | null
@@ -1705,6 +1708,39 @@ export type Database = {
         }
         Relationships: []
       }
+      waiting_list: {
+        Row: {
+          accepted_terms_at: string | null
+          created_at: string | null
+          early_adopter: boolean
+          email: string
+          id: string
+          is_qualified: boolean
+          name: string
+          notified_at: string | null
+        }
+        Insert: {
+          accepted_terms_at?: string | null
+          created_at?: string | null
+          early_adopter?: boolean
+          email: string
+          id?: string
+          is_qualified?: boolean
+          name: string
+          notified_at?: string | null
+        }
+        Update: {
+          accepted_terms_at?: string | null
+          created_at?: string | null
+          early_adopter?: boolean
+          email?: string
+          id?: string
+          is_qualified?: boolean
+          name?: string
+          notified_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1764,6 +1800,7 @@ export type Database = {
           description: string
           duration_seconds: number
           id: string
+          orientation: string
           published_at: string
           session_format: string[]
           slug: string
