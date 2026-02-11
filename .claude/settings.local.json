@@ -34,7 +34,12 @@
       "WebFetch(domain:www.syncfusion.com)",
       "Bash(node:*)",
       "Bash(curl:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(winget install:*)",
+      "Bash(pandoc:*)",
+      "Bash(cmd /c:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(powershell:*)"
     ],
     "additionalDirectories": [
       "d:\\repos\\findhypnotherapy\\webapp\\app\\book",

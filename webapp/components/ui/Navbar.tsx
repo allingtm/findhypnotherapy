@@ -113,10 +113,10 @@ export function Navbar() {
                 </motion.div>
                 <motion.div {...tapProps}>
                   <Link
-                    href="/register"
+                    href="/waitlist"
                     className="rounded-full bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-2 text-sm font-semibold text-white shadow-lg hover:from-purple-500 hover:to-blue-500 transition-all"
                   >
-                    Sign Up
+                    Join Waitlist
                   </Link>
                 </motion.div>
               </>
@@ -173,11 +173,11 @@ export function Navbar() {
                       </motion.div>
                       <motion.div {...tapProps} className="flex-1">
                         <Link
-                          href="/register"
+                          href="/waitlist"
                           onClick={() => setOpen(false)}
                           className="block w-full text-center rounded-full bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-2 text-sm font-semibold text-white"
                         >
-                          Sign Up
+                          Join Waitlist
                         </Link>
                       </motion.div>
                     </>

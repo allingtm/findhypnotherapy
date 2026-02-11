@@ -35,10 +35,10 @@ export function PractitionerHero() {
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
           <Link
-            href="/register"
+            href="/waitlist"
             className="w-full sm:w-auto px-10 py-4 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-semibold rounded-full hover:bg-gray-800 dark:hover:bg-gray-200 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-lg"
           >
-            Join the Directory
+            Join the Waiting List
           </Link>
           <a
             href="#how-it-works"

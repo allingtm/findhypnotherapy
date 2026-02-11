@@ -18,7 +18,7 @@ export function Footer() {
   const pages = [
     { title: "Home", href: "/" },
     { title: "Find a Therapist", href: "#" },
-    { title: "For Practitioners", href: "/register" },
+    { title: "For Practitioners", href: "/waitlist" },
     { title: "Login", href: "/login" },
     { title: "Privacy", href: "#" },
     { title: "Terms", href: "#" },

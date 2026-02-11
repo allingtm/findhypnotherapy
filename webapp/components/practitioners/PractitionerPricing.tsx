@@ -62,10 +62,10 @@ export function PractitionerPricing() {
 
             {/* CTA Button */}
             <Link
-              href="/register"
+              href="/waitlist"
               className="block w-full py-4 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-semibold text-lg rounded-full text-center hover:bg-gray-800 dark:hover:bg-gray-200 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
-              Start Your Free Trial
+              Join the Waiting List
             </Link>
 
             {/* Founder discount note */}

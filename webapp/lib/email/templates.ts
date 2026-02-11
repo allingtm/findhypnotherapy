@@ -4,6 +4,42 @@ interface BaseEmailProps {
   recipientName: string;
 }
 
+// =====================
+// WAITING LIST EMAIL
+// =====================
+
+interface WaitlistConfirmationEmailProps {
+  recipientName: string;
+}
+
+export function getWaitlistConfirmationEmail(props: WaitlistConfirmationEmailProps): { subject: string; html: string } {
+  const content = `
+    <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">You're on the waiting list!</h2>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Hi ${props.recipientName},
+    </p>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Thank you for your interest in joining Find Hypnotherapy as a practitioner. We've added you to our waiting list and will be in touch as soon as registration opens.
+    </p>
+    <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #1e40af; font-size: 14px; margin: 0; font-weight: 600;">
+        What happens next?
+      </p>
+      <p style="color: #1e40af; font-size: 14px; line-height: 1.5; margin: 12px 0 0 0;">
+        We're putting the finishing touches on our platform. Once we're ready to welcome new practitioners, you'll be among the first to know. Keep an eye on your inbox!
+      </p>
+    </div>
+    <p style="color: #666666; font-size: 14px; margin: 0;">
+      In the meantime, if you have any questions, feel free to reply to this email.
+    </p>
+  `;
+
+  return {
+    subject: "You're on the Find Hypnotherapy waiting list!",
+    html: getEmailWrapper(content),
+  };
+}
+
 function getEmailWrapper(content: string): string {
   return `
 <!DOCTYPE html>

@@ -85,9 +85,9 @@ export function LoginForm() {
       <SubmitButton />
 
       <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
-        Don&apos;t have an account?{' '}
-        <Link href="/register" className="text-blue-600 dark:text-blue-400 hover:underline">
-          Create one
+        Want to join as a practitioner?{' '}
+        <Link href="/waitlist" className="text-blue-600 dark:text-blue-400 hover:underline">
+          Join our waiting list
         </Link>
       </p>
     </form>

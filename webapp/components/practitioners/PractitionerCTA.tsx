@@ -68,10 +68,10 @@ export function PractitionerCTA() {
 
         {/* CTA Button with glow effect */}
         <Link
-          href="/register"
+          href="/waitlist"
           className="inline-flex items-center px-10 py-5 bg-white text-gray-900 font-semibold text-lg rounded-full hover:bg-gray-50 transition-all duration-300 shadow-[0_0_30px_rgba(255,255,255,0.3)] hover:shadow-[0_0_40px_rgba(255,255,255,0.5)] transform hover:-translate-y-1"
         >
-          Create Your Profile
+          Join the Waiting List
           <svg
             className="w-5 h-5 ml-2"
             fill="none"

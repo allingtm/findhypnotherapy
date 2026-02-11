@@ -1,6 +1,6 @@
 # Find Hypnotherapy - User Acceptance Testing Document
 
-**Version:** 1.4
+**Version:** 1.7
 **Test Environment:** https://findhypnotherapy.co.uk
 **Last Updated:** February 2026
 
@@ -123,7 +123,7 @@ Before testing, prepare the following:
 | Profile photo | Any JPEG/PNG image under 5MB |
 | Banner image | Landscape image (1200x400px recommended) |
 | Service image | Square image (800x800px recommended) |
-| Video file | MP4 video under 100MB |
+| Video file | MP4/WebM/MOV video under 50MB |
 
 ### 1.4 Glossary of Terms
 
@@ -1246,14 +1246,14 @@ Expected Result:
 ##### Sub-tab: Location
 
 **Form Fields:**
-| Field | Type | Required |
-|-------|------|----------|
-| Address Line 1 | Text | No |
-| Address Line 2 | Text | No |
-| City | Text | No |
-| Postal Code | Text | No |
-| Country | Dropdown | No (defaults to UK) |
-| Address Visibility | Radio | Yes |
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| Address Line 1 | Text | No | Max 200 chars |
+| Address Line 2 | Text | No | Max 200 chars |
+| City | Text | No | Max 100 chars |
+| Postal Code | Text | No | Max 20 chars |
+| Country | Dropdown | No (defaults to UK) | - |
+| Address Visibility | Radio | Yes | - |
 
 **Visibility Options:**
 - Full address - Shows complete address
@@ -1288,7 +1288,7 @@ Expected Result:
 |-------|------|-------------|
 | Session Formats | Checkboxes | Online, In-Person, Phone |
 | Offers Free Consultation | Checkbox | Enable free intro calls |
-| Availability Notes | Textarea | Custom text about availability |
+| Availability Notes | Textarea | Custom text about availability (max 1000 chars) |
 
 ---
 
@@ -1343,7 +1343,8 @@ Create and manage the services you offer. Each service has its own pricing, dura
 | Field | Type | Required |
 |-------|------|----------|
 | Service Name | Text | Yes |
-| Description | Textarea | Yes |
+| Service Type | Dropdown (Single Session, Package, Programme, Consultation, Subscription) | Yes |
+| Description | Textarea | No (max 500 chars) |
 | Duration | Number (minutes) | Yes |
 | Price | Currency | Yes |
 | Image | Upload | No |
@@ -1421,12 +1422,18 @@ Expected Result:
 **Tab Description:**
 Upload and manage video content. Videos can be educational content, promotional videos, or testimonials that display on your public profile.
 
+**Video Constraints:**
+- File size: Max 50MB
+- Duration: 3-90 seconds
+- Formats: MP4, WebM, MOV
+- Title: Max 100 characters
+
 ---
 
 **TEST ID: CONT-001**
 **Test: Upload Video**
 ```
-Prerequisite: Have MP4 video file under 100MB
+Prerequisite: Have MP4/WebM/MOV video file under 50MB
 Steps:
   1. Click "Content" tab
   2. Click "+ Upload Video" button
@@ -1562,7 +1569,7 @@ The Settings page contains account settings, booking preferences, and billing/su
 | Account | Name, email, password change |
 | Terms | Terms & Conditions editor (required for client invitations) |
 | Billing | Subscription status, plan details, Stripe portal |
-| Booking Settings | RSVP settings, reminders, video platform, approval settings |
+| Booking Settings | RSVP settings, reminders, video platform, approval settings, slot duration (15-120 mins), buffer time (0-30 mins), minimum notice (0 hours-1 week), booking window (1 week-1 year) |
 
 ---
 
@@ -2859,6 +2866,9 @@ For each email tested, verify:
 | 1.2 | February 2026 | Claude | Additional accuracy fixes: corrected dashboard stat card navigation links, fixed client onboarding step order, added missing portal sections (Messages, Therapists) |
 | 1.3 | February 2026 | Claude | Final verification pass: removed Session Format from Services fields (profile-level setting), corrected Portal stat card labels, fixed success message text for Portal login and Contact form |
 | 1.4 | February 2026 | Claude | Spot test verification: removed Onboarding status (code uses Invited), clarified Zoom as "Coming Soon", added note about 24 email template functions covering 30 email types |
+| 1.5 | February 2026 | Claude | Round 2 spot tests: added Service Type field (Single Session, Package, Programme, Consultation, Subscription) to Services section |
+| 1.6 | February 2026 | Claude | Round 3 spot tests: corrected video file size limit (50MB not 100MB), added supported formats (MP4/WebM/MOV), documented Booking Settings dropdown options |
+| 1.7 | February 2026 | Claude | Round 4 spot tests: added field validations (address max lengths, availability notes 1000 chars, service description optional + 500 chars, video title 100 chars, video duration 3-90 seconds) |
 
 ---
 

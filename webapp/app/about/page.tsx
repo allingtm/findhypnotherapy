@@ -121,10 +121,10 @@ export default function AboutPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                href="/register"
+                href="/waitlist"
                 className="px-8 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-medium transition-all shadow-lg"
               >
-                Join as a Practitioner
+                Join the Waiting List
               </Link>
               <Link
                 href="/"
