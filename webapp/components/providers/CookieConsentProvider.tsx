@@ -55,24 +55,18 @@ export function CookieConsentProvider({ children }: { children: React.ReactNode 
   const acceptAll = useCallback(() => {
     saveConsent({
       necessary: true,
-      analytics: true,
-      marketing: true,
     })
   }, [saveConsent])
 
   const rejectAll = useCallback(() => {
     saveConsent({
       necessary: true,
-      analytics: false,
-      marketing: false,
     })
   }, [saveConsent])
 
   const updateConsent = useCallback((categories: Partial<Record<CookieCategory, boolean>>) => {
     const current = consent?.categories ?? {
       necessary: true,
-      analytics: false,
-      marketing: false,
     }
     saveConsent({
       ...current,

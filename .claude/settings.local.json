@@ -39,7 +39,9 @@
       "Bash(pandoc:*)",
       "Bash(cmd /c:*)",
       "Bash(powershell -Command:*)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "WebFetch(domain:solvewithsoftware.com)",
+      "WebFetch(domain:tabler.io)"
     ],
     "additionalDirectories": [
       "d:\\repos\\findhypnotherapy\\webapp\\app\\book",

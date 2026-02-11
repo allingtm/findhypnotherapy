@@ -21,6 +21,17 @@ export function getWaitlistConfirmationEmail(props: WaitlistConfirmationEmailPro
     <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
       Thank you for your interest in joining Find Hypnotherapy as a practitioner. We've added you to our waiting list and will be in touch as soon as registration opens.
     </p>
+    <div style="background-color: #fef3c7; border: 1px solid #fcd34d; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #92400e; font-size: 14px; margin: 0; font-weight: 600;">
+        Your Foundation Member Discount
+      </p>
+      <p style="color: #92400e; font-size: 14px; line-height: 1.5; margin: 12px 0 0 0;">
+        As a foundation member, you'll receive an exclusive lifetime discount of just <strong>&pound;5/month</strong> for as long as you remain subscribed. Use the code below when you register:
+      </p>
+      <div style="background-color: #ffffff; border: 2px dashed #f59e0b; border-radius: 4px; padding: 12px; margin: 12px 0 0 0; text-align: center;">
+        <span style="font-family: monospace; font-size: 18px; font-weight: bold; color: #92400e; letter-spacing: 2px;">FOUNDATION_5</span>
+      </div>
+    </div>
     <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
       <p style="color: #1e40af; font-size: 14px; margin: 0; font-weight: 600;">
         What happens next?

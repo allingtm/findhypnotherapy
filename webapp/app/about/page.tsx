@@ -10,7 +10,7 @@ export default function AboutPage() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="py-20 px-4 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-neutral-900 dark:via-neutral-950 dark:to-neutral-900">
-          <div className="max-w-4xl mx-auto text-center">
+          <div className="max-w-6xl mx-auto text-center">
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
               About Find Hypnotherapy
             </h1>
@@ -22,7 +22,7 @@ export default function AboutPage() {
 
         {/* Mission Section */}
         <section className="py-16 px-4">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div>
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
@@ -69,7 +69,7 @@ export default function AboutPage() {
 
         {/* For Practitioners Section */}
         <section className="py-16 px-4 bg-gray-50 dark:bg-neutral-900">
-          <div className="max-w-4xl mx-auto text-center">
+          <div className="max-w-6xl mx-auto text-center">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
               For Practitioners
             </h2>
@@ -112,7 +112,7 @@ export default function AboutPage() {
 
         {/* CTA Section */}
         <section className="py-16 px-4">
-          <div className="max-w-2xl mx-auto text-center">
+          <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
               Ready to Get Started?
             </h2>

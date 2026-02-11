@@ -8,6 +8,7 @@ import {
   IconMenu2 as Menu,
   IconX as X,
   IconChevronRight as ChevronRight,
+  IconSparkles,
 } from "@tabler/icons-react"
 import { AnimatePresence, motion } from "framer-motion"
 
@@ -58,7 +59,7 @@ export function Navbar() {
         <div className="flex h-16 items-center justify-between gap-4">
           <div className="flex w-full items-center justify-between gap-3 md:w-auto">
             <Link href="/" className="flex items-center gap-2">
-              <div className="h-5 w-6 bg-gradient-to-r from-purple-600 to-blue-600 rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0" />
+              <IconSparkles size={24} className="text-purple-600 dark:text-purple-400 flex-shrink-0" />
               <span className="font-semibold text-gray-900 dark:text-white">Find Hypnotherapy</span>
             </Link>
             <motion.button

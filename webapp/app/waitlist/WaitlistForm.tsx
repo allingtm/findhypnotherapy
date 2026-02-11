@@ -22,6 +22,16 @@ const waitlistSchema = z.object({
     .min(1, 'Email is required')
     .email('Please enter a valid email address')
     .max(255, 'Email must be 255 characters or less'),
+  isQualified: z
+    .boolean()
+    .refine((val) => val === true, {
+      message: 'You must confirm that you are a fully qualified hypnotherapist',
+    }),
+  acceptedTerms: z
+    .boolean()
+    .refine((val) => val === true, {
+      message: 'You must accept the Privacy Policy and Terms & Conditions',
+    }),
 })
 
 function SubmitButton() {
@@ -36,14 +46,21 @@ function SubmitButton() {
 export function WaitlistForm() {
   const [state, formAction] = useActionState(joinWaitlistAction, { success: false })
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({})
+  const [isQualifiedChecked, setIsQualifiedChecked] = useState(false)
+  const [acceptedTermsChecked, setAcceptedTermsChecked] = useState(false)
+  const [earlyAdopterChecked, setEarlyAdopterChecked] = useState(false)
 
   // Client-side validation on blur
-  const validateField = (name: string, value: string) => {
+  const validateField = (name: string, value: string | boolean) => {
     try {
       if (name === 'name') {
         waitlistSchema.shape.name.parse(value)
       } else if (name === 'email') {
         waitlistSchema.shape.email.parse(value)
+      } else if (name === 'isQualified') {
+        waitlistSchema.shape.isQualified.parse(value)
+      } else if (name === 'acceptedTerms') {
+        waitlistSchema.shape.acceptedTerms.parse(value)
       }
       setClientErrors(prev => ({ ...prev, [name]: '' }))
     } catch (error: any) {
@@ -70,6 +87,8 @@ export function WaitlistForm() {
   const errors = {
     name: parseFieldErrors(state.fieldErrors, 'name', clientErrors.name),
     email: parseFieldErrors(state.fieldErrors, 'email', clientErrors.email),
+    isQualified: parseFieldErrors(state.fieldErrors, 'isQualified', clientErrors.isQualified),
+    acceptedTerms: parseFieldErrors(state.fieldErrors, 'acceptedTerms', clientErrors.acceptedTerms),
   }
 
   if (state.success) {
@@ -112,6 +131,82 @@ export function WaitlistForm() {
         error={errors.email}
         onBlur={(e) => validateField('email', e.target.value)}
       />
+
+      {/* Qualified Therapist Confirmation */}
+      <div className="mb-6">
+        <div className="flex items-start gap-3">
+          <input
+            type="checkbox"
+            id="isQualified"
+            name="isQualified"
+            value="true"
+            checked={isQualifiedChecked}
+            onChange={(e) => {
+              setIsQualifiedChecked(e.target.checked)
+              validateField('isQualified', e.target.checked)
+            }}
+            className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+          />
+          <label htmlFor="isQualified" className="text-sm text-gray-700 dark:text-gray-300">
+            I confirm that I am a <strong>fully qualified hypnotherapist</strong>
+          </label>
+        </div>
+        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 ml-7">
+          This means you hold a recognised hypnotherapy qualification (e.g., Diploma in Hypnotherapy) and are registered with a professional body such as the <strong>NCH</strong> (National Council for Hypnotherapy), <strong>GHR</strong> (General Hypnotherapy Register), <strong>CNHC</strong> (Complementary &amp; Natural Healthcare Council), <strong>AfSFH</strong> (Association for Solution Focused Hypnotherapy), or equivalent.
+        </p>
+        {errors.isQualified && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400 ml-7">{errors.isQualified}</p>
+        )}
+      </div>
+
+      {/* Early Adopter Opt-in */}
+      <div className="mb-6">
+        <div className="flex items-start gap-3">
+          <input
+            type="checkbox"
+            id="earlyAdopter"
+            name="earlyAdopter"
+            value="true"
+            checked={earlyAdopterChecked}
+            onChange={(e) => setEarlyAdopterChecked(e.target.checked)}
+            className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+          />
+          <label htmlFor="earlyAdopter" className="text-sm text-gray-700 dark:text-gray-300">
+            I&apos;d like to be an <strong>early adopter</strong> and receive early access as part of our soft launch
+          </label>
+        </div>
+      </div>
+
+      {/* Privacy Policy & Terms Acceptance */}
+      <div className="mb-6">
+        <div className="flex items-start gap-3">
+          <input
+            type="checkbox"
+            id="acceptedTerms"
+            name="acceptedTerms"
+            value="true"
+            checked={acceptedTermsChecked}
+            onChange={(e) => {
+              setAcceptedTermsChecked(e.target.checked)
+              validateField('acceptedTerms', e.target.checked)
+            }}
+            className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+          />
+          <label htmlFor="acceptedTerms" className="text-sm text-gray-700 dark:text-gray-300">
+            I agree to the{' '}
+            <Link href="/privacy" className="text-blue-600 dark:text-blue-400 hover:underline" target="_blank">
+              Privacy Policy
+            </Link>{' '}
+            and{' '}
+            <Link href="/terms" className="text-blue-600 dark:text-blue-400 hover:underline" target="_blank">
+              Terms &amp; Conditions
+            </Link>
+          </label>
+        </div>
+        {errors.acceptedTerms && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400 ml-7">{errors.acceptedTerms}</p>
+        )}
+      </div>
 
       <SubmitButton />
 

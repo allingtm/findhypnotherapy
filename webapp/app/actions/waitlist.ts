@@ -17,6 +17,20 @@ const waitlistSchema = z.object({
     .min(1, 'Email is required')
     .email('Please enter a valid email address')
     .max(255, 'Email must be 255 characters or less'),
+  isQualified: z
+    .string()
+    .refine((val) => val === 'true', {
+      message: 'You must confirm that you are a fully qualified hypnotherapist',
+    }),
+  acceptedTerms: z
+    .string()
+    .refine((val) => val === 'true', {
+      message: 'You must accept the Privacy Policy and Terms & Conditions',
+    }),
+  earlyAdopter: z
+    .string()
+    .optional()
+    .transform((val) => val === 'true'),
 })
 
 // Response type for form action
@@ -31,6 +45,9 @@ export async function joinWaitlistAction(prevState: any, formData: FormData): Pr
   const rawData = {
     name: formData.get('name'),
     email: formData.get('email'),
+    isQualified: formData.get('isQualified'),
+    acceptedTerms: formData.get('acceptedTerms'),
+    earlyAdopter: formData.get('earlyAdopter'),
   }
 
   const validation = waitlistSchema.safeParse(rawData)
@@ -54,7 +71,7 @@ export async function joinWaitlistAction(prevState: any, formData: FormData): Pr
     }
   }
 
-  const { name, email } = validation.data
+  const { name, email, earlyAdopter } = validation.data
 
   // Sanitize name (prevent XSS)
   const sanitizedName = name.replace(/[<>]/g, '')
@@ -68,6 +85,9 @@ export async function joinWaitlistAction(prevState: any, formData: FormData): Pr
       .insert({
         name: sanitizedName,
         email: email.toLowerCase(),
+        early_adopter: earlyAdopter,
+        is_qualified: true, // Always true since form validation requires it
+        accepted_terms_at: new Date().toISOString(), // Record when terms were accepted
       })
 
     // If duplicate email, still return success (prevent enumeration)

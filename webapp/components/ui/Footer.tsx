@@ -8,6 +8,7 @@ import {
   IconBrandTwitter,
   IconSun,
   IconMoon,
+  IconSparkles,
 } from "@tabler/icons-react"
 import Link from "next/link"
 import React, { useEffect, useState } from "react"
@@ -20,8 +21,9 @@ export function Footer() {
     { title: "Find a Therapist", href: "#" },
     { title: "For Practitioners", href: "/waitlist" },
     { title: "Login", href: "/login" },
-    { title: "Privacy", href: "#" },
-    { title: "Terms", href: "#" },
+    { title: "Privacy", href: "/privacy" },
+    { title: "Terms", href: "/terms" },
+    { title: "Cookies", href: "/cookie-policy" },
   ]
 
   return (
@@ -154,7 +156,7 @@ const Logo = () => {
       href="/"
       className="relative z-20 flex items-center space-x-2 px-2 py-1 text-sm font-normal"
     >
-      <div className="h-5 w-6 bg-gradient-to-r from-purple-600 to-blue-600 rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0" />
+      <IconSparkles size={24} className="text-purple-600 dark:text-purple-400 flex-shrink-0" />
       <span className="font-medium text-black dark:text-white">Find Hypnotherapy</span>
     </Link>
   )

@@ -1,7 +1,7 @@
 export const COOKIE_CONSENT_KEY = 'cookie-consent'
 export const COOKIE_CONSENT_VERSION = '1.0'
 
-export type CookieCategory = 'necessary' | 'analytics' | 'marketing'
+export type CookieCategory = 'necessary'
 
 export interface CookieConsent {
   version: string
@@ -16,18 +16,8 @@ export const COOKIE_CATEGORY_INFO: Record<CookieCategory, {
 }> = {
   necessary: {
     name: 'Necessary',
-    description: 'Essential cookies required for the website to function properly. These cannot be disabled.',
+    description: 'Essential cookies required for the website to function properly. These include authentication, calendar integration, and session management.',
     required: true,
-  },
-  analytics: {
-    name: 'Analytics',
-    description: 'Help us understand how visitors interact with our website by collecting anonymous information.',
-    required: false,
-  },
-  marketing: {
-    name: 'Marketing',
-    description: 'Used to track visitors across websites to display relevant advertisements.',
-    required: false,
   },
 }
 
@@ -36,8 +26,6 @@ export const DEFAULT_CONSENT: CookieConsent = {
   timestamp: 0,
   categories: {
     necessary: true,
-    analytics: false,
-    marketing: false,
   }
 }
 

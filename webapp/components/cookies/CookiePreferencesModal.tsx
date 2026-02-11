@@ -1,23 +1,18 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useCookieConsent } from '@/components/providers/CookieConsentProvider'
 import { Button } from '@/components/ui/Button'
 import { COOKIE_CATEGORY_INFO, CookieCategory } from '@/lib/cookies/consent'
-import { cn } from '@/lib/utils'
-import { IconX } from '@tabler/icons-react'
+import { IconX, IconCheck } from '@tabler/icons-react'
+import Link from 'next/link'
 
 interface CookiePreferencesModalProps {
   onClose: () => void
 }
 
 export function CookiePreferencesModal({ onClose }: CookiePreferencesModalProps) {
-  const { consent, updateConsent, acceptAll, rejectAll } = useCookieConsent()
-  const [localPreferences, setLocalPreferences] = useState<Record<CookieCategory, boolean>>({
-    necessary: true,
-    analytics: consent?.categories.analytics ?? false,
-    marketing: consent?.categories.marketing ?? false,
-  })
+  const { acceptAll } = useCookieConsent()
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -29,18 +24,8 @@ export function CookiePreferencesModal({ onClose }: CookiePreferencesModalProps)
     return () => document.removeEventListener('keydown', handleEscape)
   }, [onClose])
 
-  const handleSave = () => {
-    updateConsent(localPreferences)
-    onClose()
-  }
-
-  const handleAcceptAll = () => {
+  const handleAccept = () => {
     acceptAll()
-    onClose()
-  }
-
-  const handleRejectAll = () => {
-    rejectAll()
     onClose()
   }
 
@@ -52,7 +37,7 @@ export function CookiePreferencesModal({ onClose }: CookiePreferencesModalProps)
       }}
     >
       <div
-        className="bg-white dark:bg-neutral-900 rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-neutral-900 rounded-lg shadow-xl max-w-md sm:max-w-xl w-full max-h-[90vh] overflow-y-auto"
         role="dialog"
         aria-modal="true"
         aria-labelledby="cookie-preferences-title"
@@ -62,7 +47,7 @@ export function CookiePreferencesModal({ onClose }: CookiePreferencesModalProps)
             id="cookie-preferences-title"
             className="text-xl font-semibold text-gray-900 dark:text-gray-100"
           >
-            Cookie Preferences
+            Cookie Information
           </h2>
           <button
             onClick={onClose}
@@ -75,7 +60,7 @@ export function CookiePreferencesModal({ onClose }: CookiePreferencesModalProps)
 
         <div className="px-6 py-4">
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            We use cookies to improve your experience on our site. You can choose which categories of cookies you allow below.
+            We only use essential cookies required for the website to function properly. We do not use any analytics, advertising, or tracking cookies.
           </p>
 
           <div className="space-y-4">
@@ -89,57 +74,34 @@ export function CookiePreferencesModal({ onClose }: CookiePreferencesModalProps)
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900 dark:text-white">
                       {info.name}
-                      {info.required && (
-                        <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
-                          (Required)
-                        </span>
-                      )}
+                      <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                        (Required)
+                      </span>
                     </h4>
                     <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                       {info.description}
                     </p>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                    <input
-                      type="checkbox"
-                      checked={localPreferences[category]}
-                      onChange={(e) => setLocalPreferences(prev => ({
-                        ...prev,
-                        [category]: e.target.checked
-                      }))}
-                      disabled={info.required}
-                      className="sr-only peer"
-                    />
-                    <div className={cn(
-                      "w-11 h-6 rounded-full",
-                      "bg-gray-200 dark:bg-neutral-700",
-                      "peer-checked:bg-purple-600",
-                      "peer-disabled:opacity-50 peer-disabled:cursor-not-allowed",
-                      "after:content-[''] after:absolute after:top-[2px] after:left-[2px]",
-                      "after:bg-white after:rounded-full after:h-5 after:w-5",
-                      "after:transition-all peer-checked:after:translate-x-full",
-                      "after:shadow-sm"
-                    )} />
-                  </label>
+                  <div className="shrink-0 flex items-center justify-center w-11 h-6">
+                    <IconCheck className="h-5 w-5 text-purple-600" />
+                  </div>
                 </div>
               )
             })}
           </div>
+
+          <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+            For more details, see our <Link href="/cookie-policy" className="text-purple-600 dark:text-purple-400 hover:underline">Cookie Policy</Link>.
+          </p>
         </div>
 
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-neutral-700 flex flex-col sm:flex-row justify-between gap-3">
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button variant="secondary" onClick={handleRejectAll}>
-              Reject All
+        <div className="px-6 py-4 border-t border-gray-200 dark:border-neutral-700">
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={onClose}>
+              Close
             </Button>
-            <Button variant="secondary" onClick={handleAcceptAll}>
-              Accept All
-            </Button>
-            <Button variant="primary" onClick={handleSave}>
-              Save Preferences
+            <Button variant="primary" onClick={handleAccept}>
+              Got it
             </Button>
           </div>
         </div>

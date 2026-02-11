@@ -20,6 +20,7 @@
     "@syncfusion/ej2-react-navigations": "^32.1.24",
     "@syncfusion/ej2-react-schedule": "^32.1.25",
     "@tabler/icons-react": "^3.36.1",
+    "@tailwindcss/typography": "^0.5.19",
     "@zxcvbn-ts/core": "^3.0.4",
     "@zxcvbn-ts/language-en": "^3.0.2",
     "clsx": "^2.1.1",
