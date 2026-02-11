@@ -72,7 +72,7 @@ export function CTASection() {
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
         {/* Headline */}
-        <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6">
+        <h2 className="text-3xl md:text-4xl lg:text-5xl text-white mb-6">
           Ready to take the next step?
         </h2>
 

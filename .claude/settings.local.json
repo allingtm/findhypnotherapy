@@ -42,7 +42,8 @@
       "Bash(powershell:*)",
       "WebFetch(domain:solvewithsoftware.com)",
       "WebFetch(domain:tabler.io)",
-      "WebFetch(domain:developers.cloudflare.com)"
+      "WebFetch(domain:developers.cloudflare.com)",
+      "WebFetch(domain:www.volume11.ai)"
     ],
     "additionalDirectories": [
       "d:\\repos\\findhypnotherapy\\webapp\\app\\book",

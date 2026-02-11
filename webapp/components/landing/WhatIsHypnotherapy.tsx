@@ -13,7 +13,7 @@ export function WhatIsHypnotherapy() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Text Content */}
           <div className="order-2 lg:order-1">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-8">
+            <h2 className="text-3xl md:text-4xl text-gray-900 dark:text-gray-100 mb-8">
               The science behind hypnotherapy
             </h2>
 

@@ -124,7 +124,7 @@ export function HeroSearch({ specializations }: HeroSearchProps) {
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
         {/* Headline */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-gray-100 mb-4 md:mb-6 leading-tight">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-gray-900 dark:text-gray-100 mb-4 md:mb-6 leading-tight">
           Find a Hypnotherapist
         </h1>
 

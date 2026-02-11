@@ -1,6 +1,19 @@
 import type { Metadata } from "next";
+import { Overpass, Overpass_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+
+const overpass = Overpass({
+  subsets: ["latin"],
+  variable: "--font-overpass",
+  display: "swap",
+});
+
+const overpassMono = Overpass_Mono({
+  subsets: ["latin"],
+  variable: "--font-overpass-mono",
+  display: "swap",
+});
 import { CookieConsentProvider } from "@/components/providers/CookieConsentProvider";
 import { CookieConsentBanner } from "@/components/cookies/CookieConsentBanner";
 import { Toaster } from "sonner";
@@ -16,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en-GB" suppressHydrationWarning>
+    <html lang="en-GB" className={`${overpass.variable} ${overpassMono.variable}`} suppressHydrationWarning>
       <body>
         <ThemeProvider>
           <CookieConsentProvider>

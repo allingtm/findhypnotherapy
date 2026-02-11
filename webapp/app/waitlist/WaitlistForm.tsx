@@ -152,6 +152,7 @@ export function WaitlistForm() {
         name="name"
         placeholder="Jane Smith"
         required
+        maxLength={100}
         value={name}
         onChange={(e) => setName(e.target.value)}
         error={errors.name}
@@ -164,6 +165,7 @@ export function WaitlistForm() {
         name="email"
         placeholder="jane@example.com"
         required
+        maxLength={255}
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         error={errors.email}

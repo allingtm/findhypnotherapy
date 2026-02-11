@@ -83,7 +83,7 @@ export function ApplicationsSection() {
 
       <div className="relative z-10 max-w-6xl mx-auto px-6">
         {/* Headline */}
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 text-center mb-16">
+        <h2 className="text-3xl md:text-4xl text-gray-900 dark:text-gray-100 text-center mb-16">
           How hypnotherapy can help you
         </h2>
 
