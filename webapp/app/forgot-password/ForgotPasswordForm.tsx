@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useActionState } from 'react'
+import { useState, useActionState, useCallback } from 'react'
 import { useFormStatus } from 'react-dom'
 import Link from 'next/link'
 import { forgotPasswordSchema } from '@/lib/validation/auth'
@@ -8,6 +8,7 @@ import { forgotPasswordAction } from '@/app/actions/auth'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
+import { Turnstile } from '@/components/ui/Turnstile'
 import { parseFieldErrors } from '@/lib/utils/errorParsing'
 
 function SubmitButton() {
@@ -22,6 +23,11 @@ function SubmitButton() {
 export function ForgotPasswordForm() {
   const [state, formAction] = useActionState(forgotPasswordAction, { success: false })
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({})
+  const [turnstileToken, setTurnstileToken] = useState('')
+
+  const handleTurnstileVerify = useCallback((token: string) => {
+    setTurnstileToken(token)
+  }, [])
 
   const validateField = (name: string, value: string) => {
     try {
@@ -69,6 +75,12 @@ export function ForgotPasswordForm() {
         error={errors.email}
         onBlur={(e) => validateField('email', e.target.value)}
       />
+
+      {/* Turnstile spam protection */}
+      <div className="mb-4">
+        <Turnstile onVerify={handleTurnstileVerify} />
+        <input type="hidden" name="turnstileToken" value={turnstileToken} />
+      </div>
 
       <SubmitButton />
 

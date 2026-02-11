@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema } from '@/lib/validation/auth'
 import { checkIsClient } from '@/lib/auth/permissions'
+import { verifyTurnstileToken } from '@/lib/turnstile'
 
 // Response type for form actions
 type ActionResponse = {
@@ -14,6 +15,16 @@ type ActionResponse = {
 
 // Login action
 export async function loginAction(prevState: any, formData: FormData): Promise<ActionResponse> {
+  // Verify Turnstile token first
+  const turnstileToken = formData.get('turnstileToken') as string | null
+  const turnstileResult = await verifyTurnstileToken(turnstileToken)
+  if (!turnstileResult.success) {
+    return {
+      success: false,
+      error: turnstileResult.error || 'Security check failed. Please try again.',
+    }
+  }
+
   // Parse and validate form data
   const rawData = {
     email: formData.get('email'),
@@ -97,6 +108,16 @@ export async function loginAction(prevState: any, formData: FormData): Promise<A
 
 // Register action
 export async function registerAction(prevState: any, formData: FormData): Promise<ActionResponse> {
+  // Verify Turnstile token first
+  const turnstileToken = formData.get('turnstileToken') as string | null
+  const turnstileResult = await verifyTurnstileToken(turnstileToken)
+  if (!turnstileResult.success) {
+    return {
+      success: false,
+      error: turnstileResult.error || 'Security check failed. Please try again.',
+    }
+  }
+
   // Validate invitation code first (if required)
   const requiredCode = process.env.INVITATION_CODE
   if (requiredCode) {
@@ -186,6 +207,16 @@ export async function registerAction(prevState: any, formData: FormData): Promis
 
 // Forgot password action - sends reset email
 export async function forgotPasswordAction(prevState: any, formData: FormData): Promise<ActionResponse> {
+  // Verify Turnstile token first
+  const turnstileToken = formData.get('turnstileToken') as string | null
+  const turnstileResult = await verifyTurnstileToken(turnstileToken)
+  if (!turnstileResult.success) {
+    return {
+      success: false,
+      error: turnstileResult.error || 'Security check failed. Please try again.',
+    }
+  }
+
   const rawData = {
     email: formData.get('email'),
   }

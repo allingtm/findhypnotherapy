@@ -18,6 +18,7 @@ import {
   reportConversationSchema,
 } from "@/lib/validation/messages";
 import crypto from "crypto";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 type ActionResponse = {
   success: boolean;
@@ -51,6 +52,16 @@ export async function submitContactFormAction(
   prevState: unknown,
   formData: FormData
 ): Promise<ActionResponse> {
+  // Verify Turnstile token first
+  const turnstileToken = formData.get("turnstileToken") as string | null;
+  const turnstileResult = await verifyTurnstileToken(turnstileToken);
+  if (!turnstileResult.success) {
+    return {
+      success: false,
+      error: turnstileResult.error || "Security check failed. Please try again.",
+    };
+  }
+
   const rawData = {
     memberProfileId: formData.get("memberProfileId"),
     visitorName: formData.get("visitorName"),

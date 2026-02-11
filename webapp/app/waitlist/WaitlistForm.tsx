@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useActionState } from 'react'
+import { useState, useActionState, useCallback } from 'react'
 import { useFormStatus } from 'react-dom'
 import Link from 'next/link'
 import { z } from 'zod'
@@ -8,6 +8,7 @@ import { joinWaitlistAction } from '@/app/actions/waitlist'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
+import { Turnstile } from '@/components/ui/Turnstile'
 import { parseFieldErrors } from '@/lib/utils/errorParsing'
 
 // Client-side validation schema
@@ -34,10 +35,10 @@ const waitlistSchema = z.object({
     }),
 })
 
-function SubmitButton() {
+function SubmitButton({ disabled }: { disabled?: boolean }) {
   const { pending } = useFormStatus()
   return (
-    <Button type="submit" variant="primary" loading={pending} className="w-full">
+    <Button type="submit" variant="primary" loading={pending} disabled={disabled || pending} className="w-full">
       Join Waiting List
     </Button>
   )
@@ -46,9 +47,23 @@ function SubmitButton() {
 export function WaitlistForm() {
   const [state, formAction] = useActionState(joinWaitlistAction, { success: false })
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({})
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
   const [isQualifiedChecked, setIsQualifiedChecked] = useState(false)
   const [acceptedTermsChecked, setAcceptedTermsChecked] = useState(false)
   const [earlyAdopterChecked, setEarlyAdopterChecked] = useState(false)
+  const [turnstileToken, setTurnstileToken] = useState('')
+
+  // Form is valid when all required fields are filled
+  const isFormValid =
+    name.trim().length > 0 &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) &&
+    isQualifiedChecked &&
+    acceptedTermsChecked
+
+  const handleTurnstileVerify = useCallback((token: string) => {
+    setTurnstileToken(token)
+  }, [])
 
   // Client-side validation on blur
   const validateField = (name: string, value: string | boolean) => {
@@ -94,10 +109,29 @@ export function WaitlistForm() {
   if (state.success) {
     return (
       <div>
-        <Alert
-          type="success"
-          message="You're on the list! We'll email you when registration opens."
-        />
+        <div className="border rounded-lg p-6 mb-4 bg-green-50 border-green-200 text-green-800 dark:bg-green-900/30 dark:border-green-800 dark:text-green-300">
+          <div className="flex flex-col items-center text-center gap-3">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-12 h-12"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
+              />
+            </svg>
+            <div>
+              <p className="font-semibold text-lg">You&apos;re on the list!</p>
+              <p className="text-sm mt-1">Check your email for a confirmation. We&apos;ll let you know when registration opens.</p>
+              <p className="text-xs mt-2 opacity-75">Don&apos;t see it? Check your spam or junk folder.</p>
+            </div>
+          </div>
+        </div>
         <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
           Already have an account?{' '}
           <Link href="/login" className="text-blue-600 dark:text-blue-400 hover:underline">
@@ -118,6 +152,8 @@ export function WaitlistForm() {
         name="name"
         placeholder="Jane Smith"
         required
+        value={name}
+        onChange={(e) => setName(e.target.value)}
         error={errors.name}
         onBlur={(e) => validateField('name', e.target.value)}
       />
@@ -128,6 +164,8 @@ export function WaitlistForm() {
         name="email"
         placeholder="jane@example.com"
         required
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
         error={errors.email}
         onBlur={(e) => validateField('email', e.target.value)}
       />
@@ -208,7 +246,13 @@ export function WaitlistForm() {
         )}
       </div>
 
-      <SubmitButton />
+      {/* Turnstile spam protection */}
+      <div className="mb-6">
+        <Turnstile onVerify={handleTurnstileVerify} />
+        <input type="hidden" name="turnstileToken" value={turnstileToken} />
+      </div>
+
+      <SubmitButton disabled={!isFormValid} />
 
       <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
         Already have an account?{' '}

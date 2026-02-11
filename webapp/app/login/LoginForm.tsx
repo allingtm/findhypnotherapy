@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useActionState } from 'react'
+import { useState, useActionState, useCallback } from 'react'
 import { useFormStatus } from 'react-dom'
 import Link from 'next/link'
 import { loginSchema } from '@/lib/validation/auth'
@@ -8,6 +8,7 @@ import { loginAction } from '@/app/actions/auth'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
+import { Turnstile } from '@/components/ui/Turnstile'
 import { parseFieldErrors } from '@/lib/utils/errorParsing'
 
 function SubmitButton() {
@@ -22,6 +23,11 @@ function SubmitButton() {
 export function LoginForm() {
   const [state, formAction] = useActionState(loginAction, { success: false })
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({})
+  const [turnstileToken, setTurnstileToken] = useState('')
+
+  const handleTurnstileVerify = useCallback((token: string) => {
+    setTurnstileToken(token)
+  }, [])
 
   // Diagnostic logging in development
   if (process.env.NODE_ENV === 'development' && state.fieldErrors) {
@@ -80,6 +86,12 @@ export function LoginForm() {
         >
           Forgot password?
         </Link>
+      </div>
+
+      {/* Turnstile spam protection */}
+      <div className="mb-4">
+        <Turnstile onVerify={handleTurnstileVerify} />
+        <input type="hidden" name="turnstileToken" value={turnstileToken} />
       </div>
 
       <SubmitButton />

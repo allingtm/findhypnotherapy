@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
+import { Turnstile } from "@/components/ui/Turnstile";
 import { TermsAcceptance } from "./TermsAcceptance";
 import { submitBookingAction } from "@/app/actions/bookings";
 
@@ -69,6 +70,11 @@ export function BookingForm({
   const [acceptedTermsId, setAcceptedTermsId] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
   const [notes, setNotes] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
+
+  const handleTurnstileVerify = useCallback((token: string) => {
+    setTurnstileToken(token);
+  }, []);
 
   const validateField = (field: string, value: string) => {
     try {
@@ -129,6 +135,9 @@ export function BookingForm({
       formData.set("termsAccepted", "true");
       formData.set("termsId", acceptedTermsId);
     }
+
+    // Include Turnstile token
+    formData.set("turnstileToken", turnstileToken);
 
     try {
       const result = await submitBookingAction(formData);
@@ -396,6 +405,13 @@ export function BookingForm({
             }}
             disabled={isFormDisabled || isSubmitting}
           />
+        )}
+
+        {/* Turnstile spam protection */}
+        {!isFormDisabled && (
+          <div className="mb-4">
+            <Turnstile onVerify={handleTurnstileVerify} />
+          </div>
         )}
 
         <Button

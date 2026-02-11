@@ -17,6 +17,7 @@ export default function TermsPage() {
               <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Contents</h2>
               <ul className="space-y-2 text-sm">
                 <li><a href="#terms-of-service" className="text-purple-600 dark:text-purple-400 hover:underline">Terms of Service</a></li>
+                <li><a href="#subscriptions-and-pricing" className="text-purple-600 dark:text-purple-400 hover:underline">Subscriptions &amp; Pricing</a></li>
                 <li><a href="#cookie-policy" className="text-purple-600 dark:text-purple-400 hover:underline">Cookie Policy</a></li>
                 <li><a href="#acceptable-use-policy" className="text-purple-600 dark:text-purple-400 hover:underline">Acceptable Use Policy</a></li>
                 <li><a href="#disclaimer" className="text-purple-600 dark:text-purple-400 hover:underline">Disclaimer</a></li>
@@ -111,6 +112,66 @@ export default function TermsPage() {
               <h3>Governing Law</h3>
               <p>
                 These Terms of Service are governed by and construed in accordance with the laws of England and Wales. You irrevocably submit to the exclusive jurisdiction of the courts of England and Wales.
+              </p>
+            </section>
+
+            <section id="subscriptions-and-pricing">
+              <h2>Subscriptions &amp; Pricing</h2>
+              <p>
+                This section applies to therapists who subscribe to our platform to list their services in the Find Hypnotherapy directory.
+              </p>
+
+              <h3>Subscription Terms</h3>
+              <p>
+                By subscribing to Find Hypnotherapy, you agree to the following:
+              </p>
+              <ul>
+                <li>Subscriptions are billed monthly or annually, depending on the plan selected at checkout</li>
+                <li>Subscriptions automatically renew at the end of each billing period unless cancelled</li>
+                <li>You may cancel your subscription at any time through your account dashboard or by contacting us</li>
+                <li>Upon cancellation, you will retain access to your subscription benefits until the end of your current billing period</li>
+                <li>We do not provide refunds for partial billing periods</li>
+                <li>If payment fails, we may suspend your account until payment is successfully processed</li>
+              </ul>
+
+              <h3>Foundation Member Offer</h3>
+              <p>
+                We offer a special &quot;Foundation Member&quot; discount to therapists who join our waiting list before general registration opens. The terms of this offer are as follows:
+              </p>
+              <ul>
+                <li>Foundation members receive a discounted subscription rate of £5 per month</li>
+                <li>This discounted rate applies for the lifetime of your subscription, meaning it continues for as long as you remain an active, continuously subscribed member</li>
+                <li>If you cancel your subscription and later wish to re-subscribe, the Foundation Member discount will no longer apply, and you will be charged the standard rate in effect at that time</li>
+                <li>The Foundation Member discount is non-transferable and applies only to the original subscriber&apos;s account</li>
+                <li>We reserve the right to discontinue the Foundation Member offer for new sign-ups at any time without prior notice</li>
+                <li>Existing Foundation Members will not be affected by any changes to the offer for new subscribers</li>
+              </ul>
+
+              <h3>Early Adopter Programme</h3>
+              <p>
+                Therapists on our waiting list may opt in to our Early Adopter Programme for early access during our soft launch. Please note:
+              </p>
+              <ul>
+                <li>Opting in does not guarantee selection for early access; we may limit participation at our discretion</li>
+                <li>Early adopters may have access to features that are still in development or beta testing</li>
+                <li>We may request feedback from early adopters to help improve the platform</li>
+                <li>Early access features may change, be modified, or be removed before general release</li>
+              </ul>
+
+              <h3>Promotional Codes</h3>
+              <p>
+                From time to time, we may offer promotional codes or discounts. The following terms apply:
+              </p>
+              <ul>
+                <li>Promotional codes are subject to any specific terms and conditions stated at the time of issue</li>
+                <li>Unless otherwise stated, promotional codes cannot be combined with other offers or discounts</li>
+                <li>We reserve the right to modify, suspend, or cancel any promotional offer at any time</li>
+                <li>Promotional codes have no cash value and are non-transferable unless otherwise specified</li>
+              </ul>
+
+              <h3>Price Changes</h3>
+              <p>
+                We reserve the right to change our subscription prices at any time. If we change our prices, we will provide you with at least 30 days&apos; notice before the new prices take effect. Your continued use of the service after the price change takes effect constitutes your agreement to pay the updated amount. Foundation Member pricing is excluded from general price increases for as long as the subscription remains active and continuous.
               </p>
             </section>
 

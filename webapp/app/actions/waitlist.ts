@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/sendgrid'
 import { getWaitlistConfirmationEmail } from '@/lib/email/templates'
+import { verifyTurnstileToken } from '@/lib/turnstile'
 
 // Validation schema for waitlist signup
 const waitlistSchema = z.object({
@@ -41,6 +42,16 @@ type ActionResponse = {
 }
 
 export async function joinWaitlistAction(prevState: any, formData: FormData): Promise<ActionResponse> {
+  // Verify Turnstile token first
+  const turnstileToken = formData.get('turnstileToken') as string | null
+  const turnstileResult = await verifyTurnstileToken(turnstileToken)
+  if (!turnstileResult.success) {
+    return {
+      success: false,
+      error: turnstileResult.error || 'Security check failed. Please try again.',
+    }
+  }
+
   // Parse and validate form data
   const rawData = {
     name: formData.get('name'),

@@ -15,6 +15,7 @@ import crypto from "crypto";
 import { createGoogleCalendarEvent } from "@/lib/calendar/google";
 import { createMicrosoftCalendarEvent } from "@/lib/calendar/microsoft";
 import { createZoomMeeting } from "@/lib/calendar/zoom";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 type ActionResponse = {
   success: boolean;
@@ -417,6 +418,16 @@ export async function getAvailableDates(
 export async function submitBookingAction(
   formData: FormData
 ): Promise<ActionResponse> {
+  // Verify Turnstile token first
+  const turnstileToken = formData.get("turnstileToken") as string | null;
+  const turnstileResult = await verifyTurnstileToken(turnstileToken);
+  if (!turnstileResult.success) {
+    return {
+      success: false,
+      error: turnstileResult.error || "Security check failed. Please try again.",
+    };
+  }
+
   const rawData = {
     therapistProfileId: formData.get("therapistProfileId"),
     serviceId: formData.get("serviceId") || null,

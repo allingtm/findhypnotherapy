@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useCallback } from "react";
 import { z } from "zod";
 import { submitContactFormAction } from "@/app/actions/messages";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Turnstile } from "@/components/ui/Turnstile";
 import { IconSend, IconCircleCheck, IconMail } from "@tabler/icons-react";
 
 // Field schemas for client-side validation
@@ -36,6 +37,11 @@ export function ContactForm({ memberProfileId, therapistName }: ContactFormProps
   const [isExpanded, setIsExpanded] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
   const [message, setMessage] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
+
+  const handleTurnstileVerify = useCallback((token: string) => {
+    setTurnstileToken(token);
+  }, []);
 
   const validateField = (field: string, value: string) => {
     try {
@@ -186,6 +192,12 @@ export function ContactForm({ memberProfileId, therapistName }: ContactFormProps
             <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>
           </div>
         )}
+
+        {/* Turnstile spam protection */}
+        <div className="mb-4">
+          <Turnstile onVerify={handleTurnstileVerify} />
+          <input type="hidden" name="turnstileToken" value={turnstileToken} />
+        </div>
 
         <div className="flex gap-2">
           <Button
