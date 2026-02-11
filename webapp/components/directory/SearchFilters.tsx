@@ -75,7 +75,7 @@ export function SearchFilters({ specializations }: SearchFiltersProps) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search therapists..."
-            className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300 dark:border-neutral-600"
+            className="w-full h-10 px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300 dark:border-neutral-600"
           />
         </div>
 
@@ -90,7 +90,7 @@ export function SearchFilters({ specializations }: SearchFiltersProps) {
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="City or postal code..."
-            className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300 dark:border-neutral-600"
+            className="w-full h-10 px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300 dark:border-neutral-600"
           />
         </div>
 
@@ -103,7 +103,7 @@ export function SearchFilters({ specializations }: SearchFiltersProps) {
             id="specialization"
             value={specialization}
             onChange={(e) => setSpecialization(e.target.value)}
-            className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300 dark:border-neutral-600"
+            className="w-full h-10 px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300 dark:border-neutral-600"
           >
             <option value="">All specialisations</option>
             {Object.entries(groupedSpecializations).map(([category, specs]) => (
@@ -127,7 +127,7 @@ export function SearchFilters({ specializations }: SearchFiltersProps) {
             id="format"
             value={format}
             onChange={(e) => setFormat(e.target.value)}
-            className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300 dark:border-neutral-600"
+            className="w-full h-10 px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300 dark:border-neutral-600"
           >
             <option value="">All formats</option>
             <option value="in-person">In-Person</option>
@@ -141,7 +141,7 @@ export function SearchFilters({ specializations }: SearchFiltersProps) {
         <button
           type="submit"
           disabled={isPending}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="h-10 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isPending ? 'Searching...' : 'Search'}
         </button>
@@ -150,7 +150,7 @@ export function SearchFilters({ specializations }: SearchFiltersProps) {
             type="button"
             onClick={handleClear}
             disabled={isPending}
-            className="px-4 py-2 bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-neutral-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="h-10 px-4 py-2 bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-neutral-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Clear Filters
           </button>
