@@ -18,7 +18,6 @@ interface HeroSearchProps {
 
 export function HeroSearch({ specializations }: HeroSearchProps) {
   const router = useRouter()
-  const [location, setLocation] = useState('')
   const [specialization, setSpecialization] = useState('')
 
   // Group specializations by category
@@ -34,7 +33,6 @@ export function HeroSearch({ specializations }: HeroSearchProps) {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     const params = new URLSearchParams()
-    if (location) params.set('location', location)
     if (specialization) params.set('specialization', specialization)
     router.push(`/directory?${params.toString()}`)
   }
@@ -139,19 +137,6 @@ export function HeroSearch({ specializations }: HeroSearchProps) {
         <form onSubmit={handleSearch} className="max-w-2xl mx-auto px-4 md:px-0">
           <div className="bg-white dark:bg-neutral-900 rounded-3xl md:rounded-full shadow-[0_4px_24px_rgba(0,0,0,0.06)] p-4 md:p-3">
             <div className="flex flex-col md:flex-row gap-3 md:gap-2">
-              {/* Location Input */}
-              <div className="flex-1">
-                <label htmlFor="location" className="sr-only">Location</label>
-                <input
-                  type="text"
-                  id="location"
-                  placeholder="Enter your location..."
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className="w-full px-5 py-3.5 md:px-6 md:py-4 bg-gray-50 dark:bg-neutral-800 rounded-2xl md:rounded-full text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-100 transition-all text-base"
-                />
-              </div>
-
               {/* Specialization Dropdown */}
               <div className="flex-1">
                 <label htmlFor="specialization" className="sr-only">What do you need help with?</label>
