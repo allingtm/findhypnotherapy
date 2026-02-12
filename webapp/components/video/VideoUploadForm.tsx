@@ -76,19 +76,19 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
     const video = videoPreviewRef.current
     if (!video) return
 
-    // Validate duration
-    const durationValidation = validateVideoDuration(video.duration)
-    if (!durationValidation.valid) {
-      setVideoError(durationValidation.error || 'Invalid video duration')
+    // Validate aspect ratio first to determine orientation
+    const aspectValidation = validateVideoAspectRatio(video.videoWidth, video.videoHeight)
+    if (!aspectValidation.valid) {
+      setVideoError(aspectValidation.error || 'Invalid aspect ratio')
       setVideoFile(null)
       setVideoPreviewUrl(null)
       return
     }
 
-    // Validate aspect ratio
-    const aspectValidation = validateVideoAspectRatio(video.videoWidth, video.videoHeight)
-    if (!aspectValidation.valid) {
-      setVideoError(aspectValidation.error || 'Invalid aspect ratio')
+    // Validate duration with orientation-specific limit
+    const durationValidation = validateVideoDuration(video.duration, aspectValidation.orientation)
+    if (!durationValidation.valid) {
+      setVideoError(durationValidation.error || 'Invalid video duration')
       setVideoFile(null)
       setVideoPreviewUrl(null)
       return
@@ -348,7 +348,7 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
           {/* Video Upload Area */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Video (landscape 16:9 or portrait 9:16, max {VIDEO_CONSTRAINTS.MAX_DURATION_SECONDS}s)
+              Video (16:9 up to 10 min, or 9:16 Loop up to 3 min)
             </label>
 
             {!videoPreviewUrl ? (

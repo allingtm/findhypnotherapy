@@ -66,24 +66,24 @@ export function VideoFeedClient({ initialVideos, hasMore, specializations }: Vid
 
         <VideoFeedFilters specializations={specializations} />
 
-        {/* Landscape Videos Section */}
+        {/* Videos (Landscape) Section */}
         {landscapeVideos.length > 0 && (
           <section className="mb-10">
             {portraitVideos.length > 0 && (
               <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
-                Landscape
+                Videos
               </h2>
             )}
             <VideoWall videos={landscapeVideos} orientation="landscape" />
           </section>
         )}
 
-        {/* Portrait Videos Section */}
+        {/* Loops (Portrait) Section */}
         {portraitVideos.length > 0 && (
           <section>
             {landscapeVideos.length > 0 && (
               <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
-                Portrait
+                Loops
               </h2>
             )}
             <VideoWall videos={portraitVideos} orientation="portrait" />

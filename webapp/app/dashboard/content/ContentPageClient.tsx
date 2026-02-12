@@ -130,8 +130,8 @@ export function ContentPageClient({ initialVideos }: ContentPageClientProps) {
               Tips for Great Videos
             </h3>
             <ul className="mt-2 text-sm text-blue-800 dark:text-blue-200 space-y-1">
-              <li>Keep videos short and engaging (under 3 minutes)</li>
-              <li>Use landscape (16:9) or portrait (9:16) format</li>
+              <li>Videos (16:9) can be up to 10 minutes</li>
+              <li>Loops (9:16) can be up to 3 minutes</li>
               <li>Good lighting and clear audio make a big difference</li>
               <li>Introduce yourself and your specialty</li>
               <li>Include a call to action (e.g., &ldquo;Visit my profile to book&rdquo;)</li>

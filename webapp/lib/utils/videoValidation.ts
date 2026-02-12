@@ -1,6 +1,7 @@
 export const VIDEO_CONSTRAINTS = {
   MAX_FILE_SIZE: 50 * 1024 * 1024, // 50MB
-  MAX_DURATION_SECONDS: 180,
+  MAX_LANDSCAPE_DURATION_SECONDS: 600, // 10 minutes for Videos
+  MAX_PORTRAIT_DURATION_SECONDS: 180, // 3 minutes for Loops
   MIN_DURATION_SECONDS: 3,
   ALLOWED_TYPES: ['video/mp4', 'video/webm', 'video/quicktime'] as const,
   LANDSCAPE_ASPECT_RATIO: 16 / 9, // 16:9 landscape
@@ -41,7 +42,7 @@ export function validateVideoFile(file: File): ValidationResult {
   return { valid: true }
 }
 
-export function validateVideoDuration(durationSeconds: number): ValidationResult {
+export function validateVideoDuration(durationSeconds: number, orientation?: 'landscape' | 'portrait'): ValidationResult {
   if (durationSeconds < VIDEO_CONSTRAINTS.MIN_DURATION_SECONDS) {
     return {
       valid: false,
@@ -49,10 +50,16 @@ export function validateVideoDuration(durationSeconds: number): ValidationResult
     }
   }
 
-  if (durationSeconds > VIDEO_CONSTRAINTS.MAX_DURATION_SECONDS) {
+  const maxDuration = orientation === 'portrait'
+    ? VIDEO_CONSTRAINTS.MAX_PORTRAIT_DURATION_SECONDS
+    : VIDEO_CONSTRAINTS.MAX_LANDSCAPE_DURATION_SECONDS
+  const label = orientation === 'portrait' ? 'Loops' : 'Videos'
+
+  if (durationSeconds > maxDuration) {
+    const maxMinutes = maxDuration / 60
     return {
       valid: false,
-      error: `Video must be ${VIDEO_CONSTRAINTS.MAX_DURATION_SECONDS} seconds or less`,
+      error: `${label} must be ${maxMinutes} minutes or less`,
     }
   }
 

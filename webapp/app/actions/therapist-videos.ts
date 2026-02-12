@@ -31,7 +31,7 @@ const videoMetadataSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100, 'Title must be 100 characters or less'),
   description: z.string().max(500, 'Description must be 500 characters or less').optional(),
   session_format: z.array(z.enum(['in-person', 'online', 'phone'])).optional(),
-  duration_seconds: z.number().min(3).max(180).optional(),
+  duration_seconds: z.number().min(3).max(600).optional(),
   orientation: z.enum(['landscape', 'portrait']).optional(),
 })
 
