@@ -4,6 +4,7 @@ import {
   DeleteObjectsCommand,
   HeadObjectCommand,
 } from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { r2Client, R2_BUCKET_NAME, R2_PUBLIC_URL } from './client'
 import type { StorageFolder, UploadOptions, UploadResult, DeleteResult } from './types'
 
@@ -200,4 +201,28 @@ export function parsePath(path: string): { folder: StorageFolder; filename: stri
   }
 
   return null
+}
+
+/**
+ * Generate a presigned URL for direct client-to-R2 upload
+ *
+ * @param folder - The storage folder
+ * @param filename - The filename including any subfolder path
+ * @param contentType - The MIME type of the file
+ * @param expiresIn - URL expiry in seconds (default 10 minutes)
+ * @returns The presigned PUT URL
+ */
+export async function generatePresignedUploadUrl(
+  folder: StorageFolder,
+  filename: string,
+  contentType: string,
+  expiresIn: number = 600
+): Promise<string> {
+  const key = `${folder}/${filename}`
+  const command = new PutObjectCommand({
+    Bucket: R2_BUCKET_NAME,
+    Key: key,
+    ContentType: contentType,
+  })
+  return getSignedUrl(r2Client, command, { expiresIn })
 }

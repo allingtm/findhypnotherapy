@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback, useActionState } from 'react'
-import { uploadVideoAction, updateVideoAction } from '@/app/actions/therapist-videos'
+import { getVideoUploadUrl, completeVideoUpload, updateVideoAction } from '@/app/actions/therapist-videos'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
@@ -24,10 +24,10 @@ interface VideoUploadFormProps {
 export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadFormProps) {
   const isEditing = !!editVideo
 
-  const [uploadState, uploadAction, isUploading] = useActionState(
-    isEditing ? updateVideoAction : uploadVideoAction,
-    { success: false }
-  )
+  // Only use useActionState for edit mode (metadata-only, no large files)
+  const [editState, editAction, isEditSubmitting] = useActionState(updateVideoAction, {
+    success: false,
+  })
 
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null)
@@ -41,12 +41,16 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
   const [videoError, setVideoError] = useState<string | null>(null)
   const [dragActive, setDragActive] = useState(false)
 
+  // Upload progress state
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadStage, setUploadStage] = useState<string | null>(null)
+
   const [title, setTitle] = useState(editVideo?.title || '')
   const [description, setDescription] = useState(editVideo?.description || '')
 
   const videoInputRef = useRef<HTMLInputElement>(null)
   const videoPreviewRef = useRef<HTMLVideoElement>(null)
-  const formRef = useRef<HTMLFormElement>(null)
 
   const handleVideoSelect = useCallback((file: File) => {
     setVideoError(null)
@@ -132,45 +136,125 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
     setShowThumbnailSelector(false)
   }, [])
 
-  const handleSubmit = useCallback(
-    (formData: FormData) => {
-      if (!isEditing && !videoFile) {
+  // Upload file directly to R2 using presigned URL with progress tracking
+  const uploadFileToR2 = useCallback(
+    (url: string, file: File): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('PUT', url, true)
+        xhr.setRequestHeader('Content-Type', file.type)
+
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            setUploadProgress(Math.round((e.loaded / e.total) * 100))
+          }
+        })
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve()
+          } else {
+            reject(new Error(`Upload failed with status ${xhr.status}`))
+          }
+        })
+
+        xhr.addEventListener('error', () => reject(new Error('Upload failed')))
+        xhr.addEventListener('abort', () => reject(new Error('Upload cancelled')))
+
+        xhr.send(file)
+      })
+    },
+    []
+  )
+
+  // Handle new video upload (presigned URL flow)
+  const handleUploadSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault()
+
+      if (!videoFile) {
         setVideoError('Please select a video')
         return
       }
 
-      // Add video file if uploading new
-      if (videoFile) {
-        formData.set('video', videoFile)
+      if (!title.trim()) {
+        setVideoError('Please enter a title')
+        return
       }
 
-      // Add thumbnail if selected
-      if (thumbnailFile) {
-        formData.set('thumbnail', thumbnailFile)
-      }
+      setIsUploading(true)
+      setVideoError(null)
+      setUploadProgress(0)
 
-      // Add duration if available
-      if (videoDuration) {
-        formData.set('duration_seconds', Math.floor(videoDuration).toString())
-      }
+      try {
+        // Step 1: Get presigned URLs from server
+        setUploadStage('Preparing upload...')
+        const urlResult = await getVideoUploadUrl(videoFile.type, !!thumbnailFile)
 
-      // Add orientation if detected
-      if (videoOrientation) {
-        formData.set('orientation', videoOrientation)
-      }
+        if (!urlResult.success || !urlResult.videoUploadUrl || !urlResult.videoFilename) {
+          setVideoError(urlResult.error || 'Failed to prepare upload')
+          return
+        }
 
-      // Add video ID if editing
-      if (isEditing && editVideo) {
+        // Step 2: Upload video directly to R2
+        setUploadStage('Uploading video...')
+        await uploadFileToR2(urlResult.videoUploadUrl, videoFile)
+
+        // Step 3: Upload thumbnail if selected
+        let thumbnailFilename: string | undefined
+        if (thumbnailFile && urlResult.thumbnailUploadUrl && urlResult.thumbnailFilename) {
+          setUploadStage('Uploading thumbnail...')
+          setUploadProgress(0)
+          await uploadFileToR2(urlResult.thumbnailUploadUrl, thumbnailFile)
+          thumbnailFilename = urlResult.thumbnailFilename
+        }
+
+        // Step 4: Save metadata to database
+        setUploadStage('Saving...')
+        setUploadProgress(100)
+        const result = await completeVideoUpload({
+          videoFilename: urlResult.videoFilename,
+          thumbnailFilename,
+          title: title.trim(),
+          description: description.trim() || undefined,
+          duration_seconds: videoDuration ? Math.floor(videoDuration) : undefined,
+          orientation: videoOrientation || undefined,
+        })
+
+        if (!result.success) {
+          setVideoError(result.error || 'Failed to save video')
+          return
+        }
+
+        onSuccess?.()
+      } catch (err) {
+        console.error('Upload error:', err)
+        setVideoError(err instanceof Error ? err.message : 'Upload failed. Please try again.')
+      } finally {
+        setIsUploading(false)
+        setUploadStage(null)
+        setUploadProgress(0)
+      }
+    },
+    [videoFile, thumbnailFile, title, description, videoDuration, videoOrientation, uploadFileToR2, onSuccess]
+  )
+
+  // Handle edit form submission (uses useActionState - metadata only)
+  const handleEditSubmit = useCallback(
+    (formData: FormData) => {
+      if (editVideo) {
         formData.set('videoId', editVideo.id)
       }
     },
-    [videoFile, thumbnailFile, videoDuration, videoOrientation, isEditing, editVideo]
+    [editVideo]
   )
 
-  // Handle success
-  if (uploadState.success) {
+  // Handle edit success
+  if (isEditing && editState.success) {
     onSuccess?.()
   }
+
+  const showError = videoError || (isEditing && editState.error)
 
   return (
     <div className="bg-white dark:bg-neutral-800 rounded-lg shadow p-6">
@@ -178,24 +262,90 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
         {isEditing ? 'Edit Video' : 'Upload New Video'}
       </h2>
 
-      {uploadState.error && (
-        <Alert type="error" message={uploadState.error} />
+      {showError && (
+        <Alert type="error" message={showError} />
       )}
 
-      {videoError && (
-        <Alert type="error" message={videoError} />
-      )}
+      {isEditing ? (
+        // Edit form uses useActionState (no large files)
+        <form
+          action={(formData) => {
+            handleEditSubmit(formData)
+            editAction(formData)
+          }}
+          className="space-y-6"
+        >
+          {/* Thumbnail Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Thumbnail
+            </label>
+            <div className="flex items-start gap-4">
+              {thumbnailPreviewUrl ? (
+                <div className="w-24 h-24 rounded-lg overflow-hidden border border-gray-200 dark:border-neutral-700">
+                  <img
+                    src={thumbnailPreviewUrl}
+                    alt="Thumbnail"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 dark:border-neutral-600 flex items-center justify-center">
+                  <span className="text-xs text-gray-500 dark:text-gray-500">
+                    No thumbnail
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
 
-      <form
-        ref={formRef}
-        action={(formData) => {
-          handleSubmit(formData)
-          uploadAction(formData)
-        }}
-        className="space-y-6"
-      >
-        {/* Video Upload Area (only for new uploads) */}
-        {!isEditing && (
+          <Input
+            label="Title"
+            name="title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            maxLength={100}
+            required
+            placeholder="Give your video a title"
+          />
+
+          <div>
+            <label
+              htmlFor="description"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
+              Description (optional)
+            </label>
+            <textarea
+              id="description"
+              name="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={500}
+              rows={3}
+              placeholder="Tell viewers what this video is about"
+              className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300 dark:border-neutral-600"
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-500">
+              {description.length}/500 characters
+            </p>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            {onCancel && (
+              <Button type="button" variant="secondary" onClick={onCancel}>
+                Cancel
+              </Button>
+            )}
+            <Button type="submit" variant="primary" loading={isEditSubmitting}>
+              Save Changes
+            </Button>
+          </div>
+        </form>
+      ) : (
+        // New upload form uses direct R2 upload
+        <form onSubmit={handleUploadSubmit} className="space-y-6">
+          {/* Video Upload Area */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Video (landscape 16:9 or portrait 9:16, max {VIDEO_CONSTRAINTS.MAX_DURATION_SECONDS}s)
@@ -278,33 +428,31 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
               className="hidden"
             />
           </div>
-        )}
 
-        {/* Thumbnail Selection */}
-        {(videoPreviewUrl || isEditing) && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Thumbnail
-            </label>
+          {/* Thumbnail Selection */}
+          {videoPreviewUrl && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Thumbnail
+              </label>
 
-            <div className="flex items-start gap-4">
-              {thumbnailPreviewUrl ? (
-                <div className="w-24 h-24 rounded-lg overflow-hidden border border-gray-200 dark:border-neutral-700">
-                  <img
-                    src={thumbnailPreviewUrl}
-                    alt="Thumbnail"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 dark:border-neutral-600 flex items-center justify-center">
-                  <span className="text-xs text-gray-500 dark:text-gray-500">
-                    No thumbnail
-                  </span>
-                </div>
-              )}
+              <div className="flex items-start gap-4">
+                {thumbnailPreviewUrl ? (
+                  <div className="w-24 h-24 rounded-lg overflow-hidden border border-gray-200 dark:border-neutral-700">
+                    <img
+                      src={thumbnailPreviewUrl}
+                      alt="Thumbnail"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 dark:border-neutral-600 flex items-center justify-center">
+                    <span className="text-xs text-gray-500 dark:text-gray-500">
+                      No thumbnail
+                    </span>
+                  </div>
+                )}
 
-              {videoPreviewUrl && (
                 <Button
                   type="button"
                   variant="secondary"
@@ -312,62 +460,82 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
                 >
                   {thumbnailPreviewUrl ? 'Change Thumbnail' : 'Select Thumbnail'}
                 </Button>
-              )}
+              </div>
             </div>
-          </div>
-        )}
-
-        {/* Title */}
-        <Input
-          label="Title"
-          name="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          maxLength={100}
-          required
-          placeholder="Give your video a title"
-        />
-
-        {/* Description */}
-        <div>
-          <label
-            htmlFor="description"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-          >
-            Description (optional)
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            maxLength={500}
-            rows={3}
-            placeholder="Tell viewers what this video is about"
-            className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300 dark:border-neutral-600"
-          />
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-500">
-            {description.length}/500 characters
-          </p>
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-3 pt-4">
-          {onCancel && (
-            <Button type="button" variant="secondary" onClick={onCancel}>
-              Cancel
-            </Button>
           )}
-          <Button
-            type="submit"
-            variant="primary"
-            loading={isUploading}
-            disabled={!isEditing && !videoFile}
-          >
-            {isEditing ? 'Save Changes' : 'Upload Video'}
-          </Button>
-        </div>
-      </form>
+
+          {/* Title */}
+          <Input
+            label="Title"
+            name="title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            maxLength={100}
+            required
+            placeholder="Give your video a title"
+          />
+
+          {/* Description */}
+          <div>
+            <label
+              htmlFor="description"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
+              Description (optional)
+            </label>
+            <textarea
+              id="description"
+              name="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={500}
+              rows={3}
+              placeholder="Tell viewers what this video is about"
+              className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300 dark:border-neutral-600"
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-500">
+              {description.length}/500 characters
+            </p>
+          </div>
+
+          {/* Upload Progress */}
+          {isUploading && (
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  {uploadStage}
+                </span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {uploadProgress}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-neutral-700 rounded-full h-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-4">
+            {onCancel && (
+              <Button type="button" variant="secondary" onClick={onCancel} disabled={isUploading}>
+                Cancel
+              </Button>
+            )}
+            <Button
+              type="submit"
+              variant="primary"
+              loading={isUploading}
+              disabled={!videoFile}
+            >
+              Upload Video
+            </Button>
+          </div>
+        </form>
+      )}
 
       {/* Thumbnail Selector Modal */}
       {showThumbnailSelector && videoPreviewUrl && (

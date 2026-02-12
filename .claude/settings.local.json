@@ -43,7 +43,8 @@
       "WebFetch(domain:solvewithsoftware.com)",
       "WebFetch(domain:tabler.io)",
       "WebFetch(domain:developers.cloudflare.com)",
-      "WebFetch(domain:www.volume11.ai)"
+      "WebFetch(domain:www.volume11.ai)",
+      "Bash(npx next build:*)"
     ],
     "additionalDirectories": [
       "d:\\repos\\findhypnotherapy\\webapp\\app\\book",

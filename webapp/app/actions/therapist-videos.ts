@@ -4,26 +4,30 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import {
-  validateVideoFile,
-  validateThumbnailFile,
   generateVideoFilename,
   generateThumbnailFilename,
   getVideoExtension,
 } from '@/lib/utils/videoValidation'
 import type { TherapistVideo, SessionFormat, VideoFeedItem } from '@/lib/types/videos'
-import { uploadFile, deleteFile, getPublicUrl, extractR2Path, parsePath } from '@/lib/r2/storage'
+import { deleteFile, getPublicUrl, extractR2Path, parsePath, generatePresignedUploadUrl, fileExists } from '@/lib/r2/storage'
 
 type ActionResponse = {
   success: boolean
   error?: string
 }
 
-type VideoUploadResponse = ActionResponse & {
-  videoId?: string
-  videoUrl?: string
+type UploadUrlResponse = ActionResponse & {
+  videoUploadUrl?: string
+  videoFilename?: string
+  thumbnailUploadUrl?: string
+  thumbnailFilename?: string
 }
 
-const videoUploadSchema = z.object({
+type CompleteUploadResponse = ActionResponse & {
+  videoId?: string
+}
+
+const videoMetadataSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100, 'Title must be 100 characters or less'),
   description: z.string().max(500, 'Description must be 500 characters or less').optional(),
   session_format: z.array(z.enum(['in-person', 'online', 'phone'])).optional(),
@@ -59,11 +63,11 @@ async function getTherapistProfile(supabase: Awaited<ReturnType<typeof createCli
   return profile
 }
 
-// Upload video action
-export async function uploadVideoAction(
-  prevState: any,
-  formData: FormData
-): Promise<VideoUploadResponse> {
+// Get presigned URLs for direct client-to-R2 upload
+export async function getVideoUploadUrl(
+  videoContentType: string,
+  includeThumbnail: boolean = false
+): Promise<UploadUrlResponse> {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -78,31 +82,73 @@ export async function uploadVideoAction(
       return { success: false, error: 'Therapist profile not found. Please create a profile first.' }
     }
 
-    // Get video file
-    const videoFile = formData.get('video') as File
-    if (!videoFile || videoFile.size === 0) {
-      return { success: false, error: 'No video file provided' }
+    // Generate video filename and presigned URL
+    const extension = getVideoExtension(videoContentType)
+    const videoFilename = generateVideoFilename(user.id, extension)
+    const videoUploadUrl = await generatePresignedUploadUrl(
+      'therapist-videos',
+      videoFilename,
+      videoContentType
+    )
+
+    // Generate thumbnail presigned URL if requested
+    let thumbnailUploadUrl: string | undefined
+    let thumbnailFilename: string | undefined
+    if (includeThumbnail) {
+      const tempId = crypto.randomUUID()
+      thumbnailFilename = generateThumbnailFilename(user.id, tempId)
+      thumbnailUploadUrl = await generatePresignedUploadUrl(
+        'video-thumbnails',
+        thumbnailFilename,
+        'image/jpeg'
+      )
     }
 
-    // Validate video file
-    const videoValidation = validateVideoFile(videoFile)
-    if (!videoValidation.valid) {
-      return { success: false, error: videoValidation.error }
+    return {
+      success: true,
+      videoUploadUrl,
+      videoFilename,
+      thumbnailUploadUrl,
+      thumbnailFilename,
+    }
+  } catch (err) {
+    console.error('Error generating upload URL:', err)
+    return { success: false, error: 'Failed to generate upload URL' }
+  }
+}
+
+// Complete video upload after files are uploaded directly to R2
+export async function completeVideoUpload(data: {
+  videoFilename: string
+  thumbnailFilename?: string
+  title: string
+  description?: string
+  session_format?: string[]
+  duration_seconds?: number
+  orientation?: string
+}): Promise<CompleteUploadResponse> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'Not authenticated' }
     }
 
-    // Parse form data
-    const sessionFormatStr = formData.get('session_format') as string
-    const rawData = {
-      title: formData.get('title') as string,
-      description: (formData.get('description') as string) || undefined,
-      session_format: sessionFormatStr ? JSON.parse(sessionFormatStr) : undefined,
-      duration_seconds: formData.get('duration_seconds')
-        ? Number(formData.get('duration_seconds'))
-        : undefined,
-      orientation: (formData.get('orientation') as string) || undefined,
+    // Get therapist profile
+    const profile = await getTherapistProfile(supabase, user.id)
+    if (!profile) {
+      return { success: false, error: 'Therapist profile not found' }
     }
 
-    const validation = videoUploadSchema.safeParse(rawData)
+    // Validate metadata
+    const validation = videoMetadataSchema.safeParse({
+      title: data.title,
+      description: data.description || undefined,
+      session_format: data.session_format,
+      duration_seconds: data.duration_seconds,
+      orientation: data.orientation,
+    })
     if (!validation.success) {
       return { success: false, error: validation.error.issues[0]?.message || 'Validation failed' }
     }
@@ -113,55 +159,23 @@ export async function uploadVideoAction(
     const sanitizedTitle = title.replace(/[<>]/g, '')
     const sanitizedDescription = description?.replace(/[<>]/g, '')
 
-    // Generate video filename and upload
-    const extension = getVideoExtension(videoFile.type)
-    const videoFilename = generateVideoFilename(user.id, extension)
-
-    // Convert File to Buffer for R2 upload
-    const videoArrayBuffer = await videoFile.arrayBuffer()
-    const videoBuffer = Buffer.from(videoArrayBuffer)
-
-    const videoUploadResult = await uploadFile('therapist-videos', videoFilename, videoBuffer, {
-      contentType: videoFile.type,
-      cacheControl: 'max-age=3600',
-    })
-
-    if (!videoUploadResult.success) {
-      console.error('Video upload error:', videoUploadResult.error)
-      return { success: false, error: 'Failed to upload video' }
+    // Verify video was uploaded to R2
+    const videoExists = await fileExists('therapist-videos', data.videoFilename)
+    if (!videoExists) {
+      return { success: false, error: 'Video file not found. Upload may have failed.' }
     }
 
-    // Get public URL
-    const videoUrl = getPublicUrl('therapist-videos', videoFilename)
-
-    // Handle thumbnail if provided
+    // Get public URLs
+    const videoUrl = getPublicUrl('therapist-videos', data.videoFilename)
     let thumbnailUrl: string | null = null
-    let thumbnailFilename: string | null = null
-    const thumbnailFile = formData.get('thumbnail') as File
-    if (thumbnailFile && thumbnailFile.size > 0) {
-      const thumbValidation = validateThumbnailFile(thumbnailFile)
-      if (thumbValidation.valid) {
-        // We'll generate the thumbnail filename after we have the video ID
-        // For now, use a temp ID
-        const tempId = crypto.randomUUID()
-        thumbnailFilename = generateThumbnailFilename(user.id, tempId)
-
-        // Convert File to Buffer
-        const thumbArrayBuffer = await thumbnailFile.arrayBuffer()
-        const thumbBuffer = Buffer.from(thumbArrayBuffer)
-
-        const thumbUploadResult = await uploadFile('video-thumbnails', thumbnailFilename, thumbBuffer, {
-          contentType: thumbnailFile.type,
-          cacheControl: 'max-age=3600',
-        })
-
-        if (thumbUploadResult.success) {
-          thumbnailUrl = getPublicUrl('video-thumbnails', thumbnailFilename)
-        }
+    if (data.thumbnailFilename) {
+      const thumbExists = await fileExists('video-thumbnails', data.thumbnailFilename)
+      if (thumbExists) {
+        thumbnailUrl = getPublicUrl('video-thumbnails', data.thumbnailFilename)
       }
     }
 
-    // Create database record (first without slug to get the ID)
+    // Create database record
     const { data: video, error: insertError } = await supabase
       .from('therapist_videos')
       .insert({
@@ -180,7 +194,17 @@ export async function uploadVideoAction(
       .select('id')
       .single()
 
-    // Generate and update slug after we have the ID
+    if (insertError) {
+      // Rollback: delete uploaded files
+      await deleteFile('therapist-videos', data.videoFilename)
+      if (data.thumbnailFilename) {
+        await deleteFile('video-thumbnails', data.thumbnailFilename)
+      }
+      console.error('Database insert error:', insertError)
+      return { success: false, error: 'Failed to save video' }
+    }
+
+    // Generate and update slug
     if (video) {
       const slug = generateVideoSlug(sanitizedTitle, video.id)
       await supabase
@@ -189,26 +213,15 @@ export async function uploadVideoAction(
         .eq('id', video.id)
     }
 
-    if (insertError) {
-      // Rollback: delete uploaded video and thumbnail
-      await deleteFile('therapist-videos', videoFilename)
-      if (thumbnailFilename) {
-        await deleteFile('video-thumbnails', thumbnailFilename)
-      }
-      console.error('Database insert error:', insertError)
-      return { success: false, error: 'Failed to save video' }
-    }
-
-    revalidatePath('/dashboard/videos')
+    revalidatePath('/dashboard/practice')
     revalidatePath('/videos')
 
     return {
       success: true,
       videoId: video.id,
-      videoUrl,
     }
   } catch (err) {
-    console.error('Video upload error:', err)
+    console.error('Complete upload error:', err)
     return { success: false, error: 'An unexpected error occurred' }
   }
 }
