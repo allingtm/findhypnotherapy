@@ -348,7 +348,7 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
           {/* Video Upload Area */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Video (16:9 up to 10 min, or 9:16 Loop up to 3 min)
+              Video (16:9 up to 2 min, or 9:16 Loop up to 2 min)
             </label>
 
             {!videoPreviewUrl ? (

@@ -1,7 +1,7 @@
 export const VIDEO_CONSTRAINTS = {
-  MAX_FILE_SIZE: 50 * 1024 * 1024, // 50MB
-  MAX_LANDSCAPE_DURATION_SECONDS: 600, // 10 minutes for Videos
-  MAX_PORTRAIT_DURATION_SECONDS: 180, // 3 minutes for Loops
+  MAX_FILE_SIZE: 100 * 1024 * 1024, // 100MB
+  MAX_LANDSCAPE_DURATION_SECONDS: 120, // 2 minutes for Videos
+  MAX_PORTRAIT_DURATION_SECONDS: 120, // 2 minutes for Loops
   MIN_DURATION_SECONDS: 3,
   ALLOWED_TYPES: ['video/mp4', 'video/webm', 'video/quicktime'] as const,
   LANDSCAPE_ASPECT_RATIO: 16 / 9, // 16:9 landscape
