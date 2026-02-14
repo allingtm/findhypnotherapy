@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { StatCard } from "./StatCard";
 import { TodaySchedule } from "./TodaySchedule";
 import { ActionItemsList } from "./ActionItemsList";
@@ -16,17 +17,18 @@ import type {
   ScheduleItem,
   ActionItem,
   ActivityItem,
-  SessionTrendData,
-  ClientStatusData,
-  ServicePopularityData,
-  SessionFormatData,
 } from "@/app/actions/dashboard";
-import {
-  SessionsChart,
-  ClientStatusChart,
-  ServicePopularityChart,
-  SessionFormatChart,
-} from "./charts";
+import type {
+  AnalyticsOverview,
+  BookingAnalytics,
+  EngagementAnalytics,
+  ClientAnalytics,
+  ProfileCompletionScore,
+  AnalyticsInsight,
+  ProfileViewTrendData,
+} from "@/app/actions/analytics";
+import { PeriodSelector } from "@/components/analytics/PeriodSelector";
+import { AnalyticsContent } from "@/components/analytics/AnalyticsContent";
 import { SectionHeader } from "./SectionHeader";
 import { DASHBOARD_HELP } from "./helpContent";
 
@@ -37,10 +39,13 @@ interface DashboardHomeContentProps {
   actionItems: ActionItem[];
   activities: ActivityItem[];
   profileSlug?: string | null;
-  sessionTrends: SessionTrendData[];
-  clientStatus: ClientStatusData[];
-  servicePopularity: ServicePopularityData[];
-  sessionFormats: SessionFormatData[];
+  overview: AnalyticsOverview;
+  bookings: BookingAnalytics;
+  engagement: EngagementAnalytics;
+  clients: ClientAnalytics;
+  profileScore: ProfileCompletionScore;
+  insights: AnalyticsInsight[];
+  profileViews: ProfileViewTrendData[];
 }
 
 function getGreeting(): string {
@@ -57,10 +62,13 @@ export function DashboardHomeContent({
   actionItems,
   activities,
   profileSlug,
-  sessionTrends,
-  clientStatus,
-  servicePopularity,
-  sessionFormats,
+  overview,
+  bookings,
+  engagement,
+  clients,
+  profileScore,
+  insights,
+  profileViews,
 }: DashboardHomeContentProps) {
   const firstName = userName?.split(" ")[0] || "there";
 
@@ -128,14 +136,28 @@ export function DashboardHomeContent({
         <TodaySchedule schedule={schedule} />
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-        <SessionsChart data={sessionTrends} />
-        <ClientStatusChart data={clientStatus} />
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-        <ServicePopularityChart data={servicePopularity} />
-        <SessionFormatChart data={sessionFormats} />
+      {/* Analytics Section */}
+      <div className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <SectionHeader
+            title="Analytics"
+            helpTitle="Practice Analytics"
+            helpContent="Track your practice performance across bookings, engagement, and client metrics. Use the period selector to view data for different time ranges."
+            className="mb-0"
+          />
+          <Suspense fallback={null}>
+            <PeriodSelector />
+          </Suspense>
+        </div>
+        <AnalyticsContent
+          overview={overview}
+          bookings={bookings}
+          engagement={engagement}
+          clients={clients}
+          profileScore={profileScore}
+          insights={insights}
+          profileViews={profileViews}
+        />
       </div>
 
       {/* Two Column Layout */}

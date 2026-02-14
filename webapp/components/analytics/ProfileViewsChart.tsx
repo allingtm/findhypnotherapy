@@ -9,55 +9,47 @@ import {
   Legend,
   Tooltip,
   SplineAreaSeries,
-  Category,
 } from "@syncfusion/ej2-react-charts";
-import { IconChartLine } from "@tabler/icons-react";
-import type { SessionTrendData } from "@/app/actions/dashboard";
-import { SectionHeader } from "../SectionHeader";
-import { DASHBOARD_HELP } from "../helpContent";
+import { IconEye } from "@tabler/icons-react";
+import type { ProfileViewTrendData } from "@/app/actions/analytics";
 
-interface SessionsChartProps {
-  data: SessionTrendData[];
+interface ProfileViewsChartProps {
+  data: ProfileViewTrendData[];
 }
 
-export function SessionsChart({ data }: SessionsChartProps) {
-  if (!data || data.length === 0) {
+export function ProfileViewsChart({ data }: ProfileViewsChartProps) {
+  const hasData = data.some((d) => d.views > 0);
+
+  if (!hasData) {
     return (
       <div className="bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 p-4">
-        <SectionHeader
-          title="Sessions Over Time"
-          helpTitle={DASHBOARD_HELP.sessionsChart.title}
-          helpContent={DASHBOARD_HELP.sessionsChart.content}
-          className="mb-4"
-        />
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          Profile Views
+        </h3>
         <div className="flex flex-col items-center justify-center h-[250px]">
-          <IconChartLine className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
+          <IconEye className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
           <p className="text-gray-500 dark:text-gray-400 text-sm">
-            No session data available
+            No profile view data yet
           </p>
           <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
-            Data will appear once you have sessions
+            Views will be tracked when visitors view your public profile
           </p>
         </div>
       </div>
     );
   }
 
-  // Transform dates for chart
   const chartData = data.map((d) => ({
     x: new Date(d.date),
-    sessions: d.sessions,
-    bookings: d.bookings,
+    views: d.views,
+    uniqueVisitors: d.uniqueVisitors,
   }));
 
   return (
     <div className="bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 p-4">
-      <SectionHeader
-        title="Sessions Over Time"
-        helpTitle={DASHBOARD_HELP.sessionsChart.title}
-        helpContent={DASHBOARD_HELP.sessionsChart.content}
-        className="mb-4"
-      />
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        Profile Views
+      </h3>
       <ChartComponent
         height="250px"
         background="transparent"
@@ -70,7 +62,6 @@ export function SessionsChart({ data }: SessionsChartProps) {
         }}
         primaryYAxis={{
           minimum: 0,
-          labelFormat: "{value}",
           majorGridLines: { color: "#404040", width: 0.5 },
           labelStyle: { color: "#a3a3a3" },
           lineStyle: { width: 0 },
@@ -83,27 +74,27 @@ export function SessionsChart({ data }: SessionsChartProps) {
         }}
         chartArea={{ border: { width: 0 } }}
       >
-        <Inject services={[SplineAreaSeries, DateTime, Legend, Tooltip, Category]} />
+        <Inject services={[SplineAreaSeries, DateTime, Legend, Tooltip]} />
         <SeriesCollectionDirective>
           <SeriesDirective
             dataSource={chartData}
             xName="x"
-            yName="sessions"
-            name="Client Sessions"
+            yName="views"
+            name="Total Views"
             type="SplineArea"
-            fill="#22c55e"
+            fill="#f97316"
             opacity={0.3}
-            border={{ width: 2, color: "#22c55e" }}
+            border={{ width: 2, color: "#f97316" }}
           />
           <SeriesDirective
             dataSource={chartData}
             xName="x"
-            yName="bookings"
-            name="Bookings"
+            yName="uniqueVisitors"
+            name="Unique Visitors"
             type="SplineArea"
-            fill="#3b82f6"
+            fill="#06b6d4"
             opacity={0.3}
-            border={{ width: 2, color: "#3b82f6" }}
+            border={{ width: 2, color: "#06b6d4" }}
           />
         </SeriesCollectionDirective>
       </ChartComponent>

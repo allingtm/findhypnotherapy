@@ -14,6 +14,7 @@ import type { ServiceType, PriceDisplayMode } from '@/lib/types/database'
 import { SERVICE_TYPE_LABELS } from '@/lib/types/services'
 import { formatServicePrice, formatSessionCount } from '@/lib/utils/price-display'
 import { ServicesWall } from '@/components/services/ServicesWall'
+import { TrackEvent } from '@/components/analytics/TrackEvent'
 
 interface TherapistProfilePageProps {
   params: Promise<{ slug: string }>
@@ -169,6 +170,7 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
 
   return (
     <div className="min-h-screen flex flex-col">
+      <TrackEvent eventType="profile_view" therapistProfileId={profile.id} />
       <Navbar />
 
       <div className="flex-1 bg-gray-50 dark:bg-neutral-950">

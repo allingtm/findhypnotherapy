@@ -5,6 +5,7 @@ import { getActiveTermsForBooking } from "@/app/actions/therapist-terms";
 import { BookingPageContent } from "./BookingPageContent";
 import { Navbar } from "@/components/ui/Navbar";
 import { Footer } from "@/components/ui/Footer";
+import { TrackEvent } from "@/components/analytics/TrackEvent";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -67,6 +68,7 @@ export default async function BookingPage({ params, searchParams }: PageProps) {
 
   return (
     <>
+      <TrackEvent eventType="booking_page_view" therapistProfileId={profile.id} />
       <Navbar />
       <main className="min-h-screen bg-gray-50 dark:bg-neutral-900">
         <div className="max-w-6xl mx-auto px-4 py-8">

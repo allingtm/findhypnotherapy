@@ -5,6 +5,7 @@ import { Navbar } from '@/components/ui/Navbar'
 import { Footer } from '@/components/ui/Footer'
 import Link from 'next/link'
 import type { Database } from '@/lib/types/database'
+import { TrackSearchImpressions } from '@/components/analytics/TrackSearchImpressions'
 
 type TherapistSearchResult = Database['public']['Functions']['search_therapists']['Returns'][number]
 
@@ -85,11 +86,19 @@ export default async function DirectoryPage({ searchParams }: DirectoryPageProps
             </p>
           </div>
         ) : results && results.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {results.map((therapist: TherapistSearchResult) => (
-              <TherapistCard key={therapist.id} therapist={therapist} />
-            ))}
-          </div>
+          <>
+            <TrackSearchImpressions
+              impressions={results.map((t: TherapistSearchResult, idx: number) => ({
+                therapistProfileId: t.id,
+                position: ((currentPage - 1) * pageSize) + idx + 1,
+              }))}
+            />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {results.map((therapist: TherapistSearchResult) => (
+                <TherapistCard key={therapist.id} therapist={therapist} />
+              ))}
+            </div>
+          </>
         ) : (
           <div className="text-center py-12">
             <div className="text-gray-400 dark:text-gray-600 mb-4">

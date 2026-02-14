@@ -7,11 +7,16 @@ import {
   getDashboardTodaySchedule,
   getDashboardActionItems,
   getDashboardRecentActivity,
-  getDashboardSessionTrends,
-  getDashboardClientStatus,
-  getDashboardServicePopularity,
-  getDashboardSessionFormats,
 } from "@/app/actions/dashboard";
+import {
+  getAnalyticsOverview,
+  getBookingAnalytics,
+  getEngagementAnalytics,
+  getClientAnalytics,
+  getProfileCompletionScore,
+  getAnalyticsInsights,
+  getProfileViewTrends,
+} from "@/app/actions/analytics";
 import Link from "next/link";
 
 export const metadata = {
@@ -19,7 +24,14 @@ export const metadata = {
   description: "Your practice overview and management dashboard",
 };
 
-export default async function DashboardPage() {
+interface DashboardPageProps {
+  searchParams: Promise<{
+    days?: string;
+  }>;
+}
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const params = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -86,25 +98,34 @@ export default async function DashboardPage() {
     );
   }
 
-  // Fetch all dashboard data in parallel
+  const days = parseInt(params.days || "30", 10);
+  const validDays = [7, 30, 90].includes(days) ? days : 30;
+
+  // Fetch all dashboard + analytics data in parallel
   const [
     statsResult,
     scheduleResult,
     actionItemsResult,
     activitiesResult,
-    sessionTrendsResult,
-    clientStatusResult,
-    servicePopularityResult,
-    sessionFormatsResult,
+    overviewResult,
+    bookingsResult,
+    engagementResult,
+    clientsResult,
+    profileScoreResult,
+    insightsResult,
+    profileViewsResult,
   ] = await Promise.all([
     getDashboardStats(),
     getDashboardTodaySchedule(),
     getDashboardActionItems(),
     getDashboardRecentActivity(),
-    getDashboardSessionTrends(),
-    getDashboardClientStatus(),
-    getDashboardServicePopularity(),
-    getDashboardSessionFormats(),
+    getAnalyticsOverview(validDays),
+    getBookingAnalytics(validDays),
+    getEngagementAnalytics(validDays),
+    getClientAnalytics(validDays),
+    getProfileCompletionScore(),
+    getAnalyticsInsights(validDays),
+    getProfileViewTrends(validDays),
   ]);
 
   // Default stats if there's an error
@@ -115,6 +136,60 @@ export default async function DashboardPage() {
     activeClients: 0,
     invitedClients: 0,
     sessionsThisWeek: 0,
+  };
+
+  const defaultOverview = {
+    totalEnquiries: 0,
+    totalEnquiriesPrev: 0,
+    totalBookings: 0,
+    totalBookingsPrev: 0,
+    confirmationRate: 0,
+    confirmationRatePrev: 0,
+    enquiryToBookingRate: 0,
+    enquiryToBookingRatePrev: 0,
+    activeClients: 0,
+    newClients: 0,
+    newClientsPrev: 0,
+    profileViews: 0,
+    profileViewsPrev: 0,
+    uniqueVisitors: 0,
+    searchImpressions: 0,
+    searchImpressionsPrev: 0,
+  };
+
+  const defaultBookings = {
+    funnel: { pending: 0, verified: 0, confirmed: 0, completed: 0, cancelled: 0, noShow: 0 },
+    avgTimeToConfirmHours: null,
+    cancellations: { cancelledByMember: 0, cancelledByVisitor: 0, cancelledBySystem: 0, topReasons: [] },
+    byDayOfWeek: [],
+    byTimeOfDay: [],
+    topServices: [],
+    formatSplit: [],
+  };
+
+  const defaultEngagement = {
+    messageVolume: [],
+    avgResponseTimeMinutes: null,
+    conversationsStarted: 0,
+    conversationsStartedPrev: 0,
+    conversationToClientRate: 0,
+    emailDelivered: 0,
+    emailOpened: 0,
+    emailBounced: 0,
+  };
+
+  const defaultClients = {
+    pipeline: [],
+    onboardingCompletionRate: 0,
+    avgSessionsPerClient: 0,
+    sessionCompletionRate: 0,
+    rsvpResponseRate: 0,
+    invitationFunnel: { sent: 0, opened: 0, completed: 0 },
+  };
+
+  const defaultProfileScore = {
+    score: 0,
+    items: [],
   };
 
   return (
@@ -144,10 +219,13 @@ export default async function DashboardPage() {
         actionItems={actionItemsResult.items}
         activities={activitiesResult.activities}
         profileSlug={profileSlug}
-        sessionTrends={sessionTrendsResult.data}
-        clientStatus={clientStatusResult.data}
-        servicePopularity={servicePopularityResult.data}
-        sessionFormats={sessionFormatsResult.data}
+        overview={overviewResult.data || defaultOverview}
+        bookings={bookingsResult.data || defaultBookings}
+        engagement={engagementResult.data || defaultEngagement}
+        clients={clientsResult.data || defaultClients}
+        profileScore={profileScoreResult.data || defaultProfileScore}
+        insights={insightsResult.data}
+        profileViews={profileViewsResult.data}
       />
     </div>
   );
