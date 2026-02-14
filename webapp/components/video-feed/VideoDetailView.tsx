@@ -103,6 +103,54 @@ export function VideoDetailView({ video, relatedVideos, contactInfo }: VideoDeta
         )}
       </div>
 
+      {/* Contact Panel */}
+      {contactInfo && (
+        <div className="mt-6 p-4 bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-gray-100 dark:border-neutral-700">
+          <div className="flex flex-col md:flex-row gap-3">
+            {contactInfo.acceptsOnlineBooking && video.therapist_slug && (
+              <Link
+                href={`/book/${video.therapist_slug}`}
+                className="block w-full md:flex-1 px-4 py-3 bg-green-600 text-white text-center rounded-lg hover:bg-green-700 transition-colors font-medium"
+              >
+                Book Free Consultation
+              </Link>
+            )}
+
+            {contactInfo.bookingUrl && (
+              <a
+                href={contactInfo.bookingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`block w-full md:flex-1 px-4 py-3 text-center rounded-lg transition-colors font-medium ${
+                  contactInfo.acceptsOnlineBooking
+                    ? 'bg-gray-100 dark:bg-neutral-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-neutral-600'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                {contactInfo.acceptsOnlineBooking ? 'View Calendar' : 'Book an Appointment'}
+              </a>
+            )}
+
+            <div className="w-full md:flex-1">
+              <ContactForm
+                memberProfileId={video.therapist_profile_id}
+                therapistName={video.therapist_name}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Related Videos Section */}
+      {relatedVideos.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            More from {video.therapist_name}
+          </h2>
+          <VideoWall videos={relatedVideos} showTherapistInfo={false} />
+        </div>
+      )}
+
       {/* Therapist Info Card */}
       <div className="mt-6 p-4 bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-gray-100 dark:border-neutral-700">
         <div className="flex items-center gap-4">
@@ -144,46 +192,6 @@ export function VideoDetailView({ video, relatedVideos, contactInfo }: VideoDeta
         </div>
       </div>
 
-      {/* Contact Panel */}
-      {contactInfo && (
-        <div className="mt-4 p-4 bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-gray-100 dark:border-neutral-700">
-          <div className="space-y-3">
-            {contactInfo.acceptsOnlineBooking && video.therapist_slug && (
-              <Link
-                href={`/book/${video.therapist_slug}`}
-                className="block w-full px-4 py-3 bg-green-600 text-white text-center rounded-lg hover:bg-green-700 transition-colors font-medium"
-              >
-                Book Free Consultation
-              </Link>
-            )}
-
-            {contactInfo.bookingUrl && (
-              <a
-                href={contactInfo.bookingUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`block w-full px-4 py-3 text-center rounded-lg transition-colors font-medium ${
-                  contactInfo.acceptsOnlineBooking
-                    ? 'bg-gray-100 dark:bg-neutral-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-neutral-600'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
-              >
-                {contactInfo.acceptsOnlineBooking ? 'View Calendar' : 'Book an Appointment'}
-              </a>
-            )}
-
-            {(contactInfo.acceptsOnlineBooking || contactInfo.bookingUrl) && (
-              <div className="border-t border-gray-200 dark:border-neutral-700" />
-            )}
-
-            <ContactForm
-              memberProfileId={video.therapist_profile_id}
-              therapistName={video.therapist_name}
-            />
-          </div>
-        </div>
-      )}
-
       {/* Related Services */}
       {video.services && video.services.length > 0 && (
         <div className="mt-8">
@@ -191,16 +199,6 @@ export function VideoDetailView({ video, relatedVideos, contactInfo }: VideoDeta
             Related Services
           </h2>
           <ServicesWall services={video.services} therapistSlug={video.therapist_slug || ''} />
-        </div>
-      )}
-
-      {/* Related Videos Section */}
-      {relatedVideos.length > 0 && (
-        <div className="mt-10">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            More from {video.therapist_name}
-          </h2>
-          <VideoWall videos={relatedVideos} showTherapistInfo={false} />
         </div>
       )}
 
