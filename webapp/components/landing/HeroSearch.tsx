@@ -129,7 +129,7 @@ export function HeroSearch({ specializations }: HeroSearchProps) {
         </h1>
 
         {/* Subheadline */}
-        <p className="text-lg sm:text-xl md:text-2xl text-gray-600 dark:text-gray-400 mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed px-4 md:px-0">
+        <p className="text-lg sm:text-xl md:text-2xl text-gray-600 dark:text-gray-400 mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed px-4 md:px-0 text-balance">
           Your trusted directory for qualified hypnotherapists across the UK
         </p>
 
