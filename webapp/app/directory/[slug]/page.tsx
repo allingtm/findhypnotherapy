@@ -330,6 +330,13 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
               </div>
             )}
 
+            {/* Videos - Collapsible, default open */}
+            {videos.length > 0 && (
+              <CollapsibleSection title="Videos" defaultOpen={true}>
+                <VideoWall videos={videos} showTherapistInfo={false} />
+              </CollapsibleSection>
+            )}
+
             {/* About - Collapsible, default open */}
             {profile.bio && (
               <CollapsibleSection title="About" defaultOpen={true}>
@@ -364,13 +371,6 @@ export default async function TherapistProfilePage({ params }: TherapistProfileP
                     </Link>
                   ))}
                 </div>
-              </CollapsibleSection>
-            )}
-
-            {/* Videos - Collapsible, default closed */}
-            {videos.length > 0 && (
-              <CollapsibleSection title="Videos" defaultOpen={false}>
-                <VideoWall videos={videos} showTherapistInfo={false} />
               </CollapsibleSection>
             )}
           </div>
