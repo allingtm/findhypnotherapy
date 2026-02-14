@@ -130,8 +130,8 @@ export function AvailabilityPageContent({
         <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
           <li>1. Set your regular weekly availability above</li>
           <li>2. Optionally connect your calendar to automatically block times when you&apos;re busy</li>
-          <li>3. Visitors will see available time slots on your profile and can book directly</li>
-          <li>4. You&apos;ll receive an email notification when someone books</li>
+          <li>3. Visitors will see available time slots on your profile and can request a booking</li>
+          <li>4. You&apos;ll receive an email notification and can confirm or decline the booking</li>
         </ul>
       </section>
     </div>
