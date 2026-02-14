@@ -96,10 +96,10 @@ export function VideoPlayer({
       />
       <style jsx global>{`
         .plyr-wrapper {
-          --plyr-color-main: #fff;
+          --plyr-color-main: #00b3ff;
           --plyr-video-control-color: #fff;
           --plyr-video-control-background: rgba(0, 0, 0, 0.6);
-          --plyr-range-fill-background: #fff;
+          --plyr-range-fill-background: #00b3ff;
           --plyr-video-progress-buffered-background: rgba(255, 255, 255, 0.3);
         }
         .plyr-wrapper .plyr {
@@ -115,7 +115,17 @@ export function VideoPlayer({
           height: 100%;
         }
         .plyr-wrapper .plyr__controls {
-          background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+          background: linear-gradient(transparent, rgba(0, 0, 0, 0.75)) !important;
+          padding-bottom: 8px !important;
+        }
+        .plyr-wrapper .plyr__control--overlaid {
+          background: rgba(0, 0, 0, 0.7) !important;
+          border: 2px solid rgba(255, 255, 255, 0.9);
+          color: #fff !important;
+        }
+        .plyr-wrapper .plyr__control--overlaid:hover,
+        .plyr-wrapper .plyr__control--overlaid:focus {
+          background: rgba(0, 0, 0, 0.85) !important;
         }
       `}</style>
     </div>
