@@ -26,7 +26,7 @@ export interface ScheduleItem {
 
 export interface ActionItem {
   id: string;
-  type: "pending_booking" | "unread_message" | "unverified_booking";
+  type: "pending_booking" | "unread_message";
   title: string;
   description: string;
   actionLabel: string;
@@ -206,6 +206,7 @@ export async function getDashboardTodaySchedule(): Promise<{
         )
         .eq("therapist_profile_id", profile.id)
         .eq("booking_date", today)
+        .eq("is_verified", true)
         .in("status", ["pending", "confirmed"])
         .order("start_time"),
 
@@ -302,7 +303,7 @@ export async function getDashboardActionItems(): Promise<{
     const items: ActionItem[] = [];
 
     // Fetch pending bookings and conversations in parallel
-    const [pendingBookingsResult, unverifiedBookingsResult, conversationsResult] =
+    const [pendingBookingsResult, conversationsResult] =
       await Promise.all([
         // Pending verified bookings
         supabase
@@ -314,17 +315,6 @@ export async function getDashboardActionItems(): Promise<{
           .gte("booking_date", today)
           .order("booking_date")
           .limit(5),
-
-        // Unverified bookings
-        supabase
-          .from("bookings")
-          .select("id, visitor_name, visitor_email, booking_date, created_at")
-          .eq("therapist_profile_id", profile.id)
-          .eq("status", "pending")
-          .eq("is_verified", false)
-          .gte("booking_date", today)
-          .order("created_at", { ascending: false })
-          .limit(3),
 
         // Conversations with unread messages
         supabase
@@ -352,20 +342,6 @@ export async function getDashboardActionItems(): Promise<{
         actionLabel: "Review",
         actionHref: "/dashboard/bookings",
         priority: "high",
-        createdAt: booking.created_at || new Date().toISOString(),
-      });
-    }
-
-    // Add unverified bookings
-    for (const booking of unverifiedBookingsResult.data || []) {
-      items.push({
-        id: `unverified-${booking.id}`,
-        type: "unverified_booking",
-        title: "Awaiting Verification",
-        description: `${booking.visitor_email} needs to verify their email`,
-        actionLabel: "View",
-        actionHref: "/dashboard/bookings",
-        priority: "medium",
         createdAt: booking.created_at || new Date().toISOString(),
       });
     }

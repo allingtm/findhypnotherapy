@@ -15,7 +15,7 @@ import { DASHBOARD_HELP } from "./helpContent";
 
 interface ActionItem {
   id: string;
-  type: "pending_booking" | "unread_message" | "unverified_booking";
+  type: "pending_booking" | "unread_message";
   title: string;
   description: string;
   actionLabel: string;
@@ -34,8 +34,6 @@ function getIcon(type: ActionItem["type"]) {
       return <IconCalendarCheck className="w-4 h-4" />;
     case "unread_message":
       return <IconMessage className="w-4 h-4" />;
-    case "unverified_booking":
-      return <IconMail className="w-4 h-4" />;
     default:
       return <IconAlertCircle className="w-4 h-4" />;
   }

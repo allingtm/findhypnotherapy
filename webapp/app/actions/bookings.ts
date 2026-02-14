@@ -1154,20 +1154,25 @@ export async function getBookingsForMember(
           .gte("booking_date", today);
         break;
       case "pending_all":
-        // All pending bookings including unverified (for booking requests list)
-        query = query.eq("status", "pending").gte("booking_date", today);
+        // All verified pending bookings (for booking requests list)
+        query = query
+          .eq("status", "pending")
+          .eq("is_verified", true)
+          .gte("booking_date", today);
         break;
       case "upcoming":
         query = query
           .in("status", ["pending", "confirmed"])
+          .eq("is_verified", true)
           .gte("booking_date", today);
         break;
       case "past":
-        query = query.lt("booking_date", today);
+        query = query.eq("is_verified", true).lt("booking_date", today);
         break;
       case "all":
       default:
-        // No additional filters
+        // Only show verified bookings
+        query = query.eq("is_verified", true);
         break;
     }
 

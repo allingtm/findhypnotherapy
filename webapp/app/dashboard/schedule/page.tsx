@@ -64,6 +64,7 @@ export default async function SchedulePage() {
         .eq("therapist_profile_id", profile.id)
         .gte("booking_date", startOfMonth)
         .lte("booking_date", endOfMonth)
+        .eq("is_verified", true)
         .in("status", ["pending", "confirmed"])
         .order("booking_date", { ascending: true })
         .order("start_time", { ascending: true });
