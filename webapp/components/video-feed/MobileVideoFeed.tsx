@@ -1,8 +1,12 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { VideoPlayer } from './VideoPlayer'
+import dynamic from 'next/dynamic'
 import { VideoOverlay } from './VideoOverlay'
+
+const VideoPlayer = dynamic(() => import('./VideoPlayer').then(mod => ({ default: mod.VideoPlayer })), {
+  ssr: false,
+})
 import { useSwipeGesture } from '@/lib/hooks/useSwipeGesture'
 import type { VideoFeedItem } from '@/lib/types/videos'
 

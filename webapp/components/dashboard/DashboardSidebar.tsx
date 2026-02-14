@@ -12,6 +12,7 @@ import {
   IconSun,
   IconMoon,
   IconDeviceDesktop,
+  IconSparkles,
 } from "@tabler/icons-react";
 import { BillingButton } from "./BillingButton";
 import Link from "next/link";
@@ -225,11 +226,11 @@ export function DashboardSidebar({ children, user }: DashboardSidebarProps) {
 export const Logo = ({ onClick }: { onClick?: () => void }) => {
   return (
     <Link
-      href="/dashboard"
+      href="/"
       className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
       onClick={onClick}
     >
-      <div className="h-5 w-6 bg-black dark:bg-white rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0" />
+      <IconSparkles size={24} className="text-purple-600 dark:text-purple-400 flex-shrink-0" />
       <motion.span
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -244,11 +245,11 @@ export const Logo = ({ onClick }: { onClick?: () => void }) => {
 export const LogoIcon = ({ onClick }: { onClick?: () => void }) => {
   return (
     <Link
-      href="/dashboard"
+      href="/"
       className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
       onClick={onClick}
     >
-      <div className="h-5 w-6 bg-black dark:bg-white rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0" />
+      <IconSparkles size={24} className="text-purple-600 dark:text-purple-400 flex-shrink-0" />
     </Link>
   );
 };

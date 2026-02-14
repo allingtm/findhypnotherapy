@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
 import { ThumbnailSelector } from './ThumbnailSelector'
+import { TagInput } from './TagInput'
+import { VideoServiceSelector } from './VideoServiceSelector'
 import {
   VIDEO_CONSTRAINTS,
   validateVideoFile,
@@ -13,15 +15,19 @@ import {
   validateVideoDuration,
   formatDuration,
 } from '@/lib/utils/videoValidation'
-import type { TherapistVideo } from '@/lib/types/videos'
+import type { TherapistVideoWithServices } from '@/lib/types/videos'
+import type { Tables } from '@/lib/types/database'
+
+type TherapistService = Tables<'therapist_services'>
 
 interface VideoUploadFormProps {
-  editVideo?: TherapistVideo
+  editVideo?: TherapistVideoWithServices
+  services?: TherapistService[]
   onSuccess?: () => void
   onCancel?: () => void
 }
 
-export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadFormProps) {
+export function VideoUploadForm({ editVideo, services, onSuccess, onCancel }: VideoUploadFormProps) {
   const isEditing = !!editVideo
 
   // Only use useActionState for edit mode (metadata-only, no large files)
@@ -48,6 +54,8 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
 
   const [title, setTitle] = useState(editVideo?.title || '')
   const [description, setDescription] = useState(editVideo?.description || '')
+  const [tags, setTags] = useState<string[]>(editVideo?.tags || [])
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>(editVideo?.service_ids || [])
 
   const videoInputRef = useRef<HTMLInputElement>(null)
   const videoPreviewRef = useRef<HTMLVideoElement>(null)
@@ -219,6 +227,8 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
           description: description.trim() || undefined,
           duration_seconds: videoDuration ? Math.floor(videoDuration) : undefined,
           orientation: videoOrientation || undefined,
+          tags: tags.length > 0 ? tags : undefined,
+          service_ids: selectedServiceIds.length > 0 ? selectedServiceIds : undefined,
         })
 
         if (!result.success) {
@@ -236,7 +246,7 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
         setUploadProgress(0)
       }
     },
-    [videoFile, thumbnailFile, title, description, videoDuration, videoOrientation, uploadFileToR2, onSuccess]
+    [videoFile, thumbnailFile, title, description, videoDuration, videoOrientation, tags, selectedServiceIds, uploadFileToR2, onSuccess]
   )
 
   // Handle edit form submission (uses useActionState - metadata only)
@@ -245,8 +255,10 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
       if (editVideo) {
         formData.set('videoId', editVideo.id)
       }
+      formData.set('tags', JSON.stringify(tags))
+      formData.set('service_ids', JSON.stringify(selectedServiceIds))
     },
-    [editVideo]
+    [editVideo, tags, selectedServiceIds]
   )
 
   // Handle edit success
@@ -330,6 +342,18 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
               {description.length}/500 characters
             </p>
           </div>
+
+          {/* Linked Services */}
+          {services && services.length > 0 && (
+            <VideoServiceSelector
+              services={services}
+              selectedServiceIds={selectedServiceIds}
+              onChange={setSelectedServiceIds}
+            />
+          )}
+
+          {/* Tags */}
+          <TagInput tags={tags} onChange={setTags} />
 
           <div className="flex gap-3 pt-4">
             {onCancel && (
@@ -497,6 +521,18 @@ export function VideoUploadForm({ editVideo, onSuccess, onCancel }: VideoUploadF
               {description.length}/500 characters
             </p>
           </div>
+
+          {/* Linked Services */}
+          {services && services.length > 0 && (
+            <VideoServiceSelector
+              services={services}
+              selectedServiceIds={selectedServiceIds}
+              onChange={setSelectedServiceIds}
+            />
+          )}
+
+          {/* Tags */}
+          <TagInput tags={tags} onChange={setTags} />
 
           {/* Upload Progress */}
           {isUploading && (

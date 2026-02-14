@@ -1,3 +1,5 @@
+import type { ServiceType, PriceDisplayMode } from '@/lib/types/database'
+
 export type VideoStatus = 'processing' | 'published' | 'rejected' | 'deleted'
 
 export type SessionFormat = 'in-person' | 'online' | 'phone'
@@ -18,9 +20,14 @@ export interface TherapistVideo {
   orientation: VideoOrientation
   status: VideoStatus
   view_count: number
+  tags: string[] | null
   created_at: string
   updated_at: string
   published_at: string | null
+}
+
+export interface TherapistVideoWithServices extends TherapistVideo {
+  service_ids: string[]
 }
 
 export interface VideoFeedItem {
@@ -41,6 +48,21 @@ export interface VideoFeedItem {
   therapist_photo_url: string | null
   therapist_session_format: SessionFormat[] | null
   total_count: number
+  tags: string[] | null
+  services: {
+    id: string
+    name: string
+    image_url: string | null
+    service_type: ServiceType
+    price_display_mode: PriceDisplayMode
+    price: number | null
+    price_min: number | null
+    price_max: number | null
+    session_count: number
+    show_per_session_price: boolean | null
+    is_featured: boolean | null
+    show_price: boolean | null
+  }[] | null
 }
 
 export interface VideoUploadFormData {

@@ -1,4 +1,6 @@
 import { getUserVideos } from '@/app/actions/therapist-videos'
+import { getOrCreateTherapistProfile } from '@/app/actions/therapist-profile'
+import { getTherapistServices } from '@/app/actions/therapist-services'
 import { ContentPageClient } from './ContentPageClient'
 
 export const metadata = {
@@ -7,7 +9,11 @@ export const metadata = {
 }
 
 export default async function DashboardContentPage() {
-  const videos = await getUserVideos()
+  const { profile } = await getOrCreateTherapistProfile()
+  const [videos, services] = await Promise.all([
+    getUserVideos(),
+    profile ? getTherapistServices(profile.id) : Promise.resolve([]),
+  ])
 
-  return <ContentPageClient initialVideos={videos} />
+  return <ContentPageClient initialVideos={videos} services={services} />
 }

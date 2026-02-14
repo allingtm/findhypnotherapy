@@ -5,16 +5,20 @@ import { useRouter } from 'next/navigation'
 import { VideoUploadForm } from '@/components/video/VideoUploadForm'
 import { VideoCard } from '@/components/video/VideoCard'
 import { Button } from '@/components/ui/Button'
-import type { TherapistVideo } from '@/lib/types/videos'
+import type { TherapistVideoWithServices } from '@/lib/types/videos'
+import type { Tables } from '@/lib/types/database'
+
+type TherapistService = Tables<'therapist_services'>
 
 interface ContentPageClientProps {
-  initialVideos: TherapistVideo[]
+  initialVideos: TherapistVideoWithServices[]
+  services: TherapistService[]
 }
 
-export function ContentPageClient({ initialVideos }: ContentPageClientProps) {
+export function ContentPageClient({ initialVideos, services }: ContentPageClientProps) {
   const router = useRouter()
   const [showUploadForm, setShowUploadForm] = useState(false)
-  const [editingVideo, setEditingVideo] = useState<TherapistVideo | null>(null)
+  const [editingVideo, setEditingVideo] = useState<TherapistVideoWithServices | null>(null)
 
   const handleUploadSuccess = useCallback(() => {
     setShowUploadForm(false)
@@ -22,7 +26,7 @@ export function ContentPageClient({ initialVideos }: ContentPageClientProps) {
     router.refresh()
   }, [router])
 
-  const handleEditVideo = useCallback((video: TherapistVideo) => {
+  const handleEditVideo = useCallback((video: TherapistVideoWithServices) => {
     setEditingVideo(video)
     setShowUploadForm(true)
   }, [])
@@ -72,6 +76,7 @@ export function ContentPageClient({ initialVideos }: ContentPageClientProps) {
             <div className="mb-8">
               <VideoUploadForm
                 editVideo={editingVideo || undefined}
+                services={services}
                 onSuccess={handleUploadSuccess}
                 onCancel={handleCancel}
               />
@@ -85,6 +90,7 @@ export function ContentPageClient({ initialVideos }: ContentPageClientProps) {
                 <VideoCard
                   key={video.id}
                   video={video}
+                  services={services}
                   onEdit={handleEditVideo}
                 />
               ))}

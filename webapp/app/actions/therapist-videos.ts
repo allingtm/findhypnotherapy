@@ -8,7 +8,7 @@ import {
   generateThumbnailFilename,
   getVideoExtension,
 } from '@/lib/utils/videoValidation'
-import type { TherapistVideo, SessionFormat, VideoFeedItem } from '@/lib/types/videos'
+import type { TherapistVideo, TherapistVideoWithServices, SessionFormat, VideoFeedItem } from '@/lib/types/videos'
 import { deleteFile, getPublicUrl, extractR2Path, parsePath, generatePresignedUploadUrl, fileExists } from '@/lib/r2/storage'
 
 type ActionResponse = {
@@ -33,12 +33,16 @@ const videoMetadataSchema = z.object({
   session_format: z.array(z.enum(['in-person', 'online', 'phone'])).optional(),
   duration_seconds: z.number().min(3).max(120).optional(),
   orientation: z.enum(['landscape', 'portrait']).optional(),
+  tags: z.array(z.string().max(50, 'Each tag must be 50 characters or less')).max(5, 'Maximum 5 tags allowed').optional(),
+  service_ids: z.array(z.string().uuid()).optional(),
 })
 
 const videoUpdateSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100, 'Title must be 100 characters or less'),
   description: z.string().max(500, 'Description must be 500 characters or less').optional(),
   session_format: z.array(z.enum(['in-person', 'online', 'phone'])).optional(),
+  tags: z.array(z.string().max(50, 'Each tag must be 50 characters or less')).max(5, 'Maximum 5 tags allowed').optional(),
+  service_ids: z.array(z.string().uuid()).optional(),
 })
 
 // Generate URL-friendly slug from title
@@ -126,6 +130,8 @@ export async function completeVideoUpload(data: {
   session_format?: string[]
   duration_seconds?: number
   orientation?: string
+  tags?: string[]
+  service_ids?: string[]
 }): Promise<CompleteUploadResponse> {
   try {
     const supabase = await createClient()
@@ -148,16 +154,22 @@ export async function completeVideoUpload(data: {
       session_format: data.session_format,
       duration_seconds: data.duration_seconds,
       orientation: data.orientation,
+      tags: data.tags,
+      service_ids: data.service_ids,
     })
     if (!validation.success) {
       return { success: false, error: validation.error.issues[0]?.message || 'Validation failed' }
     }
 
-    const { title, description, session_format, duration_seconds, orientation } = validation.data
+    const { title, description, session_format, duration_seconds, orientation, tags, service_ids } = validation.data
 
     // Sanitize inputs
     const sanitizedTitle = title.replace(/[<>]/g, '')
     const sanitizedDescription = description?.replace(/[<>]/g, '')
+    const sanitizedTags = (tags || [])
+      .map(t => t.trim().replace(/[<>]/g, ''))
+      .filter(t => t.length > 0)
+      .filter((t, i, arr) => arr.indexOf(t) === i)
 
     // Verify video was uploaded to R2
     const videoExists = await fileExists('therapist-videos', data.videoFilename)
@@ -190,6 +202,7 @@ export async function completeVideoUpload(data: {
         orientation: orientation || 'landscape',
         status: 'published',
         published_at: new Date().toISOString(),
+        tags: sanitizedTags,
       })
       .select('id')
       .single()
@@ -211,6 +224,20 @@ export async function completeVideoUpload(data: {
         .from('therapist_videos')
         .update({ slug })
         .eq('id', video.id)
+
+      // Link services to video
+      if (service_ids && service_ids.length > 0) {
+        const videoServiceRows = service_ids.map(serviceId => ({
+          video_id: video.id,
+          service_id: serviceId,
+        }))
+        const { error: vsError } = await supabase
+          .from('video_services')
+          .insert(videoServiceRows)
+        if (vsError) {
+          console.error('Error linking services to video:', vsError)
+        }
+      }
     }
 
     revalidatePath('/dashboard/practice')
@@ -246,10 +273,14 @@ export async function updateVideoAction(
 
     // Parse form data
     const sessionFormatStr = formData.get('session_format') as string
+    const tagsStr = formData.get('tags') as string
+    const serviceIdsStr = formData.get('service_ids') as string
     const rawData = {
       title: formData.get('title') as string,
       description: (formData.get('description') as string) || undefined,
       session_format: sessionFormatStr ? JSON.parse(sessionFormatStr) : undefined,
+      tags: tagsStr ? JSON.parse(tagsStr) : undefined,
+      service_ids: serviceIdsStr ? JSON.parse(serviceIdsStr) : undefined,
     }
 
     const validation = videoUpdateSchema.safeParse(rawData)
@@ -257,11 +288,15 @@ export async function updateVideoAction(
       return { success: false, error: validation.error.issues[0]?.message || 'Validation failed' }
     }
 
-    const { title, description, session_format } = validation.data
+    const { title, description, session_format, tags, service_ids } = validation.data
 
     // Sanitize inputs
     const sanitizedTitle = title.replace(/[<>]/g, '')
     const sanitizedDescription = description?.replace(/[<>]/g, '')
+    const sanitizedTags = (tags || [])
+      .map(t => t.trim().replace(/[<>]/g, ''))
+      .filter(t => t.length > 0)
+      .filter((t, i, arr) => arr.indexOf(t) === i)
 
     // Update video (RLS ensures user can only update their own)
     const { error: updateError } = await supabase
@@ -270,6 +305,7 @@ export async function updateVideoAction(
         title: sanitizedTitle,
         description: sanitizedDescription || null,
         session_format: session_format || [],
+        tags: sanitizedTags,
       })
       .eq('id', videoId)
       .eq('user_id', user.id)
@@ -279,6 +315,26 @@ export async function updateVideoAction(
       return { success: false, error: 'Failed to update video' }
     }
 
+    // Update service links (delete and reinsert)
+    await supabase
+      .from('video_services')
+      .delete()
+      .eq('video_id', videoId)
+
+    if (service_ids && service_ids.length > 0) {
+      const videoServiceRows = service_ids.map(serviceId => ({
+        video_id: videoId,
+        service_id: serviceId,
+      }))
+      const { error: vsError } = await supabase
+        .from('video_services')
+        .insert(videoServiceRows)
+      if (vsError) {
+        console.error('Error linking services to video:', vsError)
+      }
+    }
+
+    revalidatePath('/dashboard/practice')
     revalidatePath('/dashboard/videos')
     revalidatePath('/videos')
 
@@ -371,8 +427,8 @@ export async function deleteVideoAction(
   }
 }
 
-// Get user's videos
-export async function getUserVideos(): Promise<TherapistVideo[]> {
+// Get user's videos with linked service IDs
+export async function getUserVideos(): Promise<TherapistVideoWithServices[]> {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -383,7 +439,7 @@ export async function getUserVideos(): Promise<TherapistVideo[]> {
 
     const { data: videos, error } = await supabase
       .from('therapist_videos')
-      .select('*')
+      .select('*, video_services(service_id)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
@@ -392,7 +448,11 @@ export async function getUserVideos(): Promise<TherapistVideo[]> {
       return []
     }
 
-    return (videos || []) as TherapistVideo[]
+    return (videos || []).map((v: any) => ({
+      ...v,
+      service_ids: (v.video_services || []).map((vs: any) => vs.service_id),
+      video_services: undefined,
+    })) as TherapistVideoWithServices[]
   } catch (err) {
     console.error('Error fetching videos:', err)
     return []
@@ -439,6 +499,7 @@ export async function getVideoBySlug(slug: string): Promise<VideoFeedItem | null
         duration_seconds,
         session_format,
         orientation,
+        tags,
         created_at,
         published_at,
         therapist_profile_id,
@@ -448,6 +509,22 @@ export async function getVideoBySlug(slug: string): Promise<VideoFeedItem | null
           users!inner (
             name,
             photo_url
+          )
+        ),
+        video_services (
+          therapist_services (
+            id,
+            name,
+            image_url,
+            service_type,
+            price_display_mode,
+            price,
+            price_min,
+            price_max,
+            session_count,
+            show_per_session_price,
+            is_featured,
+            show_price
           )
         )
       `)
@@ -481,6 +558,10 @@ export async function getVideoBySlug(slug: string): Promise<VideoFeedItem | null
       therapist_photo_url: user?.photo_url || null,
       therapist_session_format: profile.session_format,
       total_count: 1,
+      tags: video.tags || null,
+      services: ((video as any).video_services || [])
+        .map((vs: any) => vs.therapist_services)
+        .filter(Boolean),
     } as VideoFeedItem
   } catch (err) {
     console.error('Error fetching video:', err)
@@ -505,6 +586,7 @@ export async function getVideoByIdPublic(videoId: string): Promise<VideoFeedItem
         duration_seconds,
         session_format,
         orientation,
+        tags,
         created_at,
         published_at,
         therapist_profile_id,
@@ -514,6 +596,22 @@ export async function getVideoByIdPublic(videoId: string): Promise<VideoFeedItem
           users!inner (
             name,
             photo_url
+          )
+        ),
+        video_services (
+          therapist_services (
+            id,
+            name,
+            image_url,
+            service_type,
+            price_display_mode,
+            price,
+            price_min,
+            price_max,
+            session_count,
+            show_per_session_price,
+            is_featured,
+            show_price
           )
         )
       `)
@@ -547,6 +645,10 @@ export async function getVideoByIdPublic(videoId: string): Promise<VideoFeedItem
       therapist_photo_url: user?.photo_url || null,
       therapist_session_format: profile.session_format,
       total_count: 1,
+      tags: video.tags || null,
+      services: ((video as any).video_services || [])
+        .map((vs: any) => vs.therapist_services)
+        .filter(Boolean),
     } as VideoFeedItem
   } catch (err) {
     console.error('Error fetching video:', err)
@@ -624,10 +726,86 @@ export async function getRelatedVideos(
         therapist_photo_url: user?.photo_url || null,
         therapist_session_format: profile.session_format,
         total_count: videos.length,
+        tags: null,
+        services: null,
       } as VideoFeedItem
     })
   } catch (err) {
     console.error('Error fetching related videos:', err)
+    return []
+  }
+}
+
+// Get videos by tag
+export async function getVideosByTag(
+  tag: string,
+  limit: number = 50
+): Promise<VideoFeedItem[]> {
+  try {
+    const supabase = await createClient()
+
+    const { data: videos, error } = await supabase
+      .from('therapist_videos')
+      .select(`
+        id,
+        slug,
+        title,
+        description,
+        video_url,
+        thumbnail_url,
+        duration_seconds,
+        session_format,
+        orientation,
+        tags,
+        created_at,
+        published_at,
+        therapist_profile_id,
+        therapist_profiles!inner (
+          slug,
+          session_format,
+          users!inner (
+            name,
+            photo_url
+          )
+        )
+      `)
+      .eq('status', 'published')
+      .contains('tags', [tag])
+      .order('published_at', { ascending: false })
+      .limit(limit)
+
+    if (error || !videos) {
+      console.error('Error fetching videos by tag:', error)
+      return []
+    }
+
+    return videos.map((video: any) => {
+      const profile = video.therapist_profiles
+      const user = profile.users
+      return {
+        id: video.id,
+        slug: video.slug,
+        title: video.title,
+        description: video.description,
+        video_url: video.video_url,
+        thumbnail_url: video.thumbnail_url,
+        duration_seconds: video.duration_seconds,
+        session_format: video.session_format,
+        orientation: video.orientation || 'landscape',
+        created_at: video.created_at,
+        published_at: video.published_at,
+        therapist_profile_id: video.therapist_profile_id,
+        therapist_name: user?.name || 'Therapist',
+        therapist_slug: profile.slug,
+        therapist_photo_url: user?.photo_url || null,
+        therapist_session_format: profile.session_format,
+        total_count: videos.length,
+        tags: video.tags || null,
+        services: null,
+      } as VideoFeedItem
+    })
+  } catch (err) {
+    console.error('Error fetching videos by tag:', err)
     return []
   }
 }

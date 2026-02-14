@@ -5,16 +5,20 @@ import { useActionState } from 'react'
 import Image from 'next/image'
 import { deleteVideoAction } from '@/app/actions/therapist-videos'
 import { Button } from '@/components/ui/Button'
-import type { TherapistVideo } from '@/lib/types/videos'
+import type { TherapistVideoWithServices } from '@/lib/types/videos'
 import { formatDuration } from '@/lib/utils/videoValidation'
 import { SESSION_FORMAT_LABELS } from '@/lib/types/videos'
+import type { Tables } from '@/lib/types/database'
+
+type TherapistService = Tables<'therapist_services'>
 
 interface VideoCardProps {
-  video: TherapistVideo
-  onEdit: (video: TherapistVideo) => void
+  video: TherapistVideoWithServices
+  services?: TherapistService[]
+  onEdit: (video: TherapistVideoWithServices) => void
 }
 
-export function VideoCard({ video, onEdit }: VideoCardProps) {
+export function VideoCard({ video, services, onEdit }: VideoCardProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteState, deleteAction, isDeleting] = useActionState(deleteVideoAction, {
     success: false,
@@ -92,6 +96,37 @@ export function VideoCard({ video, onEdit }: VideoCardProps) {
                 className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 rounded"
               >
                 {SESSION_FORMAT_LABELS[format as keyof typeof SESSION_FORMAT_LABELS] || format}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Linked services */}
+        {video.service_ids && video.service_ids.length > 0 && services && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {video.service_ids.map((id) => {
+              const service = services.find(s => s.id === id)
+              return service ? (
+                <span
+                  key={id}
+                  className="text-xs px-2 py-0.5 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 rounded"
+                >
+                  {service.name}
+                </span>
+              ) : null
+            })}
+          </div>
+        )}
+
+        {/* Tags */}
+        {video.tags && video.tags.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {video.tags.map((tag) => (
+              <span
+                key={tag}
+                className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 dark:bg-neutral-700 dark:text-gray-300 rounded-full"
+              >
+                #{tag}
               </span>
             ))}
           </div>

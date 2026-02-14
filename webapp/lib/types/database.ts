@@ -1560,6 +1560,7 @@ export type Database = {
           session_format: string[] | null
           slug: string | null
           status: Database["public"]["Enums"]["video_status"] | null
+          tags: string[] | null
           therapist_profile_id: string
           thumbnail_url: string | null
           title: string
@@ -1579,6 +1580,7 @@ export type Database = {
           session_format?: string[] | null
           slug?: string | null
           status?: Database["public"]["Enums"]["video_status"] | null
+          tags?: string[] | null
           therapist_profile_id: string
           thumbnail_url?: string | null
           title: string
@@ -1598,6 +1600,7 @@ export type Database = {
           session_format?: string[] | null
           slug?: string | null
           status?: Database["public"]["Enums"]["video_status"] | null
+          tags?: string[] | null
           therapist_profile_id?: string
           thumbnail_url?: string | null
           title?: string
@@ -1707,6 +1710,42 @@ export type Database = {
           verified_via?: string
         }
         Relationships: []
+      }
+      video_services: {
+        Row: {
+          created_at: string | null
+          id: string
+          service_id: string
+          video_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          service_id: string
+          video_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          service_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "therapist_services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_services_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "therapist_videos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       waiting_list: {
         Row: {

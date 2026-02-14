@@ -2,8 +2,12 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import Image from 'next/image'
-import { VideoPlayer } from './VideoPlayer'
+import dynamic from 'next/dynamic'
 import { VideoOverlay } from './VideoOverlay'
+
+const VideoPlayer = dynamic(() => import('./VideoPlayer').then(mod => ({ default: mod.VideoPlayer })), {
+  ssr: false,
+})
 import type { VideoFeedItem } from '@/lib/types/videos'
 import { formatDuration } from '@/lib/utils/videoValidation'
 

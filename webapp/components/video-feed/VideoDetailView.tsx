@@ -2,10 +2,16 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { VideoPlayer } from './VideoPlayer'
+import dynamic from 'next/dynamic'
 import { VideoWall } from './VideoWall'
+import { ServicesWall } from '@/components/services/ServicesWall'
 import type { VideoFeedItem } from '@/lib/types/videos'
 import { SESSION_FORMAT_LABELS } from '@/lib/types/videos'
+
+const VideoPlayer = dynamic(() => import('./VideoPlayer').then(mod => ({ default: mod.VideoPlayer })), {
+  ssr: false,
+  loading: () => <div className="w-full h-full bg-black animate-pulse" />,
+})
 
 interface VideoDetailViewProps {
   video: VideoFeedItem
@@ -68,6 +74,21 @@ export function VideoDetailView({ video, relatedVideos }: VideoDetailViewProps) 
           )}
         </div>
 
+        {/* Tags */}
+        {video.tags && video.tags.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {video.tags.map((tag) => (
+              <Link
+                key={tag}
+                href={`/tags/${encodeURIComponent(tag.toLowerCase())}`}
+                className="px-2 py-0.5 bg-gray-100 text-gray-700 dark:bg-neutral-700 dark:text-gray-300 rounded-full text-xs hover:bg-gray-200 dark:hover:bg-neutral-600 transition-colors"
+              >
+                #{tag}
+              </Link>
+            ))}
+          </div>
+        )}
+
         {/* Description */}
         {video.description && (
           <p className="mt-4 text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
@@ -116,6 +137,16 @@ export function VideoDetailView({ video, relatedVideos }: VideoDetailViewProps) 
           </div>
         </div>
       </div>
+
+      {/* Related Services */}
+      {video.services && video.services.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Related Services
+          </h2>
+          <ServicesWall services={video.services} therapistSlug={video.therapist_slug || ''} />
+        </div>
+      )}
 
       {/* Related Videos Section */}
       {relatedVideos.length > 0 && (

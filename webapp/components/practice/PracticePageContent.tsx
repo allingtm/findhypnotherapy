@@ -19,7 +19,7 @@ import {
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import type { Tables } from "@/lib/types/database";
-import type { TherapistVideo } from "@/lib/types/videos";
+import type { TherapistVideoWithServices } from "@/lib/types/videos";
 
 interface Specialization {
   id: string;
@@ -35,7 +35,7 @@ interface PracticePageContentProps {
   specializations: Specialization[];
   selectedSpecializationIds: string[];
   services: TherapistService[];
-  videos: TherapistVideo[];
+  videos: TherapistVideoWithServices[];
 }
 
 type TabKey = "profile" | "services" | "content" | "visibility";
@@ -49,9 +49,9 @@ type ProfileSubTab =
   | "specializations";
 
 const tabs: { key: TabKey; label: string; icon: typeof IconUser }[] = [
-  { key: "profile", label: "Profile", icon: IconUser },
-  { key: "services", label: "Services", icon: IconCurrencyPound },
   { key: "content", label: "Content", icon: IconVideo },
+  { key: "services", label: "Services", icon: IconCurrencyPound },
+  { key: "profile", label: "Profile", icon: IconUser },
   { key: "visibility", label: "Visibility", icon: IconGlobe },
 ];
 
@@ -73,7 +73,7 @@ export function PracticePageContent({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabKey>(
-    (searchParams.get("tab") as TabKey) || "profile"
+    (searchParams.get("tab") as TabKey) || "content"
   );
   const [profileSubTab, setProfileSubTab] = useState<ProfileSubTab>(
     (searchParams.get("section") as ProfileSubTab) || "basic"
@@ -82,8 +82,11 @@ export function PracticePageContent({
   // Update URL when tab changes
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
-    if (activeTab === "profile") {
+    if (activeTab === "content") {
       params.delete("tab");
+      params.delete("section");
+    } else if (activeTab === "profile") {
+      params.set("tab", activeTab);
       if (profileSubTab !== "basic") {
         params.set("section", profileSubTab);
       } else {
@@ -106,7 +109,7 @@ export function PracticePageContent({
     if (tab && tabs.some((t) => t.key === tab)) {
       setActiveTab(tab);
     } else if (!tab) {
-      setActiveTab("profile");
+      setActiveTab("content");
     }
     if (section && profileSubTabs.some((t) => t.key === section)) {
       setProfileSubTab(section);
@@ -218,7 +221,7 @@ export function PracticePageContent({
               Upload videos to showcase your practice and connect with potential
               clients
             </p>
-            <ContentPageClient initialVideos={videos} />
+            <ContentPageClient initialVideos={videos} services={services} />
           </div>
         )}
 
