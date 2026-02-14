@@ -5,10 +5,10 @@ const MICROSOFT_AUTH_URL = 'https://login.microsoftonline.com/common/oauth2/v2.0
 const MICROSOFT_TOKEN_URL = 'https://login.microsoftonline.com/common/oauth2/v2.0/token';
 const MICROSOFT_GRAPH_API = 'https://graph.microsoft.com/v1.0';
 
-// Scopes for calendar access
+// Scopes for calendar access - read-only
 const SCOPES = [
   'User.Read',
-  'Calendars.ReadWrite',
+  'Calendars.Read',
   'offline_access', // For refresh tokens
 ].join(' ');
 
@@ -28,21 +28,6 @@ interface ScheduleItem {
     start: { dateTime: string; timeZone: string };
     end: { dateTime: string; timeZone: string };
   }>;
-}
-
-interface CalendarEvent {
-  subject: string;
-  body?: { contentType: string; content: string };
-  start: { dateTime: string; timeZone: string };
-  end: { dateTime: string; timeZone: string };
-  attendees?: Array<{
-    emailAddress: { address: string; name?: string };
-    type: string;
-  }>;
-  isReminderOn?: boolean;
-  reminderMinutesBeforeStart?: number;
-  isOnlineMeeting?: boolean;
-  onlineMeetingProvider?: string;
 }
 
 export function getMicrosoftAuthUrl(state: string): string {
@@ -321,90 +306,6 @@ export async function getMicrosoftFreeBusy(
   } catch (error) {
     console.error('Failed to get Microsoft free/busy:', error);
     return [];
-  }
-}
-
-/**
- * Create a calendar event in Microsoft Calendar
- */
-export async function createMicrosoftCalendarEvent(
-  userId: string,
-  event: {
-    title: string;
-    description?: string;
-    startTime: Date;
-    endTime: Date;
-    timezone: string;
-    attendeeEmail?: string;
-    attendeeName?: string;
-    addTeamsLink?: boolean;
-  }
-): Promise<{ success: boolean; eventId?: string; meetingUrl?: string; error?: string }> {
-  const accessToken = await getValidAccessToken(userId);
-  if (!accessToken) {
-    return { success: false, error: 'No valid access token' };
-  }
-
-  // Convert timezone to IANA format (Microsoft uses Windows timezone IDs)
-  // For simplicity, we'll use UTC and let Microsoft handle the conversion
-  const calendarEvent: CalendarEvent = {
-    subject: event.title,
-    body: event.description
-      ? { contentType: 'text', content: event.description }
-      : undefined,
-    start: {
-      dateTime: event.startTime.toISOString().replace('Z', ''),
-      timeZone: event.timezone,
-    },
-    end: {
-      dateTime: event.endTime.toISOString().replace('Z', ''),
-      timeZone: event.timezone,
-    },
-    isReminderOn: true,
-    reminderMinutesBeforeStart: 30,
-    // Add Teams meeting if requested
-    ...(event.addTeamsLink && {
-      isOnlineMeeting: true,
-      onlineMeetingProvider: 'teamsForBusiness',
-    }),
-  };
-
-  // Add attendee if provided
-  if (event.attendeeEmail) {
-    calendarEvent.attendees = [
-      {
-        emailAddress: {
-          address: event.attendeeEmail,
-          name: event.attendeeName,
-        },
-        type: 'required',
-      },
-    ];
-  }
-
-  try {
-    const response = await fetch(`${MICROSOFT_GRAPH_API}/me/events`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(calendarEvent),
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('Microsoft Calendar event creation error:', error);
-      return { success: false, error: 'Failed to create calendar event' };
-    }
-
-    const data = await response.json();
-    // Extract Teams meeting URL from response
-    const meetingUrl = data.onlineMeeting?.joinUrl;
-    return { success: true, eventId: data.id, meetingUrl };
-  } catch (error) {
-    console.error('Failed to create Microsoft Calendar event:', error);
-    return { success: false, error: 'Failed to create calendar event' };
   }
 }
 

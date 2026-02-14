@@ -5,9 +5,8 @@ const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GOOGLE_CALENDAR_API = 'https://www.googleapis.com/calendar/v3';
 
-// Scopes for calendar access
+// Scopes for calendar access - read-only free/busy checking
 const SCOPES = [
-  'https://www.googleapis.com/auth/calendar.events',
   'https://www.googleapis.com/auth/calendar.freebusy',
 ].join(' ');
 
@@ -23,24 +22,6 @@ interface FreeBusyResponse {
   calendars: {
     [email: string]: {
       busy: Array<{ start: string; end: string }>;
-    };
-  };
-}
-
-interface CalendarEvent {
-  summary: string;
-  description?: string;
-  start: { dateTime: string; timeZone: string };
-  end: { dateTime: string; timeZone: string };
-  attendees?: Array<{ email: string; displayName?: string }>;
-  reminders?: {
-    useDefault: boolean;
-    overrides?: Array<{ method: string; minutes: number }>;
-  };
-  conferenceData?: {
-    createRequest: {
-      requestId: string;
-      conferenceSolutionKey: { type: string };
     };
   };
 }
@@ -284,97 +265,6 @@ export async function getGoogleFreeBusy(
   } catch (error) {
     console.error('Failed to get Google free/busy:', error);
     return [];
-  }
-}
-
-/**
- * Create a calendar event in Google Calendar
- */
-export async function createGoogleCalendarEvent(
-  userId: string,
-  event: {
-    title: string;
-    description?: string;
-    startTime: Date;
-    endTime: Date;
-    timezone: string;
-    attendeeEmail?: string;
-    attendeeName?: string;
-    addMeetLink?: boolean;
-  }
-): Promise<{ success: boolean; eventId?: string; meetingUrl?: string; error?: string }> {
-  const accessToken = await getValidAccessToken(userId);
-  if (!accessToken) {
-    return { success: false, error: 'No valid access token' };
-  }
-
-  const calendarEvent: CalendarEvent = {
-    summary: event.title,
-    description: event.description,
-    start: {
-      dateTime: event.startTime.toISOString(),
-      timeZone: event.timezone,
-    },
-    end: {
-      dateTime: event.endTime.toISOString(),
-      timeZone: event.timezone,
-    },
-    reminders: {
-      useDefault: false,
-      overrides: [
-        { method: 'email', minutes: 24 * 60 }, // 24 hours before
-        { method: 'popup', minutes: 30 }, // 30 minutes before
-      ],
-    },
-    // Add Google Meet conference data if requested
-    ...(event.addMeetLink && {
-      conferenceData: {
-        createRequest: {
-          requestId: crypto.randomUUID(),
-          conferenceSolutionKey: { type: 'hangoutsMeet' },
-        },
-      },
-    }),
-  };
-
-  // Add attendee if provided
-  if (event.attendeeEmail) {
-    calendarEvent.attendees = [
-      {
-        email: event.attendeeEmail,
-        displayName: event.attendeeName,
-      },
-    ];
-  }
-
-  try {
-    // Include conferenceDataVersion=1 when adding Meet link
-    const apiUrl = event.addMeetLink
-      ? `${GOOGLE_CALENDAR_API}/calendars/primary/events?sendUpdates=all&conferenceDataVersion=1`
-      : `${GOOGLE_CALENDAR_API}/calendars/primary/events?sendUpdates=all`;
-
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(calendarEvent),
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('Google Calendar event creation error:', error);
-      return { success: false, error: 'Failed to create calendar event' };
-    }
-
-    const data = await response.json();
-    // Extract Google Meet link from response
-    const meetingUrl = data.hangoutLink || data.conferenceData?.entryPoints?.[0]?.uri;
-    return { success: true, eventId: data.id, meetingUrl };
-  } catch (error) {
-    console.error('Failed to create Google Calendar event:', error);
-    return { success: false, error: 'Failed to create calendar event' };
   }
 }
 

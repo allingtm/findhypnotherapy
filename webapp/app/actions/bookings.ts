@@ -10,11 +10,12 @@ import {
   getNewBookingNotificationEmail,
   getBookingConfirmedEmail,
   getBookingCancelledEmail,
+  getBookingConfirmedTherapistEmail,
+  getBookingCancelledTherapistEmail,
 } from "@/lib/email/templates";
 import crypto from "crypto";
-import { createGoogleCalendarEvent } from "@/lib/calendar/google";
-import { createMicrosoftCalendarEvent } from "@/lib/calendar/microsoft";
 import { createZoomMeeting } from "@/lib/calendar/zoom";
+import { generateICS, ICSEventData } from "@/lib/calendar/ics";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 
 type ActionResponse = {
@@ -799,15 +800,13 @@ export async function confirmBookingAction(
       return { success: false, error: "Failed to confirm booking" };
     }
 
-    // Get therapist info for email and calendar event
+    // Get therapist info for email and calendar invite
     const { data: therapist } = await supabase
       .from("therapist_profiles")
       .select(`
-        users!inner(name),
+        users!inner(name, email),
         therapist_booking_settings(
           timezone,
-          google_calendar_connected,
-          microsoft_calendar_connected,
           zoom_connected,
           video_platform_preference,
           default_video_link
@@ -816,73 +815,34 @@ export async function confirmBookingAction(
       .eq("id", profileId)
       .single();
 
-    const therapistUser = therapist?.users as unknown as { name?: string };
+    const therapistUser = therapist?.users as unknown as { name?: string; email?: string };
     const therapistName = therapistUser?.name || "the therapist";
+    const therapistEmail = therapistUser?.email;
 
     const bookingSettings = therapist?.therapist_booking_settings as unknown as {
       timezone?: string;
-      google_calendar_connected?: boolean;
-      microsoft_calendar_connected?: boolean;
       zoom_connected?: boolean;
       video_platform_preference?: string;
       default_video_link?: string;
     } | null;
 
-    // Create calendar event if calendar is connected
     const timezone = bookingSettings?.timezone || "Europe/London";
 
     // Parse booking date and times to create Date objects
     const [year, month, day] = booking.booking_date.split("-").map(Number);
     const [startHour, startMin] = booking.start_time.split(":").map(Number);
-    const [endHour, endMin] = booking.end_time.split(":").map(Number);
 
     const startTime = new Date(year, month - 1, day, startHour, startMin, 0);
-    const endTime = new Date(year, month - 1, day, endHour, endMin, 0);
-
-    const calendarEventDetails = {
-      title: `Consultation with ${booking.visitor_name}`,
-      description: `Hypnotherapy consultation booked through Find Hypnotherapy.\n\nClient: ${booking.visitor_name}\nEmail: ${booking.visitor_email}`,
-      startTime,
-      endTime,
-      timezone,
-      attendeeEmail: booking.visitor_email,
-      attendeeName: booking.visitor_name,
-    };
 
     // Determine if we need a video link (only for online sessions)
     const needsVideoLink = booking.session_format === "online";
     const videoPreference = bookingSettings?.video_platform_preference || "none";
     let meetingUrl: string | null = null;
 
-    // Create calendar event and generate video link based on preference
-    if (bookingSettings?.google_calendar_connected) {
-      const addMeetLink = needsVideoLink && videoPreference === "google_meet";
-      const calendarResult = await createGoogleCalendarEvent(userId, {
-        ...calendarEventDetails,
-        addMeetLink,
-      });
-      if (!calendarResult.success) {
-        console.warn("Failed to create Google Calendar event:", calendarResult.error);
-      } else if (calendarResult.meetingUrl) {
-        meetingUrl = calendarResult.meetingUrl;
-      }
-    } else if (bookingSettings?.microsoft_calendar_connected) {
-      const addTeamsLink = needsVideoLink && videoPreference === "teams";
-      const calendarResult = await createMicrosoftCalendarEvent(userId, {
-        ...calendarEventDetails,
-        addTeamsLink,
-      });
-      if (!calendarResult.success) {
-        console.warn("Failed to create Microsoft Calendar event:", calendarResult.error);
-      } else if (calendarResult.meetingUrl) {
-        meetingUrl = calendarResult.meetingUrl;
-      }
-    }
-
     // Handle Zoom OAuth - create meeting independently of calendar
     if (needsVideoLink && videoPreference === "zoom_oauth" && bookingSettings?.zoom_connected) {
       const zoomResult = await createZoomMeeting(userId, {
-        topic: calendarEventDetails.title,
+        topic: `Consultation with ${booking.visitor_name}`,
         startTime,
         duration: booking.duration_minutes,
         timezone,
@@ -908,7 +868,32 @@ export async function confirmBookingAction(
         .eq("id", bookingId);
     }
 
-    // Send confirmation email to visitor
+    // Generate ICS calendar invite for both visitor and therapist
+    const icsData: ICSEventData = {
+      uid: booking.id,
+      title: `Consultation with ${booking.session_format === "online" ? "(Online) " : ""}${booking.visitor_name}`,
+      description: `Hypnotherapy consultation booked through Find Hypnotherapy.\n\nClient: ${booking.visitor_name}\nEmail: ${booking.visitor_email}`,
+      startDate: booking.booking_date,
+      startTime: booking.start_time,
+      endTime: booking.end_time,
+      timezone,
+      meetingUrl: meetingUrl || undefined,
+      organizerName: therapistName,
+      organizerEmail: therapistEmail || "noreply@findhypnotherapy.com",
+      attendeeName: booking.visitor_name,
+      attendeeEmail: booking.visitor_email,
+      method: "REQUEST",
+      sequence: 0,
+    };
+    const icsContent = generateICS(icsData);
+    const icsAttachment = {
+      content: Buffer.from(icsContent).toString("base64"),
+      filename: "booking.ics",
+      type: "text/calendar",
+      disposition: "attachment" as const,
+    };
+
+    // Send confirmation email to visitor with ICS attachment
     const emailContent = getBookingConfirmedEmail({
       recipientName: booking.visitor_name,
       therapistName,
@@ -922,6 +907,7 @@ export async function confirmBookingAction(
       to: booking.visitor_email,
       subject: emailContent.subject,
       html: emailContent.html,
+      attachments: [icsAttachment],
     });
 
     // Store SendGrid message ID for tracking
@@ -934,6 +920,30 @@ export async function confirmBookingAction(
 
     if (!emailSent.success) {
       console.warn("Failed to send confirmation email to visitor:", booking.visitor_email);
+    }
+
+    // Send confirmation email to therapist with ICS attachment
+    if (therapistEmail) {
+      const therapistEmailContent = getBookingConfirmedTherapistEmail({
+        recipientName: therapistName,
+        visitorName: booking.visitor_name,
+        visitorEmail: booking.visitor_email,
+        bookingDate: booking.booking_date,
+        startTime: booking.start_time,
+        meetingUrl: meetingUrl || undefined,
+        sessionFormat: booking.session_format || undefined,
+      });
+
+      const therapistEmailSent = await sendEmail({
+        to: therapistEmail,
+        subject: therapistEmailContent.subject,
+        html: therapistEmailContent.html,
+        attachments: [icsAttachment],
+      });
+
+      if (!therapistEmailSent.success) {
+        console.warn("Failed to send confirmation email to therapist:", therapistEmail);
+      }
     }
 
     revalidatePath("/dashboard/bookings");
@@ -966,10 +976,13 @@ export async function cancelBookingAction(
         visitor_email,
         booking_date,
         start_time,
+        end_time,
         status,
+        therapist_profile_id,
         therapist_profiles!inner (
           users!inner (
-            name
+            name,
+            email
           )
         )
       `)
@@ -1000,12 +1013,45 @@ export async function cancelBookingAction(
       return { success: false, error: "Failed to cancel booking" };
     }
 
-    // Send cancellation email to visitor
+    // Get therapist info and booking settings for timezone
     const therapistProfile = booking.therapist_profiles as unknown as {
-      users: { name?: string };
+      users: { name?: string; email?: string };
     };
     const therapistName = therapistProfile.users?.name || "the therapist";
+    const therapistEmail = therapistProfile.users?.email;
 
+    // Get timezone from booking settings
+    const { data: settings } = await supabase
+      .from("therapist_booking_settings")
+      .select("timezone")
+      .eq("therapist_profile_id", profileId)
+      .single();
+    const timezone = settings?.timezone || "Europe/London";
+
+    // Generate cancellation ICS
+    const icsData: ICSEventData = {
+      uid: booking.id,
+      title: `Consultation with ${booking.visitor_name}`,
+      startDate: booking.booking_date,
+      startTime: booking.start_time,
+      endTime: booking.end_time,
+      timezone,
+      organizerName: therapistName,
+      organizerEmail: therapistEmail || "noreply@findhypnotherapy.com",
+      attendeeName: booking.visitor_name,
+      attendeeEmail: booking.visitor_email,
+      method: "CANCEL",
+      sequence: 1,
+    };
+    const icsContent = generateICS(icsData);
+    const icsAttachment = {
+      content: Buffer.from(icsContent).toString("base64"),
+      filename: "booking-cancelled.ics",
+      type: "text/calendar",
+      disposition: "attachment" as const,
+    };
+
+    // Send cancellation email to visitor with ICS attachment
     const emailContent = getBookingCancelledEmail({
       recipientName: booking.visitor_name,
       therapistName,
@@ -1018,9 +1064,32 @@ export async function cancelBookingAction(
       to: booking.visitor_email,
       subject: emailContent.subject,
       html: emailContent.html,
+      attachments: [icsAttachment],
     });
     if (!emailSent.success) {
       console.warn("Failed to send cancellation email to visitor:", booking.visitor_email);
+    }
+
+    // Send cancellation email to therapist with ICS attachment
+    if (therapistEmail) {
+      const therapistEmailContent = getBookingCancelledTherapistEmail({
+        recipientName: therapistName,
+        visitorName: booking.visitor_name,
+        bookingDate: booking.booking_date,
+        startTime: booking.start_time,
+        reason: reason || undefined,
+        cancelledBy: "member",
+      });
+
+      const therapistEmailSent = await sendEmail({
+        to: therapistEmail,
+        subject: therapistEmailContent.subject,
+        html: therapistEmailContent.html,
+        attachments: [icsAttachment],
+      });
+      if (!therapistEmailSent.success) {
+        console.warn("Failed to send cancellation email to therapist:", therapistEmail);
+      }
     }
 
     revalidatePath("/dashboard/bookings");

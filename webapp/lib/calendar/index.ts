@@ -6,7 +6,6 @@ export {
   exchangeCodeForTokens as exchangeGoogleCodeForTokens,
   saveGoogleTokens,
   getGoogleFreeBusy,
-  createGoogleCalendarEvent,
   disconnectGoogleCalendar,
 } from './google';
 
@@ -16,6 +15,9 @@ export {
   exchangeCodeForTokens as exchangeMicrosoftCodeForTokens,
   saveMicrosoftTokens,
   getMicrosoftFreeBusy,
-  createMicrosoftCalendarEvent,
   disconnectMicrosoftCalendar,
 } from './microsoft';
+
+// ICS calendar file generation
+export { generateICS, getICSContentType } from './ics';
+export type { ICSEventData } from './ics';

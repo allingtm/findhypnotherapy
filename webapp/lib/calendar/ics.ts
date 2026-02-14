@@ -10,6 +10,7 @@ export interface ICSEventData {
   startDate: string; // YYYY-MM-DD
   startTime: string; // HH:MM
   endTime: string; // HH:MM
+  timezone?: string; // IANA timezone ID (default: "Europe/London")
   location?: string;
   meetingUrl?: string;
   organizerName: string;
@@ -62,10 +63,13 @@ function foldLine(line: string): string {
 }
 
 /**
- * Generates a VTIMEZONE component for Europe/London
+ * Generates a VTIMEZONE component for the given timezone.
+ * Includes full DST rules for Europe/London; for other timezones,
+ * relies on the calendar app to resolve the IANA TZID.
  */
-function generateTimezone(): string {
-  return `BEGIN:VTIMEZONE
+function generateTimezone(tzid: string): string {
+  if (tzid === "Europe/London") {
+    return `BEGIN:VTIMEZONE
 TZID:Europe/London
 BEGIN:DAYLIGHT
 TZOFFSETFROM:+0000
@@ -82,6 +86,20 @@ DTSTART:19701025T020000
 RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU
 END:STANDARD
 END:VTIMEZONE`;
+  }
+
+  // For other IANA timezones, emit a minimal VTIMEZONE.
+  // Most modern calendar apps (Google, Apple, Outlook) resolve
+  // standard IANA timezone IDs without needing full DST rules.
+  return `BEGIN:VTIMEZONE
+TZID:${tzid}
+BEGIN:STANDARD
+TZOFFSETFROM:+0000
+TZOFFSETTO:+0000
+TZNAME:${tzid}
+DTSTART:19700101T000000
+END:STANDARD
+END:VTIMEZONE`;
 }
 
 /**
@@ -91,6 +109,7 @@ export function generateICS(data: ICSEventData): string {
   const now = new Date();
   const dtstamp = now.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 
+  const tzid = data.timezone || "Europe/London";
   const dtstart = formatICSDateTime(data.startDate, data.startTime);
   const dtend = formatICSDateTime(data.startDate, data.endTime);
 
@@ -112,12 +131,12 @@ export function generateICS(data: ICSEventData): string {
     "PRODID:-//Find Hypnotherapy//Session Scheduler//EN",
     `METHOD:${data.method}`,
     "CALSCALE:GREGORIAN",
-    generateTimezone(),
+    generateTimezone(tzid),
     "BEGIN:VEVENT",
     `UID:${data.uid}@findhypnotherapy.co.uk`,
     `DTSTAMP:${dtstamp}`,
-    `DTSTART;TZID=Europe/London:${dtstart}`,
-    `DTEND;TZID=Europe/London:${dtend}`,
+    `DTSTART;TZID=${tzid}:${dtstart}`,
+    `DTEND;TZID=${tzid}:${dtend}`,
     foldLine(`SUMMARY:${escapeICSText(data.title)}`),
     `ORGANIZER;CN=${escapeICSText(data.organizerName)}:mailto:${data.organizerEmail}`,
     `ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=${escapeICSText(data.attendeeName)}:mailto:${data.attendeeEmail}`,

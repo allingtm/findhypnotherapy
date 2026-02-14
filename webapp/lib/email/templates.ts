@@ -381,7 +381,7 @@ export function getBookingConfirmedEmail(props: BookingConfirmedEmailProps): { s
     </div>
     ${meetingSection}
     <p style="color: #666666; font-size: 14px; margin: 0;">
-      We recommend adding this to your calendar. If you need to reschedule or cancel, please contact ${props.therapistName} directly.
+      A calendar invite is attached to this email. Open it to add the appointment to your calendar. If you need to reschedule or cancel, please contact ${props.therapistName} directly.
     </p>
   `;
 
@@ -417,12 +417,103 @@ export function getBookingCancelledEmail(props: BookingCancelledEmailProps): { s
       ${props.reason ? `<p style="color: #991b1b; font-size: 14px; line-height: 1.5; margin: 12px 0 0 0;"><strong>Reason:</strong> ${props.reason}</p>` : ""}
     </div>
     <p style="color: #666666; font-size: 14px; margin: 0;">
-      We apologise for any inconvenience. You can visit the therapist's profile to book a new appointment at a different time.
+      A calendar cancellation is attached. Open it to remove the appointment from your calendar. You can visit the therapist's profile to book a new appointment at a different time.
     </p>
   `;
 
   return {
     subject: `Booking cancelled - ${formatBookingDate(props.bookingDate)}`,
+    html: getEmailWrapper(content),
+  };
+}
+
+// Email sent to therapist when they confirm a booking (with ICS calendar invite)
+interface BookingConfirmedTherapistEmailProps extends BaseEmailProps {
+  visitorName: string;
+  visitorEmail: string;
+  bookingDate: string;
+  startTime: string;
+  meetingUrl?: string;
+  sessionFormat?: string;
+}
+
+export function getBookingConfirmedTherapistEmail(props: BookingConfirmedTherapistEmailProps): { subject: string; html: string } {
+  const meetingSection = props.meetingUrl && props.sessionFormat === 'online' ? `
+    <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #1e40af; font-size: 14px; margin: 0 0 8px; font-weight: 600;">
+        Video Meeting
+      </p>
+      <p style="color: #1e40af; font-size: 14px; line-height: 1.5; margin: 0;">
+        Meeting link: <a href="${props.meetingUrl}" style="color: #2563eb;">${props.meetingUrl}</a>
+      </p>
+    </div>
+  ` : '';
+
+  const content = `
+    <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">Booking confirmed</h2>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Hi ${props.recipientName},
+    </p>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      You've confirmed a booking with <strong>${props.visitorName}</strong> (${props.visitorEmail}).
+    </p>
+    <div style="background-color: #dcfce7; border: 1px solid #86efac; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #166534; font-size: 14px; margin: 0 0 8px; font-weight: 600;">Confirmed Appointment</p>
+      <p style="color: #166534; font-size: 14px; line-height: 1.5; margin: 0;">
+        <strong>Date:</strong> ${formatBookingDate(props.bookingDate)}<br>
+        <strong>Time:</strong> ${formatBookingTime(props.startTime)}
+      </p>
+    </div>
+    ${meetingSection}
+    <p style="color: #666666; font-size: 14px; margin: 0;">
+      A calendar invite is attached to this email. Open it to add the appointment to your calendar.
+    </p>
+  `;
+
+  return {
+    subject: `Booking confirmed with ${props.visitorName} - ${formatBookingDate(props.bookingDate)}`,
+    html: getEmailWrapper(content),
+  };
+}
+
+// Email sent to therapist when a booking is cancelled (with ICS cancellation)
+interface BookingCancelledTherapistEmailProps extends BaseEmailProps {
+  visitorName: string;
+  bookingDate: string;
+  startTime: string;
+  reason?: string;
+  cancelledBy: "member" | "visitor";
+}
+
+export function getBookingCancelledTherapistEmail(props: BookingCancelledTherapistEmailProps): { subject: string; html: string } {
+  const cancelledByText = props.cancelledBy === "member"
+    ? "You have cancelled this booking."
+    : `<strong>${props.visitorName}</strong> has cancelled this booking.`;
+
+  const content = `
+    <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 20px;">Booking cancelled</h2>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      Hi ${props.recipientName},
+    </p>
+    <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+      ${cancelledByText}
+    </p>
+    <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 16px; margin: 0 0 24px;">
+      <p style="color: #991b1b; font-size: 14px; margin: 0 0 8px; font-weight: 600;">Cancelled Appointment</p>
+      <p style="color: #991b1b; font-size: 14px; line-height: 1.5; margin: 0;">
+        <strong>Client:</strong> ${props.visitorName}<br>
+        <strong>Date:</strong> ${formatBookingDate(props.bookingDate)}<br>
+        <strong>Time:</strong> ${formatBookingTime(props.startTime)}
+      </p>
+      ${props.reason ? `<p style="color: #991b1b; font-size: 14px; line-height: 1.5; margin: 12px 0 0 0;"><strong>Reason:</strong> ${props.reason}</p>` : ""}
+    </div>
+    <p style="color: #666666; font-size: 14px; margin: 0;">
+      A calendar cancellation is attached. Open it to remove the appointment from your calendar.
+    </p>
+  `;
+
+  return {
+    subject: `Booking cancelled - ${props.visitorName} on ${formatBookingDate(props.bookingDate)}`,
     html: getEmailWrapper(content),
   };
 }

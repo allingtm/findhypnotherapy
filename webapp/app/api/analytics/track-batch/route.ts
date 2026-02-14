@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { rateLimit } from "@/lib/rate-limit";
 import crypto from "crypto";
 
 const MAX_BATCH_SIZE = 50;
+
+// Rate limit: 20 batch requests per IP per minute
+const RATE_LIMIT = 20;
+const RATE_WINDOW_MS = 60_000;
 
 interface ImpressionEvent {
   therapist_profile_id: string;
@@ -11,6 +16,16 @@ interface ImpressionEvent {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit by IP
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
+
+    if (!rateLimit("analytics-track-batch", ip, RATE_LIMIT, RATE_WINDOW_MS)) {
+      return new NextResponse(null, { status: 429 });
+    }
+
     const body = await request.json();
     const { events } = body as { events: ImpressionEvent[] };
 
@@ -34,10 +49,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Create anonymous visitor hash
-    const ip =
-      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      request.headers.get("x-real-ip") ||
-      "unknown";
     const userAgent = request.headers.get("user-agent") || "unknown";
     const visitor_hash = crypto
       .createHash("sha256")
