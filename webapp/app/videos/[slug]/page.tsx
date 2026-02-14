@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { Navbar } from '@/components/ui/Navbar'
 import { Footer } from '@/components/ui/Footer'
 import { VideoDetailView } from '@/components/video-feed/VideoDetailView'
-import { getVideoBySlug, getVideoByIdPublic, getRelatedVideos } from '@/app/actions/therapist-videos'
+import { getVideoBySlug, getVideoByIdPublic, getRelatedVideos, getTherapistContactInfo } from '@/app/actions/therapist-videos'
 import type { Metadata } from 'next'
 
 interface VideoPageProps {
@@ -48,14 +48,17 @@ export default async function VideoPage({ params }: VideoPageProps) {
     notFound()
   }
 
-  // Fetch related videos from the same therapist
-  const relatedVideos = await getRelatedVideos(video.therapist_profile_id, video.id)
+  // Fetch related videos and contact info in parallel
+  const [relatedVideos, contactInfo] = await Promise.all([
+    getRelatedVideos(video.therapist_profile_id, video.id),
+    getTherapistContactInfo(video.therapist_profile_id),
+  ])
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <div className="flex-1 bg-gray-50 dark:bg-neutral-950">
-        <VideoDetailView video={video} relatedVideos={relatedVideos} />
+        <VideoDetailView video={video} relatedVideos={relatedVideos} contactInfo={contactInfo} />
       </div>
       <Footer />
     </div>

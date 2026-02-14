@@ -232,19 +232,11 @@ export function BookingForm({
     );
   }
 
-  const isFormDisabled = !selectedDate || !selectedSlot;
-
   return (
     <div className="bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700 p-6">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
         Your Details
       </h3>
-
-      {isFormDisabled && (
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-          Please select a date and time above to continue.
-        </p>
-      )}
 
       {error && <Alert type="error" message={error} />}
 
@@ -271,7 +263,7 @@ export function BookingForm({
             name="visitorName"
             required
             maxLength={100}
-            disabled={isFormDisabled || isSubmitting}
+            disabled={isSubmitting}
             onBlur={(e) => validateField("visitorName", e.target.value)}
             className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed ${
               fieldErrors.visitorName
@@ -300,7 +292,7 @@ export function BookingForm({
             name="visitorEmail"
             required
             maxLength={255}
-            disabled={isFormDisabled || isSubmitting}
+            disabled={isSubmitting}
             onBlur={(e) => validateField("visitorEmail", e.target.value)}
             className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed ${
               fieldErrors.visitorEmail
@@ -332,7 +324,7 @@ export function BookingForm({
             id="visitorPhone"
             name="visitorPhone"
             maxLength={20}
-            disabled={isFormDisabled || isSubmitting}
+            disabled={isSubmitting}
             onBlur={(e) => validateField("visitorPhone", e.target.value)}
             className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed ${
               fieldErrors.visitorPhone
@@ -361,7 +353,7 @@ export function BookingForm({
             rows={3}
             maxLength={1000}
             value={notes}
-            disabled={isFormDisabled || isSubmitting}
+            disabled={isSubmitting}
             onChange={(e) => {
               setNotes(e.target.value);
               if (fieldErrors.visitorNotes && e.target.value.length <= 1000) {
@@ -403,20 +395,24 @@ export function BookingForm({
               setTermsAccepted(accepted);
               setAcceptedTermsId(termsId);
             }}
-            disabled={isFormDisabled || isSubmitting}
+            disabled={isSubmitting}
           />
         )}
 
         {/* Turnstile spam protection */}
-        {!isFormDisabled && (
-          <div className="mb-4">
-            <Turnstile onVerify={handleTurnstileVerify} />
-          </div>
+        <div className="mb-4">
+          <Turnstile onVerify={handleTurnstileVerify} />
+        </div>
+
+        {(!selectedDate || !selectedSlot) && (
+          <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+            Please select a date and time to complete your booking.
+          </p>
         )}
 
         <Button
           type="submit"
-          disabled={isFormDisabled || isSubmitting || (!!therapistTerms && !termsAccepted)}
+          disabled={!selectedDate || !selectedSlot || isSubmitting || (!!therapistTerms && !termsAccepted)}
           loading={isSubmitting}
           className="w-full"
         >

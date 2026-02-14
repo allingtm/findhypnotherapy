@@ -809,3 +809,42 @@ export async function getVideosByTag(
     return []
   }
 }
+
+// Fetch therapist contact/booking data for video detail page
+export async function getTherapistContactInfo(therapistProfileId: string): Promise<{
+  acceptsOnlineBooking: boolean
+  offersFreeConsultation: boolean
+  bookingUrl: string | null
+} | null> {
+  try {
+    const supabase = await createClient()
+
+    const { data: profile, error } = await supabase
+      .from('therapist_profiles')
+      .select(`
+        offers_free_consultation,
+        booking_url,
+        therapist_booking_settings(accepts_online_booking)
+      `)
+      .eq('id', therapistProfileId)
+      .eq('is_published', true)
+      .single()
+
+    if (error || !profile) {
+      return null
+    }
+
+    const bookingSettings = profile.therapist_booking_settings as unknown as {
+      accepts_online_booking: boolean | null
+    } | null
+
+    return {
+      acceptsOnlineBooking: bookingSettings?.accepts_online_booking === true,
+      offersFreeConsultation: profile.offers_free_consultation === true,
+      bookingUrl: (profile as any).booking_url || null,
+    }
+  } catch (err) {
+    console.error('Error fetching therapist contact info:', err)
+    return null
+  }
+}

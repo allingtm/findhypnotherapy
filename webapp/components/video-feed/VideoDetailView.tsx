@@ -5,6 +5,7 @@ import Image from 'next/image'
 import dynamic from 'next/dynamic'
 import { VideoWall } from './VideoWall'
 import { ServicesWall } from '@/components/services/ServicesWall'
+import { ContactForm } from '@/components/messages/ContactForm'
 import type { VideoFeedItem } from '@/lib/types/videos'
 import { SESSION_FORMAT_LABELS } from '@/lib/types/videos'
 
@@ -16,9 +17,14 @@ const VideoPlayer = dynamic(() => import('./VideoPlayer').then(mod => ({ default
 interface VideoDetailViewProps {
   video: VideoFeedItem
   relatedVideos: VideoFeedItem[]
+  contactInfo: {
+    acceptsOnlineBooking: boolean
+    offersFreeConsultation: boolean
+    bookingUrl: string | null
+  } | null
 }
 
-export function VideoDetailView({ video, relatedVideos }: VideoDetailViewProps) {
+export function VideoDetailView({ video, relatedVideos, contactInfo }: VideoDetailViewProps) {
   const formattedDate = video.published_at
     ? new Date(video.published_at).toLocaleDateString('en-GB', {
         day: 'numeric',
@@ -137,6 +143,46 @@ export function VideoDetailView({ video, relatedVideos }: VideoDetailViewProps) 
           </div>
         </div>
       </div>
+
+      {/* Contact Panel */}
+      {contactInfo && (
+        <div className="mt-4 p-4 bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-gray-100 dark:border-neutral-700">
+          <div className="space-y-3">
+            {contactInfo.acceptsOnlineBooking && video.therapist_slug && (
+              <Link
+                href={`/book/${video.therapist_slug}`}
+                className="block w-full px-4 py-3 bg-green-600 text-white text-center rounded-lg hover:bg-green-700 transition-colors font-medium"
+              >
+                Book Free Consultation
+              </Link>
+            )}
+
+            {contactInfo.bookingUrl && (
+              <a
+                href={contactInfo.bookingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`block w-full px-4 py-3 text-center rounded-lg transition-colors font-medium ${
+                  contactInfo.acceptsOnlineBooking
+                    ? 'bg-gray-100 dark:bg-neutral-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-neutral-600'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                {contactInfo.acceptsOnlineBooking ? 'View Calendar' : 'Book an Appointment'}
+              </a>
+            )}
+
+            {(contactInfo.acceptsOnlineBooking || contactInfo.bookingUrl) && (
+              <div className="border-t border-gray-200 dark:border-neutral-700" />
+            )}
+
+            <ContactForm
+              memberProfileId={video.therapist_profile_id}
+              therapistName={video.therapist_name}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Related Services */}
       {video.services && video.services.length > 0 && (
